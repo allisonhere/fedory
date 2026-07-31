@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# fedory:summary=Install Steam and graphics drivers selected for this system
+# fedory:requires-sudo=true
+#
+# Fedora-native note: Steam ships via RPM Fusion nonfree (see
+# packaging/package-map.tsv), not an AUR-style community package -- same
+# `fedory-pkg-add steam` call as upstream, just resolving to a different
+# source underneath.
+
+set -e
+
+echo "Installing Steam..."
+fedory-pkg-add steam
+fedory-install-gaming-gpu-lib32
+
+echo ""
+echo "Steam will start automatically now. This might take a while..."
+
+setsid gtk-launch steam >/dev/null 2>&1 &

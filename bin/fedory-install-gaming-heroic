@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# fedory:summary=Install Heroic Games Launcher (Epic, GOG, Amazon Prime Gaming) with graphics drivers.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: upstream installs an AUR *-bin package. Heroic has
+# no Fedora RPM; Flathub's com.heroicgameslauncher.hgl is the standard
+# install path.
+
+set -e
+
+echo "Installing Heroic Games Launcher..."
+if ! command -v flatpak >/dev/null 2>&1; then
+  sudo dnf install -y flatpak
+fi
+flatpak install -y --noninteractive flathub com.heroicgameslauncher.hgl
+fedory-install-gaming-gpu-lib32
+
+setsid flatpak run com.heroicgameslauncher.hgl >/dev/null 2>&1 &

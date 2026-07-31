@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# fedory:summary=Install support for using Xbox controllers with Steam/RetroArch/etc.
+# fedory:group=install
+# fedory:name=gaming xbox-controllers
+# fedory:requires-sudo=true
+#
+# Fedora-native note: xpadneo-dkms is AUR-only upstream; it has no
+# confirmed official Fedora package or maintained COPR yet (see
+# packaging/package-map.tsv) -- verify/update the COPR name below before
+# relying on this in production.
+
+set -e
+
+echo "Installing Xbox controller Bluetooth support..."
+
+fedory-pkg-add kernel-devel dkms
+fedory-pkg-copr-add lizardbyte/xpadneo xpadneo-dkms || {
+  echo "Could not install xpadneo from COPR -- verify the repo name in" >&2
+  echo "packaging/package-map.tsv, this hasn't been confirmed working." >&2
+  exit 1
+}
+
+# Prevent xpad/xpadneo driver conflict
+echo blacklist xpad | sudo tee /etc/modprobe.d/blacklist-xpad.conf >/dev/null
+echo hid_xpadneo | sudo tee /etc/modules-load.d/xpadneo.conf >/dev/null
+
+# Ensure user is in the input group (controllers need it)
+needs_reboot=false
+if ! id -nG "$USER" | grep -qw input; then
+  sudo usermod -aG input "$USER"
+  needs_reboot=true
+fi
+
+# Swap drivers in the running kernel so a reboot isn't needed otherwise
+if lsmod | grep -q '^xpad '; then
+  sudo modprobe -r xpad 2>/dev/null || needs_reboot=true
+fi
+
+if $needs_reboot; then
+  gum confirm "Reboot needed to finish setup. Reboot now?" && sudo reboot now
+  exit 0
+fi
+
+sudo modprobe hid_xpadneo
+
+echo ""
+echo "Now you can pair your Xbox controller with Bluetooth using Super + Ctrl + B."

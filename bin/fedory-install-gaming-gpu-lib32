@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# fedory:summary=Install 32-bit graphics drivers (Vulkan + NVIDIA) for any detected GPUs.
+# fedory:group=install
+# fedory:name=gaming gpu-lib32
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: Arch's multilib repo prefixes 32-bit packages with
+# `lib32-`; Fedora's native multiarch instead suffixes the *same* package
+# name with `.i686` (e.g. `mesa-vulkan-drivers.i686`, not a separately
+# named package). mesa-vulkan-drivers already covers both Intel and AMD in
+# one package, so there's no per-vendor split to detect via lspci the way
+# upstream does.
+
+set -e
+
+echo "Installing 32-bit graphics drivers..."
+
+PACKAGES=(mesa-vulkan-drivers.i686 mesa-dri-drivers.i686)
+
+if fedory-hw-nvidia-gsp || fedory-hw-nvidia-without-gsp; then
+  PACKAGES+=(xorg-x11-drv-nvidia-libs.i686)
+fi
+
+sudo dnf install -y --setopt=install_weak_deps=False "${PACKAGES[@]}"
