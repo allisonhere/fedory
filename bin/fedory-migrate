@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# fedory:summary=Run pending Fedory migrations.
+# fedory:args=[--pending]
+
+set -euo pipefail
+
+mode="run"
+
+usage() {
+  echo "Usage: fedory-migrate [--pending]"
+}
+
+while (($#)); do
+  case "$1" in
+    --pending|--check)
+      mode="pending"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+FEDORY_PATH="${FEDORY_PATH:-/usr/share/fedory}"
+STATE_DIR="${FEDORY_MIGRATION_STATE:-$HOME/.local/state/fedory/migrations}"
+MIGRATIONS_DIR="$FEDORY_PATH/migrations"
+
+migration_entries() {
+  [[ -d $MIGRATIONS_DIR ]] || return 0
+
+  local file filename
+
+  for file in "$MIGRATIONS_DIR"/*.sh; do
+    [[ -f $file ]] || continue
+    filename=$(basename "$file")
+    printf '%s\t%s\t%s\n' "$filename" "$file" "$STATE_DIR/$filename"
+  done
+}
+
+pending_migrations() {
+  local name file marker
+
+  while IFS=$'\t' read -r name file marker; do
+    [[ -n $name ]] || continue
+    if [[ ! -f $marker ]]; then
+      printf '%s\n' "$name"
+    fi
+  done < <(migration_entries)
+}
+
+if [[ $mode == "pending" ]]; then
+  pending_output=$(pending_migrations)
+  if [[ -n $pending_output ]]; then
+    printf '%s\n' "$pending_output"
+    exit 0
+  else
+    exit 1
+  fi
+fi
+
+# Fedora-native rewrite of upstream's wait_for_pacman_transaction: dnf/rpm
+# don't have a single well-known lock *file* the way pacman's db.lck is --
+# rpm's own db lock is held via flock on /var/lib/rpm/.rpm.lock for the
+# duration of a transaction, not left behind as a stale marker, so `fuser`
+# (which reports a lock as held only while a process actually has the fd
+# open) is the accurate check here, with a pgrep fallback in case fuser
+# isn't installed.
+wait_for_package_transaction() {
+  local rpm_lock=/var/lib/rpm/.rpm.lock
+
+  transaction_active() {
+    if command -v fuser >/dev/null 2>&1 && [[ -e $rpm_lock ]]; then
+      fuser "$rpm_lock" >/dev/null 2>&1 && return 0
+    fi
+    pgrep -x 'dnf|dnf-3|dnf5|packagekitd|rpm' >/dev/null 2>&1
+  }
+
+  transaction_active || return 0
+  echo "Waiting for a dnf/rpm transaction to finish before running Fedory migrations..."
+
+  for _ in {1..900}; do
+    transaction_active || return 0
+    sleep 1
+  done
+
+  echo "A dnf/rpm transaction is still running; Fedory migrations will retry on next login."
+  exit 0
+}
+
+wait_for_package_transaction
+
+mkdir -p "$STATE_DIR"
+[[ -d $MIGRATIONS_DIR ]] || exit 0
+
+while IFS=$'\t' read -r name file marker; do
+  [[ -n $name ]] || continue
+
+  if [[ ! -f $marker ]]; then
+    echo -e "\e[32m\nRunning migration (${name%.sh})\e[0m"
+    FEDORY_PATH="$FEDORY_PATH" bash -euo pipefail "$file"
+    mkdir -p "$(dirname "$marker")"
+    touch "$marker"
+  fi
+done < <(migration_entries)
+
+# Clear a login-time notification the user left sitting there and then resolved
+# by running migrations some other way. The substring matches both the current
+# and legacy notification titles.
+fedory-notification-dismiss "Fedory Migrations" >/dev/null 2>&1 || true
