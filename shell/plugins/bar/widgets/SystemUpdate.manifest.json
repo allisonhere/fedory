@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "fedory.system-update",
+  "name": "Fedory update",
+  "version": "1.0.0",
+  "author": "Fedory",
+  "description": "Indicates available Fedory updates",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "SystemUpdate.qml"
+  },
+  "barWidget": {
+    "displayName": "Fedory update",
+    "description": "Indicates available Fedory updates",
+    "category": "System",
+    "allowMultiple": false
+  }
+}

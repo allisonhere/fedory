@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "fedory.dev-gallery",
+  "name": "Dev gallery",
+  "version": "1.0.0",
+  "author": "Fedory",
+  "description": "Visual reference for fedory-shell common UI components. Summon with: fedory-shell shell summon fedory.dev-gallery '{}' (or run: fedory dev ui-preview).",
+  "kinds": [
+    "panel"
+  ],
+  "entryPoints": {
+    "panel": "GalleryPanel.qml"
+  }
+}

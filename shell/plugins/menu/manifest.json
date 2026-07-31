@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "fedory.menu",
+  "name": "Fedory menu",
+  "version": "1.0.0",
+  "author": "Fedory",
+  "description": "Quickshell-powered Fedory command menu",
+  "kinds": [
+    "menu",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "menu": "Menu.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Fedory menu",
+    "description": "Launches the Fedory menu",
+    "category": "Compositor",
+    "allowMultiple": false
+  }
+}
