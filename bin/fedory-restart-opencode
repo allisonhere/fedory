@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# fedory:summary=Reload opencode configuration (used by the Fedory theme switching).
+
+if pgrep -x opencode >/dev/null; then
+  killall -SIGUSR2 opencode
+fi

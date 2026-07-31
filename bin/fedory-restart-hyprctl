@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# fedory:summary=Reload hyprland configuration (used by the Fedory theme switching).
+
+hyprctl reload >/dev/null
