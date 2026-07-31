@@ -1,3 +1,4 @@
+run_logged "$FEDORY_INSTALL/config/base-packages.sh"
 run_logged "$FEDORY_INSTALL/config/theme-system.sh"
 run_logged "$FEDORY_INSTALL/config/faillock.sh"
 run_logged "$FEDORY_INSTALL/config/lockscreen-pam.sh"

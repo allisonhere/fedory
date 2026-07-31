@@ -3,11 +3,11 @@
 # Workstation install. Fedory-invented -- upstream Omarchy no longer has a
 # repo-root equivalent post-4.0 ("Quattro"); see docs/scope.md for why.
 #
-#   curl -fsSL https://raw.githubusercontent.com/<org>/fedory/master/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/allisonhere/fedory/master/bootstrap.sh | bash
 #
 set -eEo pipefail
 
-FEDORY_REPO="${FEDORY_REPO:-<org>/fedory}"
+FEDORY_REPO="${FEDORY_REPO:-allisonhere/fedory}"
 FEDORY_REF="${FEDORY_REF:-master}"
 FEDORY_PATH="${FEDORY_PATH:-$HOME/.local/share/fedory}"
 

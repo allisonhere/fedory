@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <code>curl -fsSL https://raw.githubusercontent.com/&lt;org&gt;/fedory/master/bootstrap.sh | bash</code>
+  <code>curl -fsSL https://raw.githubusercontent.com/allisonhere/fedory/master/bootstrap.sh | bash</code>
 </p>
 
 ---
@@ -41,7 +41,7 @@ custom ISO/spin (see [`docs/scope.md`](docs/scope.md) for why, and what that
 tradeoff means). Boot a normal Fedora install, log in, then run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<org>/fedory/master/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/allisonhere/fedory/master/bootstrap.sh | bash
 ```
 
 The installer explains each step as it runs and tells you how long to expect
