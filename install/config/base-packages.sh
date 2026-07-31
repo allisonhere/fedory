@@ -12,17 +12,18 @@ mapfile -t base_packages < <(grep -v '^#' "$FEDORY_PATH/install/fedory-base.pack
 ui_info "Installing ${#base_packages[@]} core Fedory packages (this takes a while on first run)..."
 fedory-pkg-add "${base_packages[@]}"
 
-if fedory-cmd-missing docker; then
-  # Not idempotent on every dnf5 version -- a rerun where the repo file
-  # already exists from a previous attempt can error here. That shouldn't
-  # block the rest of this leaf (or worse, silently skip straight to
-  # `fedory-pkg-add docker-ce ...` against an unconfigured repo, which is
-  # what actually happened: the addrepo call failed with nothing checking
-  # it, docker-ce/docker-ce-cli/containerd.io were then requested with no
-  # matching repo enabled, --skip-unavailable let dnf quietly drop them,
-  # and enable-services.sh only found that out later as "Unit docker.socket
-  # does not exist" -- by which point it had already aborted before
-  # reaching the GDM->SDDM switch further down that same script).
+if ! rpm -q docker-ce &>/dev/null; then
+  # Checking for a `docker` command on PATH (fedory-cmd-missing docker) is
+  # not enough: a real bootstrap run showed the Docker CE install block
+  # never even ran, no "Adding the Docker CE dnf repo..." message printed
+  # anywhere, docker.socket/docker group never created -- because `docker`
+  # already resolved to something else on that system (podman-docker's
+  # shim is the likely culprit; Fedora Workstation can ship it by default).
+  # rpm -q docker-ce checks for the actual Docker CE package specifically.
+  #
+  # Also not idempotent on every dnf5 version -- a rerun where the repo
+  # file already exists from a previous attempt can error here. That
+  # shouldn't block the rest of this leaf.
   if [[ ! -f /etc/yum.repos.d/docker-ce.repo ]]; then
     ui_info "Adding the Docker CE dnf repo..."
     dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo \
@@ -31,8 +32,8 @@ if fedory-cmd-missing docker; then
   fedory-pkg-add docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 fi
 
-if fedory-cmd-present docker; then
+if rpm -q docker-ce &>/dev/null; then
   systemctl enable docker || ui_warn "could not enable the docker service"
 else
-  ui_warn "docker did not install -- skipping docker.service enable (see the Docker CE repo message above)"
+  ui_warn "docker-ce did not install -- skipping docker.service enable (see the Docker CE repo message above)"
 fi

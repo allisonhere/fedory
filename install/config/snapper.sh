@@ -14,6 +14,11 @@ if ! findmnt -no FSTYPE / | grep -q btrfs; then
   return 0 2>/dev/null || exit 0
 fi
 
+# A real bootstrap run showed this leaf assumed `snapper` was already on
+# PATH and failed outright ("snapper: command not found") -- nothing in
+# the base package list installs it.
+fedory-pkg-add snapper
+
 if [[ ! -f $SNAPPER_CONFIG_PATH ]]; then
   mkdir -p "$(dirname "$SNAPPER_CONFIG_PATH")"
 
