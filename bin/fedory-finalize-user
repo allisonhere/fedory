@@ -81,13 +81,16 @@ if (( first_install )); then
   export FEDORY_SETUP_CONTEXT=bootstrap
 fi
 
-if [[ -n ${FEDORY_INSTALL_LOG_FILE:-} && -f $FEDORY_INSTALL/helpers/logging.sh ]]; then
+if [[ -f $FEDORY_INSTALL/helpers/logging.sh ]]; then
   source "$FEDORY_INSTALL/helpers/logging.sh"
 else
+  # Genuinely missing (very old checkout) -- minimal fallback that doesn't
+  # tolerate a leaf failing, unlike the real run_logged above.
   run_logged() {
     local script="$1"
     bash -eE -c 'source "$1"' bash "$script"
   }
+  report_failed_leaves() { return 0; }
 fi
 
 # Dev-aware skill symlinks. Cannot be baked into the static skel seed because
@@ -125,3 +128,5 @@ fi
 
 fedory-done mark finalize-user
 ui_success "User finalization complete."
+
+report_failed_leaves

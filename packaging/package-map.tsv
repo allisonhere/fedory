@@ -22,7 +22,7 @@ docker	-	-	-	Docker's own dnf repo (download.docker.com), not COPR	external-repo
 docker-buildx	-	-	-	same Docker repo as docker	external-repo	ships as docker-buildx-plugin from the same Docker repo
 docker-compose	-	-	-	same Docker repo as docker	external-repo	ships as docker-compose-plugin from the same Docker repo
 dosfstools	dosfstools	-	-	-	dnf	1:1 name match
-dotnet-runtime	dotnet-runtime	-	-	-	dnf	Fedora ships .NET officially, direct match
+dotnet-runtime	dotnet-runtime-9.0	-	-	-	dnf	Fedora versions its .NET packages (dotnet-runtime-X.Y); a real bootstrap run showed the bare "dotnet-runtime" meta-package doesn't exist. Not independently confirmed which LTS version is current on every Fedora release -- verify before relying on it
 dua-cli	-	-	-	cargo install dua-cli	source-build	not consistently packaged; cargo install is the reliable fallback
 evince	evince	-	-	-	dnf	1:1 name match (GNOME's newer "Papers" may eventually replace it; revisit)
 exfatprogs	exfatprogs	-	-	-	dnf	1:1 name match
@@ -41,7 +41,7 @@ fzf	fzf	-	-	-	dnf	1:1 name match
 git	git	-	-	-	dnf	1:1 name match
 gnome-calculator	gnome-calculator	-	-	-	dnf	1:1 name match
 gnome-keyring	gnome-keyring	-	-	-	dnf	1:1 name match
-gnome-themes-extra	gnome-themes-extra	-	-	-	dnf	1:1 name match
+gnome-themes-extra	adwaita-gtk2-theme	-	-	-	dnf	a real bootstrap run showed the bare "gnome-themes-extra" name doesn't exist on Fedora 44; adwaita-gtk2-theme is a plausible current replacement (legacy GTK2/3 Adwaita theming) but not independently confirmed -- verify before relying on it
 grim	grim	-	-	-	dnf	1:1 name match
 gpu-screen-recorder	-	dec05eba/gpu-screen-recorder	-	-	copr	not in official Fedora repos; maintainer-run COPR is the standard install path
 gum	gum	-	-	-	dnf	confirmed installable directly via dnf (bootstrap.sh installs it alongside git before this map is even consulted); no COPR needed on current Fedora
@@ -55,14 +55,14 @@ hyprpicker	hyprpicker	solopasha/hyprland	-	-	dnf-or-copr	likely bundled once Hyp
 hyprsunset	hyprsunset	solopasha/hyprland	-	-	dnf-or-copr	same as hyprpicker
 imagemagick	ImageMagick	-	-	-	dnf	Fedora package name is capitalized ImageMagick
 imv	imv	-	-	-	dnf	1:1 name match
-inetutils	inetutils	-	-	-	dnf	1:1 name match
+inetutils	-	-	-	-	dropped	a real bootstrap run showed this package name doesn't exist on Fedora 44; legacy network tools (telnet, ftp, rsh) that aren't essential to the desktop, not worth guessing an alternate name for
 inotify-tools	inotify-tools	-	-	-	dnf	1:1 name match
 inxi	inxi	-	-	-	dnf	1:1 name match
 jq	jq	-	-	-	dnf	1:1 name match
 kdenlive	kdenlive	-	-	-	dnf	1:1 name match
 kernel-modules-hook	-	-	-	-	dropped	Arch pacman hook for kernel module cleanup; dnf/dracut already handles this on Fedora
 lazydocker	-	-	-	go install github.com/jesseduffield/lazydocker@latest	source-build	not in Fedora repos; upstream ships prebuilt binaries too as an alternative
-lazygit	lazygit	-	-	-	dnf	Fedora added lazygit to official repos
+lazygit	-	-	-	go install github.com/jesseduffield/lazygit@latest	source-build	a real bootstrap run showed lazygit isn't actually in Fedora's official repos despite this row previously claiming otherwise; go install is upstream's documented fallback, same pattern as lazydocker
 less	less	-	-	-	dnf	1:1 name match
 libsecret	libsecret	-	-	-	dnf	1:1 name match
 libyaml	libyaml	-	-	-	dnf	1:1 name match
@@ -81,7 +81,7 @@ nautilus	nautilus	-	-	-	dnf	1:1 name match
 nautilus-python	nautilus-python	-	-	-	dnf	1:1 name match
 gnome-disk-utility	gnome-disk-utility	-	-	-	dnf	1:1 name match
 noto-fonts	google-noto-sans-fonts	-	-	-	dnf	Fedora's Noto packages are split and prefixed google-noto-*
-noto-fonts-cjk	google-noto-sans-cjk-ttc-fonts	-	-	-	dnf	see noto-fonts naming note
+noto-fonts-cjk	google-noto-sans-cjk-vf-fonts	-	-	-	dnf	confirmed via a real bootstrap run (Fedora 44 installs this under the -vf- variable-font naming, not the older -ttc- TrueType Collection name this row previously guessed)
 noto-fonts-emoji	google-noto-emoji-fonts	-	-	-	dnf	see noto-fonts naming note
 nss-mdns	nss-mdns	-	-	-	dnf	1:1 name match
 nvim	neovim	-	-	-	dnf	Fedora package name is neovim, not nvim
@@ -109,7 +109,7 @@ tensaku	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-o
 sddm	sddm	-	-	-	dnf	1:1 name match
 slurp	slurp	-	-	-	dnf	1:1 name match
 socat	socat	-	-	-	dnf	1:1 name match
-starship	starship	-	-	-	dnf	1:1 name match
+starship	-	-	-	official install script (starship.rs) or cargo install starship	source-build	a real bootstrap run showed starship isn't actually in Fedora's official repos despite this row previously claiming otherwise; upstream's own install script is the documented path, same pattern as mise
 sushi	sushi	-	-	-	dnf	1:1 name match
 system-config-printer	system-config-printer	-	-	-	dnf	1:1 name match
 tesseract	tesseract	-	-	-	dnf	1:1 name match

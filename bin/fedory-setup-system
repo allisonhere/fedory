@@ -86,9 +86,19 @@ start_install_log
 
 source "$FEDORY_INSTALL/config/all.sh"
 
-fedory-setup-hardware --install-user "$install_user"
+# A problem in hardware setup (this machine's specific quirks) shouldn't
+# block login/post-install setup from running -- same reasoning as
+# run_logged itself not aborting the rest of a phase over one leaf.
+hardware_status=0
+fedory-setup-hardware --install-user "$install_user" || hardware_status=1
 
 source "$FEDORY_INSTALL/login/all.sh"
 source "$FEDORY_INSTALL/post-install/all.sh"
 
 stop_install_log
+
+overall_status=0
+report_failed_leaves || overall_status=1
+(( hardware_status == 0 )) || overall_status=1
+
+exit $overall_status

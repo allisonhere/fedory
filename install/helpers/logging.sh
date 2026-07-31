@@ -41,6 +41,7 @@ stop_install_log() {
 }
 
 FEDORY_RUN_LOGGED_STEP=${FEDORY_RUN_LOGGED_STEP:-0}
+FEDORY_FAILED_LEAVES=()
 
 # Always visible on the real terminal, independent of whether the leaf's own
 # output (dnf/flatpak progress, etc.) is streaming live or being captured
@@ -48,6 +49,18 @@ FEDORY_RUN_LOGGED_STEP=${FEDORY_RUN_LOGGED_STEP:-0}
 # these leaves, several of which run long dnf/flatpak transactions with no
 # other indication of overall progress, so this is what tells the user
 # something is still moving forward and roughly what's happening right now.
+#
+# Deliberately always returns 0: a real bootstrap run showed one leaf
+# failing (a handful of base packages unavailable on that specific Fedora
+# version) aborted every leaf after it -- hardware setup, login setup,
+# post-install, and the entire per-user finalization pass never ran at all,
+# over problems in a small fraction of ~115 packages that dnf itself had
+# already worked around for everything else via --skip-broken. A failed
+# leaf is recorded and reported (see report_failed_leaves, called once
+# every leaf has had a chance to run) rather than treated as fatal on the
+# spot -- callers that genuinely cannot proceed without a leaf succeeding
+# should check for that themselves rather than relying on run_logged to
+# abort everything downstream.
 run_logged() {
   local script="$1"
   local exit_code errexit_was_set=0
@@ -86,7 +99,21 @@ run_logged() {
     fedory_log_line "[$(date '+%Y-%m-%d %H:%M:%S')] Completed: $script"
   else
     fedory_log_line "[$(date '+%Y-%m-%d %H:%M:%S')] Failed: $script (exit code: $exit_code)"
+    FEDORY_FAILED_LEAVES+=("$label")
+    ui_warn "$label had a problem (exit $exit_code) -- continuing with the rest of setup. Details above, or in \$FEDORY_INSTALL_LOG_FILE."
   fi
 
-  return $exit_code
+  return 0
+}
+
+# Call once after every leaf in a phase (config/all.sh, hardware, login,
+# post-install, user) has had a chance to run. Prints a summary and returns
+# nonzero if anything failed, so the caller (fedory-setup-system,
+# fedory-finalize-user) can still signal overall failure to bootstrap.sh --
+# but only after everything that *could* run already has.
+report_failed_leaves() {
+  (( ${#FEDORY_FAILED_LEAVES[@]} > 0 )) || return 0
+  ui_warn "${#FEDORY_FAILED_LEAVES[@]} step(s) had problems and were left unfinished: ${FEDORY_FAILED_LEAVES[*]}"
+  ui_warn "Setup continued past them. Review the messages above (or \$FEDORY_INSTALL_LOG_FILE), fix what's blocking them, and retry -- e.g. 'fedory pkg add hyprland' once its COPR issue is resolved -- rather than re-running the whole bootstrap."
+  return 1
 }

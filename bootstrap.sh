@@ -162,23 +162,36 @@ main() {
   export FEDORY_USER_NAME FEDORY_USER_EMAIL
 
   # --- step 4: root-owned system setup ---------------------------------------
+  # A problem installing or configuring one piece (a package unavailable on
+  # this specific Fedora version, a COPR with a broken dependency, etc.)
+  # doesn't stop here -- fedory-setup-system itself keeps going through
+  # every remaining piece and only reports nonzero at the end if something
+  # needs follow-up, so step 5 (per-user setup) still gets a chance to run
+  # even when step 4 wasn't 100% clean.
+  had_issues=0
   step "Applying system setup (needs sudo)"
   info "Package installs, services, firewall, display manager, hardware setup."
   sudo env FEDORY_PATH="$FEDORY_PATH" PATH="$FEDORY_PATH/bin:$PATH" \
     fedory-setup-system --install-user "$USER" --first-install \
-    || die "fedory-setup-system failed -- see /var/log/fedory-install.log"
+    || had_issues=1
 
   # --- step 5: per-user finalization -----------------------------------------
   step "Finalizing your user setup"
   FEDORY_SETUP_CONTEXT=bootstrap fedory-finalize-user --first-install \
-    || die "fedory-finalize-user failed"
+    || had_issues=1
 
   # --- step 6: done -----------------------------------------------------------
   step "Done"
   elapsed=$(( $(date +%s) - STEP_START_EPOCH ))
   info "Finished in $(( elapsed / 60 ))m $(( elapsed % 60 ))s."
   echo
-  if has_gum; then
+  if (( had_issues )); then
+    if has_gum; then
+      gum style --foreground 214 --bold "Fedory is installed, but a few things need a second look -- scroll up (or check /var/log/fedory-install.log) for what to retry."
+    else
+      echo "Fedory is installed, but a few things need a second look -- scroll up (or check /var/log/fedory-install.log) for what to retry."
+    fi
+  elif has_gum; then
     gum style --foreground 42 --bold "Fedory is installed. Reboot to log into your new Hyprland desktop."
   else
     echo "Fedory is installed. Reboot to log into your new Hyprland desktop."

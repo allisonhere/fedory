@@ -59,3 +59,5 @@ export PATH="$FEDORY_PATH/bin:$PATH"
 
 source "$FEDORY_INSTALL/helpers/logging.sh"
 source "$FEDORY_INSTALL/hardware/all.sh"
+
+report_failed_leaves
