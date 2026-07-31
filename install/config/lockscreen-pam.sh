@@ -1,0 +1,1 @@
+fedory-setup-lock

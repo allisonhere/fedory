@@ -1,0 +1,29 @@
+#!/bin/bash
+# Aggregate test runner: CLI + shell tests. Does not run test/acceptance
+# (graphical, requires a real Fedora+Hyprland machine -- see docs/scope.md).
+set -uo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FAILED=0
+
+run_suite() {
+  local name=$1 script=$2
+  echo "== $name =="
+  if "$script"; then
+    echo "-- $name passed"
+  else
+    echo "-- $name FAILED"
+    FAILED=1
+  fi
+  echo
+}
+
+run_suite "cli" "$ROOT_DIR/test/cli"
+run_suite "shell" "$ROOT_DIR/test/shell"
+
+if (( FAILED )); then
+  echo "One or more suites failed."
+  exit 1
+fi
+
+echo "All suites passed."

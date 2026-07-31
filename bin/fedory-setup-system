@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# fedory:summary=Apply Fedory system setup on this machine
+# fedory:group=setup
+# fedory:requires-sudo=true
+# fedory:examples=fedory setup system --install-user drbayless --first-install
+
+set -euo pipefail
+
+usage() {
+  cat <<USAGE
+Usage: fedory setup system --install-user USER [--first-install|--upgrade]
+
+Runs root-owned Fedory system setup on an existing Fedora install.
+bootstrap.sh calls this after packages are installed and the target user
+exists. It also calls fedory-setup-hardware, so hardware setup cannot be
+accidentally skipped.
+
+Unlike upstream Omarchy, there is no ISO chroot: this runs directly against
+the live system (see docs/scope.md).
+USAGE
+}
+
+install_user="${FEDORY_INSTALL_USER:-}"
+first_install=0
+upgrade=0
+
+while (($#)); do
+  case "$1" in
+    --install-user)
+      install_user="${2:-}"
+      shift 2
+      ;;
+    --first-install)
+      first_install=1
+      shift
+      ;;
+    --upgrade)
+      upgrade=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if (( EUID != 0 )); then
+  echo "Error: fedory-setup-system must run as root" >&2
+  exit 1
+fi
+
+if [[ -z $install_user || $install_user == "root" ]]; then
+  echo "Error: --install-user must name the target non-root user" >&2
+  exit 1
+fi
+
+if ! getent passwd "$install_user" >/dev/null; then
+  echo "Error: user '$install_user' does not exist" >&2
+  exit 1
+fi
+
+export FEDORY_INSTALL_USER="$install_user"
+export FEDORY_FIRST_INSTALL="$first_install"
+export FEDORY_UPGRADE="$upgrade"
+export FEDORY_PATH="${FEDORY_PATH:-/usr/share/fedory}"
+export FEDORY_INSTALL="${FEDORY_INSTALL:-$FEDORY_PATH/install}"
+export FEDORY_INSTALL_LOG_FILE="${FEDORY_INSTALL_LOG_FILE:-/var/log/fedory-install.log}"
+export PATH="$FEDORY_PATH/bin:$PATH"
+
+source "$FEDORY_INSTALL/helpers/logging.sh"
+start_install_log
+
+source "$FEDORY_INSTALL/config/all.sh"
+
+fedory-setup-hardware --install-user "$install_user"
+
+source "$FEDORY_INSTALL/login/all.sh"
+source "$FEDORY_INSTALL/post-install/all.sh"
+
+stop_install_log

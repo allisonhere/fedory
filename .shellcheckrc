@@ -1,0 +1,7 @@
+# Scripts under install/ and migrations/ are sourced, not executed, and
+# intentionally omit a shebang -- tell shellcheck to assume bash for them.
+shell=bash
+
+# SC2250: quoting style opinion; project style leaves $VAR unquoted inside [[ ]]
+# per AGENTS.md, which shellcheck otherwise flags.
+disable=SC2250

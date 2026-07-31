@@ -1,0 +1,204 @@
+upstream_pkg	fedora_pkg	copr	flatpak	source_build	status	rationale
+aether	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-only tool; no known independent source repo found yet, needs investigation before a Fedora build can exist
+alsa-utils	alsa-utils	-	-	-	dnf	1:1 name match
+asdcontrol	-	-	-	build from source (github.com/nikosdion/asdcontrol or similar)	source-build	Apple display brightness tool, AUR-only, tiny C source; buildable directly
+avahi	avahi	-	-	-	dnf	1:1 name match
+bash-completion	bash-completion	-	-	-	dnf	1:1 name match
+bat	bat	-	-	-	dnf	1:1 name match
+bluez	bluez	-	-	-	dnf	1:1 name match
+bluez-tools	bluez-tools	-	-	-	dnf	1:1 name match
+bluez-utils	-	-	-	-	dropped	Arch splits bluetoothctl into bluez-utils; Fedora ships it inside the bluez package itself
+bolt	bolt	-	-	-	dnf	1:1 name match (Thunderbolt device manager)
+brightnessctl	brightnessctl	-	-	-	dnf	1:1 name match
+btop	btop	-	-	-	dnf	1:1 name match
+chromium	-	-	org.chromium.Chromium	-	flatpak	Not in Fedora repos (codec/licensing); Flathub build is the standard Fedora-recommended path
+clang	clang	-	-	-	dnf	1:1 name match
+cliamp	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
+cups	cups	-	-	-	dnf	1:1 name match
+cups-browsed	cups-browsed	-	-	-	dnf	1:1 name match
+cups-filters	cups-filters	-	-	-	dnf	1:1 name match
+cups-pdf	cups-pdf	-	-	-	dnf	1:1 name match
+docker	-	-	-	Docker's own dnf repo (download.docker.com), not COPR	external-repo	Fedora doesn't package Docker CE (prefers Podman); Docker publishes and supports an official dnf repo directly
+docker-buildx	-	-	-	same Docker repo as docker	external-repo	ships as docker-buildx-plugin from the same Docker repo
+docker-compose	-	-	-	same Docker repo as docker	external-repo	ships as docker-compose-plugin from the same Docker repo
+dosfstools	dosfstools	-	-	-	dnf	1:1 name match
+dotnet-runtime	dotnet-runtime	-	-	-	dnf	Fedora ships .NET officially, direct match
+dua-cli	-	dua-cli (check availability)	-	cargo install dua-cli	source-build	not consistently packaged; cargo install is the reliable fallback
+evince	evince	-	-	-	dnf	1:1 name match (GNOME's newer "Papers" may eventually replace it; revisit)
+exfatprogs	exfatprogs	-	-	-	dnf	1:1 name match
+expac	-	-	-	-	dropped	Arch-specific pacman query formatter; dnf repoquery covers the same need natively, no Fedora port needed
+eza	eza	-	-	-	dnf	Fedora added eza to official repos
+fakeroot	fakeroot	-	-	-	dnf	1:1 name match
+fastfetch	fastfetch	-	-	-	dnf	1:1 name match
+fcitx5	fcitx5	-	-	-	dnf	1:1 name match
+fcitx5-gtk	fcitx5-gtk4	-	-	-	dnf	Fedora splits by GTK version; use fcitx5-gtk4 (and fcitx5-gtk3 if GTK3 apps need it)
+fcitx5-qt	fcitx5-qt	-	-	-	dnf	1:1 name match
+fd	fd-find	-	-	-	dnf	Fedora package name differs (fd-find); binary installs as fdfind on Debian-family only, stays fd on Fedora
+ffmpegthumbnailer	ffmpegthumbnailer	-	-	-	dnf	1:1 name match
+fontconfig	fontconfig	-	-	-	dnf	1:1 name match
+foot	foot	-	-	-	dnf	1:1 name match
+fzf	fzf	-	-	-	dnf	1:1 name match
+git	git	-	-	-	dnf	1:1 name match
+gnome-calculator	gnome-calculator	-	-	-	dnf	1:1 name match
+gnome-keyring	gnome-keyring	-	-	-	dnf	1:1 name match
+gnome-themes-extra	gnome-themes-extra	-	-	-	dnf	1:1 name match
+grim	grim	-	-	-	dnf	1:1 name match
+gpu-screen-recorder	-	dec05eba/gpu-screen-recorder	-	-	copr	not in official Fedora repos; maintainer-run COPR is the standard install path
+gum	-	charm/charm or similar Charm COPR	-	go install github.com/charmbracelet/gum@latest	copr	Charm tools generally ship via their own COPR/repo, not Fedora proper
+gvfs-mtp	gvfs-mtp	-	-	-	dnf	1:1 name match
+gvfs-nfs	gvfs-nfs	-	-	-	dnf	1:1 name match
+gvfs-smb	gvfs-smb	-	-	-	dnf	1:1 name match
+hyprland	hyprland (verify still-current Fedora version)	solopasha/hyprland (fallback)	-	-	dnf-or-copr	Fedora added Hyprland to official repos in recent releases; fall back to the solopasha COPR on older Fedora
+hyprland-guiutils	-	solopasha/hyprland	-	-	copr	ships alongside Hyprland in the same COPR ecosystem
+hyprland-preview-share-picker	-	solopasha/hyprland	-	-	copr	same Hyprland COPR ecosystem
+hyprpicker	hyprpicker (check availability)	solopasha/hyprland	-	-	dnf-or-copr	likely bundled once Hyprland itself is official; COPR fallback otherwise
+hyprsunset	hyprsunset (check availability)	solopasha/hyprland	-	-	dnf-or-copr	same as hyprpicker
+imagemagick	ImageMagick	-	-	-	dnf	Fedora package name is capitalized ImageMagick
+imv	imv	-	-	-	dnf	1:1 name match
+inetutils	inetutils	-	-	-	dnf	1:1 name match
+inotify-tools	inotify-tools	-	-	-	dnf	1:1 name match
+inxi	inxi	-	-	-	dnf	1:1 name match
+jq	jq	-	-	-	dnf	1:1 name match
+kdenlive	kdenlive	-	-	-	dnf	1:1 name match
+kernel-modules-hook	-	-	-	-	dropped	Arch pacman hook for kernel module cleanup; dnf/dracut already handles this on Fedora
+lazydocker	-	-	-	go install github.com/jesseduffield/lazydocker@latest	source-build	not in Fedora repos; upstream ships prebuilt binaries too as an alternative
+lazygit	lazygit	-	-	-	dnf	Fedora added lazygit to official repos
+less	less	-	-	-	dnf	1:1 name match
+libsecret	libsecret	-	-	-	dnf	1:1 name match
+libyaml	libyaml	-	-	-	dnf	1:1 name match
+libreoffice-fresh	libreoffice	-	-	-	dnf	Fedora doesn't split fresh/still; one rolling libreoffice package
+llvm	llvm	-	-	-	dnf	1:1 name match
+localsend	-	-	org.localsend.localsend_app	-	flatpak	not in Fedora repos; Flathub is upstream's own recommended distribution channel
+lua51	-	-	-	compat-lua5.1 if available, else build lua-5.1 from source	source-build	Fedora's lua package defaults to 5.4; Hyprland/nvim plugin ecosystem pinned to 5.1 needs an explicit compat build
+luarocks	luarocks	-	-	-	dnf	1:1 name match
+man-db	man-db	-	-	-	dnf	1:1 name match
+mariadb-libs	mariadb-connector-c	-	-	-	dnf	Fedora's client library package is named differently
+mise	-	-	-	official install script (mise.jdx.dev) or cargo install mise	source-build	not in Fedora repos; upstream's own install script is the documented path
+moonlight-qt	-	-	com.moonlight_stream.Moonlight	-	flatpak	not in Fedora repos; Flathub is upstream's recommended channel
+mpv	mpv	-	-	-	dnf (RPM Fusion)	needs RPM Fusion free enabled
+mpv-mpris	mpv-mpris	-	-	-	dnf (RPM Fusion)	needs RPM Fusion free enabled
+nautilus	nautilus	-	-	-	dnf	1:1 name match
+nautilus-python	nautilus-python	-	-	-	dnf	1:1 name match
+gnome-disk-utility	gnome-disk-utility	-	-	-	dnf	1:1 name match
+noto-fonts	google-noto-sans-fonts	-	-	-	dnf	Fedora's Noto packages are split and prefixed google-noto-*
+noto-fonts-cjk	google-noto-sans-cjk-ttc-fonts	-	-	-	dnf	see noto-fonts naming note
+noto-fonts-emoji	google-noto-emoji-fonts	-	-	-	dnf	see noto-fonts naming note
+nss-mdns	nss-mdns	-	-	-	dnf	1:1 name match
+nvim	neovim	-	-	-	dnf	Fedora package name is neovim, not nvim
+obs-studio	obs-studio	-	-	-	dnf (RPM Fusion)	needs RPM Fusion free enabled
+obsidian	-	-	md.obsidian.Obsidian	-	flatpak	not in Fedora repos; Flathub is the standard install path
+omacut	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
+omawrite	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
+omarchy-nvim	fedory-nvim (planned fork)	-	-	fork the upstream Neovim config as our own default config	source-build	this is upstream's own curated Neovim distro config, not a generic tool; Fedory needs its own equivalent config rather than a packaging translation
+pacman-contrib	-	-	-	-	dropped	Arch-specific pacman helper scripts; dnf-utils already assumed present covers the equivalent need
+pamixer	pamixer	-	-	-	dnf	1:1 name match
+pinta	pinta	-	-	-	dnf	1:1 name match
+plocate	plocate	-	-	-	dnf	1:1 name match
+plymouth	plymouth	-	-	-	dnf	1:1 name match
+postgresql-libs	libpq	-	-	-	dnf	Fedora's client library package is named differently
+power-profiles-daemon	power-profiles-daemon	-	-	-	dnf	1:1 name match
+python-gobject	python3-gobject	-	-	-	dnf	Fedora prefixes Python packages with python3-
+python-poetry-core	python3-poetry-core	-	-	-	dnf	see python-gobject naming note
+python-terminaltexteffects	-	-	-	pip install --user terminaltexteffects	source-build	not in Fedora repos; pip install is the practical fallback
+qemu-user-static-binfmt	qemu-user-static	-	-	-	dnf	Fedora bundles binfmt registration into the main qemu-user-static package
+quickshell-git	-	errornointernet/quickshell (verify current maintainer COPR)	-	build from source (git.outfoxxed.me/quickshell/quickshell)	copr	load-bearing for the entire Phase 6 shell; not in Fedora repos, needs a tracked COPR or a documented from-source build
+ripgrep	ripgrep	-	-	-	dnf	1:1 name match
+ruby	ruby	-	-	-	dnf	1:1 name match
+rust	rust	-	-	-	dnf	1:1 name match (rustup also viable for toolchain management)
+tensaku	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
+sddm	sddm	-	-	-	dnf	1:1 name match
+slurp	slurp	-	-	-	dnf	1:1 name match
+socat	socat	-	-	-	dnf	1:1 name match
+starship	starship	-	-	-	dnf	1:1 name match
+sushi	sushi	-	-	-	dnf	1:1 name match
+system-config-printer	system-config-printer	-	-	-	dnf	1:1 name match
+tesseract	tesseract	-	-	-	dnf	1:1 name match
+tesseract-data-eng	tesseract-langpack-eng	-	-	-	dnf	Fedora names language packs langpack-<lang>
+tldr	tldr	-	-	-	dnf	1:1 name match (tealdeer is a faster Rust alternative if tldr proves unpackaged)
+tree-sitter-cli	-	-	-	npm install -g tree-sitter-cli or cargo install tree-sitter-cli	source-build	not in Fedora repos
+tmux	tmux	-	-	-	dnf	1:1 name match
+tobi-try	-	-	-	investigate github.com/basecamp (jdx/mise author's "usage"-adjacent tool?)	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
+ttf-ia-writer	-	-	-	manual font install from iAWriter's published font files	source-build	not packaged anywhere; direct font file drop into ~/.local/share/fonts
+ttf-jetbrains-mono-nerd-basic	-	che/nerd-fonts or similar	-	-	copr	Nerd Font patched variants aren't in Fedora's official font packages
+tzupdate	-	-	-	pip install --user tzupdate	source-build	not in Fedora repos
+udiskie	udiskie	-	-	-	dnf	1:1 name match
+ufw	-	-	-	-	dropped	Fedora Workstation defaults to firewalld; install/config/firewall.sh was rewritten around firewall-cmd instead (see Phase 1)
+ufw-docker	-	-	-	-	dropped	same rationale as ufw; firewalld's zone/interface assignment covers the same Docker-firewall need without an extra package
+unzip	unzip	-	-	-	dnf	1:1 name match
+usage	-	-	-	cargo install usage-cli (jdx/usage, mise's author)	source-build	not in Fedora repos; same author/ecosystem as mise
+uwsm	uwsm	-	-	-	dnf	Fedora added uwsm to official repos
+whois	whois	-	-	-	dnf	1:1 name match
+wireless-regdb	wireless-regdb	-	-	-	dnf	1:1 name match
+wireplumber	wireplumber	-	-	-	dnf	1:1 name match
+wl-clipboard	wl-clipboard	-	-	-	dnf	1:1 name match
+wtype	wtype	-	-	-	dnf	1:1 name match if packaged, otherwise trivial from-source build
+woff2-font-awesome	fontawesome-fonts-web (verify)	-	-	-	dnf	naming likely differs; verify exact Fedora Font Awesome web-font package
+xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	-	-	-	dnf	1:1 name match
+xdg-desktop-portal-hyprland	-	solopasha/hyprland	-	-	copr	same Hyprland COPR ecosystem
+xdg-terminal-exec	-	-	-	build from source (github.com/Vladimir-csp/xdg-terminal-exec)	source-build	not in Fedora repos; small shell/C source, easy to build
+xournalpp	xournalpp	-	-	-	dnf	1:1 name match
+yaru-icon-theme	-	heliocastro/yaru or similar	-	-	copr	Ubuntu's icon theme isn't in Fedora's official repos
+yay	-	-	-	-	dropped	Arch AUR helper; Fedora has no AUR analog, COPR is enabled per-repository instead (see fedory-pkg-copr-add)
+yt-dlp	yt-dlp	-	-	-	dnf	1:1 name match
+zoxide	zoxide	-	-	-	dnf	1:1 name match
+autoconf-archive	autoconf-archive	-	-	-	dnf	1:1 name match
+asusctl	-	lukenukem/asus-linux	-	-	copr	the asus-linux.org project's own COPR is the standard install path on Fedora too
+base	-	-	-	-	dropped	Arch meta-package for the minimal base system; Fedora's base install already provides the equivalent
+base-devel	-	-	-	-	dropped	Arch build-toolchain meta-package; Fedora equivalent is the @development-tools group, already assumed present for a dev-focused install
+broadcom-wl	akmod-wl	-	-	if akmod-wl is unavailable for a given kernel, build broadcom-wl from source against dkms	dnf (RPM Fusion)	Broadcom Wi-Fi driver story differs entirely on Fedora; RPM Fusion's akmod-wl is the closest equivalent, with a source-build fallback noted
+btrfs-progs	btrfs-progs	-	-	-	dnf	1:1 name match
+dkms	dkms	-	-	-	dnf	1:1 name match
+egl-wayland	egl-wayland	-	-	-	dnf	1:1 name match
+gst-plugin-pipewire	gstreamer1-plugin-pipewire	-	-	-	dnf	Fedora's GStreamer packages use the gstreamer1- prefix
+gtk4-layer-shell	gtk4-layer-shell	-	-	-	dnf	1:1 name match
+libpulse	pulseaudio-libs	-	-	-	dnf	Fedora's PulseAudio-compat library package is named differently
+intel-ipu7-camera	-	-	-	track upstream kernel driver merge status	dropped	very new Arch-only kernel module packaging; not yet stable/portable enough to translate
+intel-lpmd	intel-lpmd	-	-	-	dnf	1:1 name match on recent Fedora
+intel-media-driver	intel-media-driver	-	-	-	dnf	1:1 name match
+libva-intel-driver	libva-intel-driver	-	-	-	dnf	1:1 name match
+libva-nvidia-driver	-	elxreno/libva-nvidia-driver or similar	-	build from source (github.com/elFarto/nvidia-vaapi-driver)	copr-or-source	not in Fedora's official repos
+limine	-	-	-	-	dropped	Arch/Limine-specific bootloader; Fedora uses grub2/bootupd (see docs/scope.md)
+limine-mkinitcpio-hook	-	-	-	-	dropped	same rationale as limine; mkinitcpio itself has no Fedora equivalent (dracut owns this role)
+limine-snapper-sync	-	-	-	grub2-btrfs as the closest equivalent, not auto-installed (see install/config/snapper.sh)	dropped	Limine-specific; grub2-btrfs is the nearest Fedora analog but is a deliberate opt-in, not a drop-in replacement
+linux	kernel	-	-	-	dnf	Fedora's kernel package is simply "kernel", already present on any install
+linux-firmware	linux-firmware	-	-	-	dnf	1:1 name match, already present on any install
+linux-headers	kernel-devel	-	-	-	dnf	Fedora's kernel headers package is kernel-devel
+linux-ptl	-	-	-	-	dropped	Arch-specific bleeding-edge kernel variant for very new Intel Panther Lake hardware; Fedora's mainline "kernel" package tracks new hardware support on its own cadence
+linux-ptl-headers	-	-	-	-	dropped	see linux-ptl
+macbook12-spi-driver-dkms	-	-	-	build from source (github.com/Dunedan/mbp-2016-linux or t2linux project)	source-build	AUR-only DKMS driver; t2linux project is the closest maintained upstream
+nvidia-580xx-dkms	akmod-nvidia	rpmfusion (official, not a 3rd-party COPR)	-	-	dnf (RPM Fusion)	Fedora's NVIDIA path is RPM Fusion's akmod-nvidia, versioned automatically rather than by driver-branch package name
+nvidia-dkms	akmod-nvidia	rpmfusion	-	-	dnf (RPM Fusion)	see nvidia-580xx-dkms
+nvidia-open-dkms	akmod-nvidia-open (verify current RPM Fusion package name)	rpmfusion	-	-	dnf (RPM Fusion)	RPM Fusion is tracking the open kernel modules split too; verify current package name at implementation time
+nvidia-580xx-utils	xorg-x11-drv-nvidia-cuda	rpmfusion	-	-	dnf (RPM Fusion)	RPM Fusion doesn't split utils by driver branch the way Arch does
+nvidia-utils	xorg-x11-drv-nvidia-cuda	rpmfusion	-	-	dnf (RPM Fusion)	see nvidia-580xx-utils
+lib32-nvidia-580xx-utils	-	-	-	-	dropped	Fedora doesn't ship a lib32/multilib NVIDIA userspace package the way Arch does; 32-bit gaming NVIDIA support works differently (Steam's own runtime)
+lib32-nvidia-utils	-	-	-	-	dropped	see lib32-nvidia-580xx-utils
+pipewire	pipewire	-	-	-	dnf	1:1 name match
+pipewire-alsa	pipewire-alsa	-	-	-	dnf	1:1 name match
+pipewire-jack	pipewire-jack-audio-connection-kit	-	-	-	dnf	Fedora's compat package has a longer name
+pipewire-pulse	pipewire-pulseaudio	-	-	-	dnf	Fedora's naming differs slightly
+qt6-wayland	qt6-qtwayland	-	-	-	dnf	Fedora prefixes Qt6 modules with qt6-qt
+snapper	snapper	-	-	-	dnf	1:1 name match
+sof-firmware	alsa-sof-firmware	-	-	-	dnf	Fedora's SOF firmware package is prefixed alsa-
+thermald	thermald	-	-	-	dnf	1:1 name match
+webp-pixbuf-loader	webp-pixbuf-loader	-	-	-	dnf	1:1 name match
+yay-debug	-	-	-	-	dropped	debug symbols for yay, which is itself dropped
+tuxedo-drivers-nocompatcheck-dkms	-	tuxedocomputers COPR (Tuxedo's own)	-	-	copr	TUXEDO Computers publish their own Fedora COPR for this hardware line
+yt6801-dkms	-	-	-	build from source (github.com/HowardChanBUS/yt6801, AUR-only upstream)	source-build	niche Ethernet adapter DKMS driver, AUR-only origin
+zram-generator	zram-generator-defaults	-	-	-	dnf	Fedora Workstation already ships and enables zram by default via this package
+libvpl	libvpl	-	-	-	dnf	1:1 name match (Intel media SDK)
+vpl-gpu-rt	vpl-gpu-rt	-	-	-	dnf	1:1 name match
+vulkan-intel	mesa-vulkan-drivers	-	-	-	dnf	Fedora bundles Intel+AMD Vulkan ICDs into one mesa-vulkan-drivers package
+vulkan-radeon	mesa-vulkan-drivers	-	-	-	dnf	see vulkan-intel; same package covers both
+vulkan-asahi	-	-	-	-	dropped	Apple Silicon GPU Vulkan driver; out of scope until Fedora Asahi Remix parity is separately evaluated
+linux-firmware-marvell	-	-	-	-	dropped	already bundled inside Fedora's main linux-firmware package, no separate package needed
+dell-xps-touchpad-haptics	-	-	-	build from source (AUR-only, check for upstream github repo)	source-build	niche AUR-only haptic touchpad driver
+lsp-plugins-lv2	lsp-plugins-lv2	-	-	-	dnf	1:1 name match
+apple-bcm-firmware	-	-	-	t2linux project's own Fedora repo (t2linux.org)	external-repo	t2linux publishes a maintained Fedora repo for the whole T2 Mac hardware-support stack
+apple-t2-audio-config	-	-	-	t2linux project's own Fedora repo	external-repo	see apple-bcm-firmware
+linux-t2	-	-	-	t2linux project's own Fedora repo (patched kernel)	external-repo	see apple-bcm-firmware
+linux-t2-headers	-	-	-	t2linux project's own Fedora repo	external-repo	see apple-bcm-firmware
+t2fanrd	-	-	-	t2linux project's own Fedora repo	external-repo	see apple-bcm-firmware
+tiny-dfr	-	-	-	t2linux project's own Fedora repo	external-repo	see apple-bcm-firmware
+qmk-hid	-	-	-	build from source (QMK-related AUR-only helper)	source-build	niche Framework 16 keyboard-module helper, AUR-only origin
+networkmanager	NetworkManager	-	-	-	dnf	Fedora capitalizes the package NetworkManager; already installed and enabled by default on Workstation

@@ -1,0 +1,105 @@
+#!/bin/bash
+# CLI routing, command metadata, and static-safety checks.
+#
+# Grows alongside bin/fedory (Phase 2). Until the dispatcher exists, this
+# suite still earns its keep as a static-safety net over bin/, install/,
+# migrations/, and packaging/ -- so run it from Phase 0 onward, not just
+# after Phase 2 lands.
+set -uo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FAIL=0
+
+fail() {
+  echo "FAIL: $*"
+  FAIL=1
+}
+
+pass() {
+  echo "ok: $*"
+}
+
+# 1. Every *.sh / extensionless bin/ script must be valid bash syntax.
+check_syntax() {
+  local f
+  while IFS= read -r -d '' f; do
+    if bash -n "$f" 2>/tmp/fedory-test-cli-syntax.err; then
+      pass "syntax: ${f#"$ROOT_DIR"/}"
+    else
+      fail "syntax: ${f#"$ROOT_DIR"/}: $(cat /tmp/fedory-test-cli-syntax.err)"
+    fi
+  done < <(find "$ROOT_DIR/bin" "$ROOT_DIR/install" "$ROOT_DIR/migrations" \
+    -type f \( -name '*.sh' -o -perm -u+x \) -print0 2>/dev/null)
+  rm -f /tmp/fedory-test-cli-syntax.err
+}
+
+# 2. If shellcheck is available, run it (non-fatal warnings don't fail the
+#    suite, but errors do).
+check_shellcheck() {
+  if ! command -v shellcheck >/dev/null 2>&1; then
+    echo "skip: shellcheck not installed in this sandbox"
+    return
+  fi
+  local f
+  while IFS= read -r -d '' f; do
+    if shellcheck --severity=error "$f" >/tmp/fedory-test-cli-shellcheck.err 2>&1; then
+      pass "shellcheck: ${f#"$ROOT_DIR"/}"
+    else
+      fail "shellcheck: ${f#"$ROOT_DIR"/}: $(cat /tmp/fedory-test-cli-shellcheck.err)"
+    fi
+  done < <(find "$ROOT_DIR/bin" "$ROOT_DIR/install" "$ROOT_DIR/migrations" \
+    -type f \( -name '*.sh' -o -perm -u+x \) -print0 2>/dev/null)
+  rm -f /tmp/fedory-test-cli-shellcheck.err
+}
+
+# 3. If bin/fedory exists (Phase 2+), exercise its routing/metadata engine.
+check_dispatcher() {
+  local fedory_bin="$ROOT_DIR/bin/fedory"
+  if [[ ! -x $fedory_bin ]]; then
+    echo "skip: bin/fedory not implemented yet (Phase 2)"
+    return
+  fi
+
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "skip: jq not installed, cannot validate commands --json"
+    return
+  fi
+
+  local json
+  if ! json=$(FEDORY_PATH="$ROOT_DIR" "$fedory_bin" commands --json 2>/tmp/fedory-test-cli-dispatch.err); then
+    fail "dispatcher: 'fedory commands --json' exited non-zero: $(cat /tmp/fedory-test-cli-dispatch.err)"
+    rm -f /tmp/fedory-test-cli-dispatch.err
+    return
+  fi
+  rm -f /tmp/fedory-test-cli-dispatch.err
+
+  if ! echo "$json" | jq -e '.ok == true and (.commands | type == "array")' >/dev/null 2>&1; then
+    fail "dispatcher: 'fedory commands --json' did not return {ok:true, commands:[...]}"
+    return
+  fi
+  pass "dispatcher: commands --json returns valid JSON"
+
+  local dupes
+  dupes=$(echo "$json" | jq -r '.commands[].route' | sort | uniq -d)
+  if [[ -n $dupes ]]; then
+    fail "dispatcher: duplicate routes: $dupes"
+  else
+    pass "dispatcher: no duplicate routes"
+  fi
+
+  local missing_summary
+  missing_summary=$(echo "$json" | jq -r '.commands[] | select((.summary // "") == "") | .route')
+  if [[ -n $missing_summary ]]; then
+    fail "dispatcher: commands missing summary: $missing_summary"
+  else
+    pass "dispatcher: every command has a summary"
+  fi
+}
+
+check_syntax
+check_shellcheck
+check_dispatcher
+
+if (( FAIL )); then
+  exit 1
+fi

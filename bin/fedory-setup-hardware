@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# fedory:summary=Apply Fedory hardware-specific packages and system configuration
+# fedory:group=setup
+# fedory:requires-sudo=true
+# fedory:examples=fedory setup hardware --install-user drbayless
+
+set -euo pipefail
+
+usage() {
+  cat <<USAGE
+Usage: fedory setup hardware --install-user USER
+
+Runs idempotent hardware detection/setup for this machine. Called by
+fedory-setup-system, and safe to rerun later for diagnostics or after
+hardware/package updates.
+USAGE
+}
+
+install_user="${FEDORY_INSTALL_USER:-}"
+while (($#)); do
+  case "$1" in
+    --install-user)
+      install_user="${2:-}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if (( EUID != 0 )); then
+  echo "Error: fedory-setup-hardware must run as root" >&2
+  exit 1
+fi
+
+if [[ -z $install_user || $install_user == "root" ]]; then
+  echo "Error: --install-user must name the target non-root user" >&2
+  exit 1
+fi
+
+if ! getent passwd "$install_user" >/dev/null; then
+  echo "Error: user '$install_user' does not exist" >&2
+  exit 1
+fi
+
+export FEDORY_INSTALL_USER="$install_user"
+export FEDORY_PATH="${FEDORY_PATH:-/usr/share/fedory}"
+export FEDORY_INSTALL="${FEDORY_INSTALL:-$FEDORY_PATH/install}"
+export FEDORY_INSTALL_LOG_FILE="${FEDORY_INSTALL_LOG_FILE:-/var/log/fedory-install.log}"
+export PATH="$FEDORY_PATH/bin:$PATH"
+
+source "$FEDORY_INSTALL/helpers/logging.sh"
+source "$FEDORY_INSTALL/hardware/all.sh"

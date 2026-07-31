@@ -1,0 +1,31 @@
+#!/bin/bash
+# Runs every test/shell.d/*-test.sh file, recording failures but continuing
+# through the rest so a single bad file doesn't hide the rest of the signal.
+set -uo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SHELL_D="$ROOT_DIR/test/shell.d"
+FAILED_FILES=()
+
+shopt -s nullglob
+files=("$SHELL_D"/*-test.sh)
+shopt -u nullglob
+
+if (( ${#files[@]} == 0 )); then
+  echo "skip: no test/shell.d/*-test.sh files yet"
+  exit 0
+fi
+
+for f in "${files[@]}"; do
+  echo "-- running ${f#"$ROOT_DIR"/}"
+  if ! bash "$f"; then
+    FAILED_FILES+=("$f")
+  fi
+done
+
+if (( ${#FAILED_FILES[@]} > 0 )); then
+  echo
+  echo "Failed files:"
+  printf '  %s\n' "${FAILED_FILES[@]#"$ROOT_DIR"/}"
+  exit 1
+fi
