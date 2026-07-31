@@ -29,6 +29,7 @@ lookup_map() {
 dnf_pkgs=()
 coprs=()
 declare -A copr_seen=()
+declare -A pkg_needs_copr=() # final dnf package name -> the COPR it requires (if any)
 flatpaks=()
 skipped_notes=()
 
@@ -57,11 +58,15 @@ for requested in "$@"; do
     copr | copr-or-source)
       copr=$(lookup_map "$requested" copr)
       fedora_pkg=$(lookup_map "$requested" fedora_pkg)
-      if [[ -n $copr && $copr != "-" && -z ${copr_seen[$copr]:-} ]]; then
-        coprs+=("$copr")
-        copr_seen[$copr]=1
+      final_pkg="${fedora_pkg:-$requested}"
+      if [[ -n $copr && $copr != "-" ]]; then
+        if [[ -z ${copr_seen[$copr]:-} ]]; then
+          coprs+=("$copr")
+          copr_seen[$copr]=1
+        fi
+        pkg_needs_copr[$final_pkg]="$copr"
       fi
-      dnf_pkgs+=("${fedora_pkg:-$requested}")
+      dnf_pkgs+=("$final_pkg")
       ;;
     flatpak)
       flatpak_id=$(lookup_map "$requested" flatpak)
@@ -79,10 +84,34 @@ for requested in "$@"; do
   esac
 done
 
+# A COPR failing to enable (no build for this Fedora version yet is common
+# right after a new release, or a transient network/mirror issue) shouldn't
+# block every other package in this call -- callers like
+# install/config/base-packages.sh pass in a hundred-plus packages at once,
+# and one unavailable COPR used to abort the entire batch before anything
+# else got installed. Track failures and drop just the packages that needed
+# them instead.
+declare -A copr_failed=()
 for copr in "${coprs[@]}"; do
   echo "Enabling COPR: $copr"
-  sudo dnf copr enable -y "$copr" || exit 1
+  if ! sudo dnf copr enable -y "$copr"; then
+    echo "warning: could not enable COPR '$copr' -- skipping packages that need it" >&2
+    copr_failed[$copr]=1
+  fi
 done
+
+if (( ${#copr_failed[@]} > 0 )); then
+  filtered_pkgs=()
+  for pkg in "${dnf_pkgs[@]}"; do
+    needed_copr="${pkg_needs_copr[$pkg]:-}"
+    if [[ -n $needed_copr && -n ${copr_failed[$needed_copr]:-} ]]; then
+      skipped_notes+=("$pkg: COPR '$needed_copr' unavailable (couldn't enable it -- possibly no build for this Fedora version yet)")
+      continue
+    fi
+    filtered_pkgs+=("$pkg")
+  done
+  dnf_pkgs=("${filtered_pkgs[@]}")
+fi
 
 if (( ${#dnf_pkgs[@]} > 0 )); then
   if fedory-pkg-missing "${dnf_pkgs[@]}"; then
