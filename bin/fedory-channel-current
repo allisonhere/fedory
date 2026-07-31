@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# fedory:summary=Print the active Fedory channel
+#
+# Fedora-native rewrite: upstream distinguishes stable/rc/edge/dev by which
+# pacman-installed package (omarchy vs omarchy-dev) and mirror channel are
+# in play. Fedory has no RPM packaging or package channels at all (see
+# docs/scope.md) -- there's only ever one distribution mechanism, a git
+# checkout. The only meaningful distinction left is whether that checkout
+# is dev-linked to somewhere other than the default install path, and if
+# so, which branch it's on.
+
+set -euo pipefail
+
+fedory_path="${FEDORY_PATH:-/usr/share/fedory}"
+
+if [[ $fedory_path != "/usr/share/fedory" ]]; then
+  branch=$(git -C "$fedory_path" branch --show-current 2>/dev/null)
+  if [[ -n $branch ]]; then
+    echo "dev ($branch)"
+  else
+    echo "dev"
+  fi
+  exit 0
+fi
+
+branch=$(git -C "$fedory_path" branch --show-current 2>/dev/null)
+echo "${branch:-unknown}"

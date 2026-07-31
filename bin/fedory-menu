@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# fedory:summary=Control the Fedory menu (toggle / summon / close / refresh)
+# fedory:args=[toggle|summon|close|refresh|ping] [route]
+# fedory:examples=fedory menu | fedory menu toggle system | fedory menu summon style.theme | fedory menu refresh
+
+# Thin wrapper around the standard plugin IPC surface. The menu is the
+# first-party `fedory.menu` plugin; routes are passed as JSON payload.
+
+set -euo pipefail
+
+verb="${1-toggle}"
+route="${2-root}"
+
+menu_payload() {
+  perl -MEncode=decode -MJSON::PP=encode_json -e 'print encode_json({ menu => decode("UTF-8", $ARGV[0]) })' "$1"
+}
+
+case "$verb" in
+  toggle)
+    exec fedory-shell shell toggle fedory.menu "$(menu_payload "$route")"
+    ;;
+  summon)
+    exec fedory-shell shell summon fedory.menu "$(menu_payload "$route")"
+    ;;
+  close)
+    exec fedory-shell shell hide fedory.menu
+    ;;
+  refresh | ping)
+    exec fedory-shell shell call fedory.menu "$verb" "{}"
+    ;;
+  -h | --help | help)
+    cat <<USAGE
+Usage: fedory menu [verb] [route]
+
+Verbs:
+  toggle [route]   Open the menu at <route>, or close it if already open. Default verb.
+  summon [route]   Always open the menu (no close-if-visible toggle).
+  close            Close the menu if it is visible.
+  refresh          Re-parse the menu JSONC files.
+  ping             Health check.
+
+Route is an item id (e.g. setup.power) or alias (e.g. power). Defaults to
+"root", which opens the top-level menu.
+USAGE
+    exit 0
+    ;;
+  *)
+    echo "fedory-menu: unknown verb '$verb'. Try 'fedory menu --help'." >&2
+    exit 2
+    ;;
+esac

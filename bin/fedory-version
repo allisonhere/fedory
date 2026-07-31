@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# fedory:summary=Print the installed Fedory version
+#
+# Fedora-native rewrite: upstream falls back to querying pacman for the
+# omarchy/omarchy-dev package version when FEDORY_PATH isn't a dev-linked
+# checkout. Fedory has no RPM packaging (bootstrap.sh always clones a real
+# git checkout to ~/.local/share/fedory -- see docs/scope.md), so there's
+# no package-manager version to fall back to; report from git and the
+# repo's own version file every time instead.
+
+fedory_path=${FEDORY_PATH:-/usr/share/fedory}
+fedory_path=${fedory_path%/}
+
+hash=$(git -C "$fedory_path" rev-parse --short HEAD 2>/dev/null || true)
+
+if [[ -n $hash ]]; then
+  dirty=""
+  git -C "$fedory_path" diff --quiet 2>/dev/null || dirty=".dirty"
+  echo "$(<"$fedory_path/version" 2>/dev/null || echo "0.0.0")-git.${hash}${dirty}"
+elif [[ -f $fedory_path/version ]]; then
+  cat "$fedory_path/version"
+else
+  exit 1
+fi

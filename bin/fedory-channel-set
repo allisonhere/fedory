@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# fedory:summary=Switch the Fedory git branch a checkout tracks
+# fedory:args=<branch> [--dev]
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: upstream's channel-set swaps between pacman
+# packages (omarchy/omarchy-settings vs the -dev variants) across
+# stable/rc/edge mirrors. Fedory has none of that -- no RPM packaging, no
+# package channels (see docs/scope.md and fedory-channel-current) -- so
+# there's nothing to swap at the package-manager level. What upstream
+# calls "channels" collapses here to "which branch does the checkout
+# track," which is just git.
+
+set -euo pipefail
+
+usage() { echo "Usage: fedory-channel-set <branch> [--dev]"; }
+fail() { echo "Error: $*" >&2; exit 1; }
+
+(( $# > 0 )) || { usage; exit 1; }
+branch="$1"
+shift
+
+dev_checkout=""
+if [[ ${1:-} == "--dev" ]]; then
+  dev_checkout="$HOME/fedory"
+fi
+
+target_path="${dev_checkout:-${FEDORY_PATH:-/usr/share/fedory}}"
+
+if [[ -n $dev_checkout ]]; then
+  if [[ -e $dev_checkout && ! -d $dev_checkout/.git ]]; then
+    fail "$dev_checkout already exists and is not a git checkout."
+  fi
+  if [[ ! -d $dev_checkout/.git ]]; then
+    fail "no checkout at $dev_checkout to switch branches on. Clone one first, e.g.:" \
+      "git clone <your-fedory-repo-url> $dev_checkout"
+  fi
+  git -C "$dev_checkout" fetch origin "$branch" || fail "could not fetch branch '$branch'"
+  git -C "$dev_checkout" checkout "$branch" || fail "could not check out branch '$branch'"
+  fedory-dev-link "$dev_checkout" --no-reboot
+else
+  if [[ ! -d $target_path/.git ]]; then
+    fail "$target_path is not a git checkout, so there is no branch to switch."
+  fi
+  git -C "$target_path" fetch origin "$branch" || fail "could not fetch branch '$branch'"
+  git -C "$target_path" checkout "$branch" || fail "could not check out branch '$branch'"
+fi
+
+echo "Now tracking branch '$branch' at $target_path."
