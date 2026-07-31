@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# fedory:summary=Open Voxtype configuration
+
+set -e
+
+fedory-launch-floating-terminal-with-presentation "voxtype configure"
+fedory-restart-shell

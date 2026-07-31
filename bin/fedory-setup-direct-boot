@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# fedory:summary=Add or remove an EFI boot entry for direct kernel boot (not yet implemented)
+# fedory:requires-sudo=true
+#
+# Upstream's version points efibootmgr straight at a Unified Kernel Image
+# (UKI) it finds under /boot/EFI/Linux/omarchy*.efi -- Arch's Limine +
+# mkinitcpio pipeline builds a UKI as a normal part of install. Fedora
+# Workstation's default boot chain is GRUB2 + BLS entries pointing at a
+# separate kernel + initramfs, not a UKI, so there is no
+# /boot/EFI/Linux/*.efi to point efibootmgr at by default.
+#
+# A real Fedora equivalent needs its own design: either generate a UKI via
+# `dracut --uefi` (opt-in on Fedora, not the default) and register that with
+# efibootmgr, or skip the UKI step and add a boot entry for the kernel +
+# initramfs pair directly. Neither is a find-and-replace of the command
+# names upstream uses, so this is left unimplemented rather than faked.
+
+echo "fedory-setup-direct-boot is not implemented yet." >&2
+echo "Fedora's default GRUB2/BLS boot chain has no UKI to point efibootmgr at;" >&2
+echo "see this script's header comment for what a real implementation needs." >&2
+exit 1

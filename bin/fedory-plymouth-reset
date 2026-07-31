@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# fedory:summary=Restore the default Fedory Plymouth boot theme and SDDM login screen
+# fedory:requires-sudo=true
+
+fedory-refresh-plymouth
+fedory-refresh-sddm
