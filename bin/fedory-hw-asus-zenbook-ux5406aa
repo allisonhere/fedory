@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# fedory:summary=Detect ASUS Zenbook UX5406AA series laptops on Intel Panther Lake.
+
+fedory-hw-match "ux5406aa" && fedory-hw-intel-ptl

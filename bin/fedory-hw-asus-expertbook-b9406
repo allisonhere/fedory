@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# fedory:summary=Detect ASUS ExpertBook B9406 series laptops on Intel Panther Lake.
+
+fedory-hw-match "B9406" && fedory-hw-intel-ptl

@@ -4,9 +4,11 @@ run_logged "$FEDORY_INSTALL/user/git.sh"
 run_logged "$FEDORY_INSTALL/user/xcompose.sh"
 run_logged "$FEDORY_INSTALL/user/mise-work.sh"
 
-# Vendor-specific per-user hardware fixups land here in Phase 8 (see
-# install/user/hardware/ once populated), mirroring upstream's
-# install/user/hardware/<vendor>/*.sh layout.
+run_logged "$FEDORY_INSTALL/user/hardware/asus/fix-audio-mixer.sh"
+run_logged "$FEDORY_INSTALL/user/hardware/asus/fix-mic.sh"
+run_logged "$FEDORY_INSTALL/user/hardware/framework/fix-f13-amd-audio-input.sh"
+run_logged "$FEDORY_INSTALL/user/hardware/dell/xps13-text-scaling.sh"
+run_logged "$FEDORY_INSTALL/user/hardware/fix-nouveau-cursor.sh"
 
 run_logged "$FEDORY_INSTALL/user/default-keyring.sh"
 run_logged "$FEDORY_INSTALL/user/mise.sh"

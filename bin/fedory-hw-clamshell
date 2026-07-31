@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# fedory:summary=Returns true when clamshell mode is active
+# fedory:hidden=true
+
+# Clamshell = lid closed while driving one or more external monitors.
+fedory-hw-laptop-closed && fedory-hw-external-monitors
