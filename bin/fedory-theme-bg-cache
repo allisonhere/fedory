@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# fedory:summary=Cache background switcher thumbnails for the current theme
+
+theme_name=$(cat "$HOME/.local/state/fedory/current/theme.name" 2>/dev/null)
+
+fedory-menu-images \
+  --cache-only \
+  "$HOME/.local/state/fedory/current/theme/backgrounds" \
+  "$HOME/.config/fedory/backgrounds/$theme_name"

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# fedory:summary=Apply the current theme keyboard color to supported keyboards
+# fedory:hidden=true
+
+fedory-theme-set-keyboard-asus-rog
+fedory-theme-set-keyboard-f16

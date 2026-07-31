@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# fedory:summary=Open the Fedory background switcher
+# fedory:group=theme
+# fedory:name=bg-switcher
+# fedory:aliases=fedory background
+
+theme_name=$(cat "$HOME/.local/state/fedory/current/theme.name" 2>/dev/null)
+current_background=$(readlink -f "$HOME/.local/state/fedory/current/background" 2>/dev/null)
+
+fedory-menu-images \
+  --selected "$current_background" \
+  "$HOME/.local/state/fedory/current/theme/backgrounds" \
+  "$HOME/.config/fedory/backgrounds/$theme_name"
