@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <code>curl -fsSL https://raw.githubusercontent.com/&lt;org&gt;/fedory/master/bootstrap.sh | bash</code>
+  <code>curl -fsSL https://github.com/allisonhere/fedory/master/bootstrap.sh | bash</code>
 </p>
 
 ---
