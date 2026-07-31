@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# fedory:summary=Toggle bar visibility without killing the Fedory shell
+# fedory:args=[toggle|on|off]
+# fedory:examples=fedory toggle bar | fedory toggle bar off | fedory toggle bar on
+
+fedory-toggle bar-off "${1:-toggle}"

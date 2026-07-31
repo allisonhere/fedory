@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# fedory:summary=Toggle notification do-not-disturb mode
+
+state=$(fedory-shell notifications toggleDnd 2>/dev/null || echo "")
+fedory-shell -q fedory.indicators refresh

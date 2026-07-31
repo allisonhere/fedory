@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# fedory:summary=Send the low battery warning notification and run battery-low hooks.
+# fedory:args=<percentage>
+# fedory:hidden=true
+
+set -euo pipefail
+
+if (($# != 1)); then
+  echo "Usage: fedory-battery-low <percentage>" >&2
+  exit 1
+fi
+
+level=$1
+
+fedory-notification-send -g 󱐋 -u critical "Time to recharge!" "Battery is down to ${level}%" -i battery-caution -t 30000
+fedory-hook battery-low "$level"

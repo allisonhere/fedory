@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# fedory:summary=Toggle screensaver availability
+
+fedory-toggle screensaver-off
+
+if fedory-toggle-enabled screensaver-off; then
+  fedory-notification-send -g 󱄄 "Screensaver disabled"
+else
+  fedory-notification-send -g 󱄄 "Screensaver enabled"
+fi

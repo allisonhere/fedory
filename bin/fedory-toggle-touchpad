@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# fedory:summary=Enable, disable, or toggle the touchpad
+# fedory:args=[on|off|toggle]
+
+exec fedory-toggle-input-device touchpad "${1:-toggle}"

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# fedory:summary=Cycle to the next media source and transfer playback when the current source is playing
+# fedory:args=[next|previous]
+# fedory:examples=fedory audio source switch | fedory-audio-source-switch previous
+
+direction="${1:-next}"
+
+case "$direction" in
+  next)
+    fedory-shell media sourceSwitch
+    ;;
+  previous)
+    fedory-shell media sourceSwitchPrevious
+    ;;
+  *)
+    echo "Usage: fedory-audio-source-switch [next|previous]" >&2
+    exit 1
+    ;;
+esac

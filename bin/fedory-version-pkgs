@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# fedory:summary=Print when system packages were last upgraded
+#
+# Upstream reads the last "upgraded" line from /var/log/pacman.log. Fedora's
+# rpm database keeps its own install/upgrade timestamps directly queryable
+# via `rpm -qa --last`, so no dnf log parsing is needed -- the most recent
+# entry there already answers "when did a package last change."
+
+last_line=$(rpm -qa --last 2>/dev/null | head -1)
+[[ -n $last_line ]] || exit 1
+
+# Format: "<name-evr>    Day Mon DD HH:MM:SS YYYY"; strip the package name.
+timestamp="${last_line#"${last_line%%[[:space:]]*}"}"
+timestamp="${timestamp#"${timestamp%%[![:space:]]*}"}"
+
+date -d "$timestamp" "+%A, %B %d %Y at %H:%M"

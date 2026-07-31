@@ -19,10 +19,22 @@ pass() {
   echo "ok: $*"
 }
 
-# 1. Every *.sh / extensionless bin/ script must be valid bash syntax.
+# 1. Every *.sh / extensionless bin/ bash script must be valid bash syntax.
+#    Scripts under install/ and migrations/ are sourced and intentionally
+#    have no shebang, so a bare executable with no shebang is still ours to
+#    check; a script with a non-bash shebang (e.g. fedory-file-select is
+#    Python) is a different language's problem, not this test's.
+is_bash_script() {
+  local f="$1" first_line
+  IFS= read -r first_line <"$f" 2>/dev/null || first_line=""
+  [[ $first_line != "#!"* ]] && return 0
+  [[ $first_line == "#!/bin/bash"* || $first_line == "#!/usr/bin/env bash"* ]]
+}
+
 check_syntax() {
   local f
   while IFS= read -r -d '' f; do
+    is_bash_script "$f" || continue
     if bash -n "$f" 2>/tmp/fedory-test-cli-syntax.err; then
       pass "syntax: ${f#"$ROOT_DIR"/}"
     else
@@ -42,6 +54,7 @@ check_shellcheck() {
   fi
   local f
   while IFS= read -r -d '' f; do
+    is_bash_script "$f" || continue
     if shellcheck --severity=error "$f" >/tmp/fedory-test-cli-shellcheck.err 2>&1; then
       pass "shellcheck: ${f#"$ROOT_DIR"/}"
     else
@@ -52,7 +65,29 @@ check_shellcheck() {
   rm -f /tmp/fedory-test-cli-shellcheck.err
 }
 
-# 3. If bin/fedory exists (Phase 2+), exercise its routing/metadata engine.
+# 3. Non-bash bin/ scripts (currently just fedory-file-select, ported from
+#    upstream's Python D-Bus portal client) still get a syntax pass, just via
+#    their own interpreter instead of bash -n.
+check_other_syntax() {
+  local f first_line
+  while IFS= read -r -d '' f; do
+    IFS= read -r first_line <"$f" 2>/dev/null || first_line=""
+    case "$first_line" in
+      "#!"*python*)
+        if command -v python3 >/dev/null 2>&1; then
+          if python3 -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" "$f" 2>/tmp/fedory-test-cli-pysyntax.err; then
+            pass "syntax(python): ${f#"$ROOT_DIR"/}"
+          else
+            fail "syntax(python): ${f#"$ROOT_DIR"/}: $(cat /tmp/fedory-test-cli-pysyntax.err)"
+          fi
+        fi
+        ;;
+    esac
+  done < <(find "$ROOT_DIR/bin" -type f -perm -u+x -print0 2>/dev/null)
+  rm -f /tmp/fedory-test-cli-pysyntax.err
+}
+
+# 4. If bin/fedory exists (Phase 2+), exercise its routing/metadata engine.
 check_dispatcher() {
   local fedory_bin="$ROOT_DIR/bin/fedory"
   if [[ ! -x $fedory_bin ]]; then
@@ -98,6 +133,7 @@ check_dispatcher() {
 
 check_syntax
 check_shellcheck
+check_other_syntax
 check_dispatcher
 
 if (( FAIL )); then

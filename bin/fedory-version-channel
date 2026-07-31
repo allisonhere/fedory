@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# fedory:summary=Print the active Fedora release and Fedory repo branch
+#
+# Upstream's omarchy-version-channel reports which of Omarchy's own binary
+# package mirrors/channels (stable/rc/edge) pacman.conf is pointed at --
+# there's no Fedory equivalent of that concept: Fedory isn't a from-scratch
+# binary package repo the way Omarchy is, it's a bootstrap layer over stock
+# Fedora (see docs/scope.md), so packages come from many different sources
+# per packaging/package-map.tsv rather than one unified mirror. The nearest
+# actually-meaningful "channel" here is which Fedora release you're on plus
+# which branch of the Fedory repo itself is checked out.
+
+fedora_version="unknown"
+if [[ -f /etc/os-release ]]; then
+  # shellcheck source=/dev/null
+  source /etc/os-release
+  fedora_version="${PRETTY_NAME:-unknown}"
+fi
+
+repo_branch=$(fedory-version-branch 2>/dev/null) || repo_branch="unknown"
+
+echo "$fedora_version / $repo_branch"

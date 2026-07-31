@@ -202,3 +202,4 @@ t2fanrd	-	-	-	t2linux project's own Fedora repo	external-repo	see apple-bcm-firm
 tiny-dfr	-	-	-	t2linux project's own Fedora repo	external-repo	see apple-bcm-firmware
 qmk-hid	-	-	-	build from source (QMK-related AUR-only helper)	source-build	niche Framework 16 keyboard-module helper, AUR-only origin
 networkmanager	NetworkManager	-	-	-	dnf	Fedora capitalizes the package NetworkManager; already installed and enabled by default on Workstation
+supergfxctl	supergfxctl	lukenukem/asus-linux	-	-	copr	referenced by fedory-toggle-hybrid-gpu; same asus-linux.org COPR as asusctl, not in the original base/other package lists (installed on-demand)

@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# fedory:summary=Print debugging information
+# fedory:args=[--no-sudo] [--print]
+# fedory:examples=fedory debug --print --no-sudo
+# fedory:requires-sudo=true
+
+NO_SUDO=false
+PRINT_ONLY=false
+
+while (( $# > 0 )); do
+  case "$1" in
+    --no-sudo)
+      NO_SUDO=true
+      shift
+      ;;
+    --print)
+      PRINT_ONLY=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      echo "Usage: fedory-debug [--no-sudo] [--print]"
+      exit 1
+      ;;
+  esac
+done
+
+LOG_FILE="/tmp/fedory-debug.log"
+
+if [[ $NO_SUDO = "true" ]]; then
+  DMESG_OUTPUT="(skipped - --no-sudo flag used)"
+else
+  DMESG_OUTPUT="$(sudo dmesg)"
+fi
+
+cat > "$LOG_FILE" <<EOF
+Date: $(date)
+Hostname: $(hostname)
+Fedory Package: $(rpm -q fedory-dev 2>/dev/null || rpm -q fedory 2>/dev/null || echo "unknown")
+
+=========================================
+SYSTEM INFORMATION
+=========================================
+$(inxi -Farz)
+
+=========================================
+DMESG
+=========================================
+$DMESG_OUTPUT
+
+=========================================
+JOURNALCTL (CURRENT BOOT, WARNINGS+ERRORS)
+=========================================
+$(journalctl -b -p 4..1)
+
+=========================================
+INSTALLED PACKAGES
+=========================================
+$(dnf repoquery --userinstalled --qf '%{name} %{version}-%{release} (%{reponame})' 2>/dev/null | sort)
+EOF
+
+if [[ $PRINT_ONLY = "true" ]]; then
+  cat "$LOG_FILE"
+  exit 0
+fi
+
+# Upstream Omarchy has a hosted paste service (logs.omarchy.org) for the
+# "Upload log" option below. Fedory doesn't run an equivalent service, so
+# that option is left out here rather than silently pointing at someone
+# else's server (or one that doesn't exist for this project).
+OPTIONS=("View log" "Save in current directory")
+
+ACTION=$(gum choose "${OPTIONS[@]}")
+
+case "$ACTION" in
+  "View log")
+    less "$LOG_FILE"
+    ;;
+  "Save in current directory")
+    cp "$LOG_FILE" "./fedory-debug.log"
+    echo "✓ Log saved to $(pwd)/fedory-debug.log"
+    ;;
+esac

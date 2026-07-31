@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# fedory:summary=Enable, disable, or toggle the touch functionality of the screen
+# fedory:args=[on|off|toggle]
+
+exec fedory-toggle-input-device touchscreen "${1:-toggle}"

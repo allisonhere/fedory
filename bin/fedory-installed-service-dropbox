@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# fedory:summary=Check whether Dropbox is installed and running
+# fedory:hidden=true
+
+set -euo pipefail
+
+if fedory-cmd-present dropbox-cli && dropbox-cli running >/dev/null 2>&1; then
+  exit 0
+fi
+
+pgrep -x dropbox >/dev/null 2>&1
