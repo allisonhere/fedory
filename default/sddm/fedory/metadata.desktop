@@ -1,0 +1,7 @@
+[SddmGreeterTheme]
+Name=Fedory
+Description=Minimal terminal-style login theme matching the Fedory boot aesthetic
+Author=Fedory
+Type=sddm-theme
+Version=1.0
+QtVersion=6

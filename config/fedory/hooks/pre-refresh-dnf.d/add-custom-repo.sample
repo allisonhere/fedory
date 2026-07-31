@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# This hook is called by `fedory refresh dnf` BEFORE `dnf upgrade` runs. Use
+# it to enable an extra repo so it's picked up by the upgrade -- common
+# cases are enabling a COPR, a vendor repo, or an internal company mirror.
+#
+# The hook runs as the invoking user with a warm sudo cache.
+#
+# To put it into use, remove .sample from this file name.
+
+# Example: enable a COPR repo before upgrading.
+# sudo dnf copr enable -y someuser/somerepo

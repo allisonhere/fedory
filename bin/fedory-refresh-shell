@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# fedory:summary=Reset shell.json to Fedory defaults
+# fedory:examples=fedory refresh shell
+
+set -euo pipefail
+
+fedory-refresh-config fedory/shell.json
+fedory-bar defaults
+
+fedory-restart-shell

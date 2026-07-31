@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# fedory:summary=Overwrite the user config for the Plymouth boot sequence with the Fedory default and rebuild it.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: upstream rebuilds the initramfs via
+# limine-mkinitcpio (falling back to mkinitcpio); dracut is Fedora's
+# initramfs builder, and there's no encrypted-drive-decryption step to
+# theme separately here since Fedora's default LUKS unlock prompt is
+# handled by Plymouth itself, same theme.
+
+set -e
+
+sudo cp -r "$FEDORY_PATH/default/plymouth/." /usr/share/plymouth/themes/fedory/
+sudo plymouth-set-default-theme fedory
+sudo dracut --regenerate-all -f

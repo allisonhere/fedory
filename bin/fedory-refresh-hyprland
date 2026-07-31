@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# fedory:summary=Overwrite all the user Hyprland Lua configs in ~/.config/hypr with the Fedory defaults.
+
+fedory-refresh-config hypr/.luarc.json
+fedory-refresh-config hypr/autostart.lua
+fedory-refresh-config hypr/bindings.lua
+fedory-refresh-config hypr/input.lua
+fedory-refresh-config hypr/looknfeel.lua
+fedory-refresh-config hypr/hyprland.lua
+fedory-refresh-config hypr/monitors.lua
+
+mkdir -p ~/.local/state/fedory/toggles/hypr
+cp "$FEDORY_PATH/default/hypr/toggles/flags.lua" ~/.local/state/fedory/toggles/hypr/

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# fedory:summary=Run a full dnf upgrade, honoring any pre-refresh-dnf hooks.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: upstream's refresh-pacman resets /etc/pacman.conf
+# and the mirrorlist to one of Omarchy's own stable/rc/edge channel
+# templates before upgrading -- those exist because Omarchy ships its own
+# opinionated pacman mirrors/repos. Fedory doesn't ship a dnf.conf or repo
+# files of its own (Fedora's stock repos and mirror selection work fine
+# out of the box -- see docs/scope.md), so there's nothing analogous to
+# reset here. This just runs the pre-refresh-dnf hook (for custom repos,
+# same idea as upstream's pre-refresh-pacman hook) and upgrades.
+
+set -e
+
+fedory-hook pre-refresh-dnf
+
+sudo dnf upgrade -y

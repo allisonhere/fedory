@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# fedory:summary=Overwrite the user config for hyprsunset with the Fedory default and restart the service.
+
+fedory-refresh-config hypr/hyprsunset.conf
+fedory-restart-hyprsunset

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# fedory:summary=Ensure default application launchers and mise wrappers are installed.
+
+# Copy .desktop declarations
+mkdir -p ~/.local/share/applications
+cp "$FEDORY_PATH"/applications/*.desktop ~/.local/share/applications/
+
+if fedory-cmd-present alacritty; then
+  cp "$FEDORY_PATH/default/alacritty/Alacritty.desktop" ~/.local/share/applications/
+fi
+
+if [[ -f "$FEDORY_PATH/install/user/mise.sh" ]]; then
+  bash "$FEDORY_PATH/install/user/mise.sh"
+fi
+
+update-desktop-database ~/.local/share/applications

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# fedory:summary=Overwrite the user tmux config with the Fedory default and reload tmux.
+
+fedory-refresh-config tmux/tmux.conf
+fedory-restart-tmux

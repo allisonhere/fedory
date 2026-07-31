@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# fedory:summary=Regenerate the GRUB2 boot configuration (not yet implemented)
+# fedory:requires-sudo=true
+#
+# Upstream's refresh-limine resets /boot/limine.conf to Omarchy's own
+# shipped default and rebuilds it via limine-update + limine-snapper-sync --
+# that works because Omarchy owns and ships limine.conf as opinionated
+# config. Fedora's default boot chain is GRUB2 + BLS entries generated from
+# /etc/default/grub and /boot/loader/entries/*.conf by grub2-mkconfig and
+# kernel-install, not a single file Fedory ships or owns, so there's no
+# Fedory-owned boot config to "reset to default" the same way.
+#
+# A real implementation would need its own design: either regenerate
+# grub.cfg via `grub2-mkconfig -o <path>` (path differs BIOS vs UEFI) with
+# whatever Fedory-specific /etc/default/grub tweaks are decided on, or lean
+# entirely on BLS auto-regeneration and just document that GRUB2 doesn't
+# need a manual refresh step the way Limine does. Left unimplemented rather
+# than faked -- see fedory-setup-direct-boot for the same kind of gap.
+
+echo "fedory-refresh-grub is not implemented yet." >&2
+echo "Fedora's GRUB2/BLS boot chain has no single Fedory-owned config file" >&2
+echo "to reset; see this script's header comment for what a real" >&2
+echo "implementation needs." >&2
+exit 1
