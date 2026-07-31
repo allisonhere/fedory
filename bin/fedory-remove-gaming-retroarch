@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# fedory:summary=Remove RetroArch and its config/saves. Leaves ~/Games/roms and ~/Games/bios alone.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: matches fedory-install-gaming-retroarch's simplified
+# install (base RetroArch only, no individually-named libretro-*-git core
+# packages -- see packaging/package-map.tsv), so there's nothing beyond the
+# retroarch package itself to drop.
+
+set -e
+
+fedory-pkg-drop retroarch
+
+rm -rf \
+  "$HOME/.config/retroarch" \
+  "$HOME/.local/share/retroarch" \
+  "$HOME/.cache/retroarch"
+
+echo ""
+echo "RetroArch has been removed."
+echo "ROMs and BIOS files at ~/Games/roms and ~/Games/bios were left in place."

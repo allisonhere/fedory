@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# fedory:summary=Remove Sunshine and close Fedory-managed Moonlight streaming ports.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: firewalld instead of ufw, undoing exactly the
+# rich rules and trusted-zone interface assignment that
+# fedory-install-service-sunshine adds (see install/config/firewall.sh
+# for the same ufw->firewalld pattern).
+
+set -e
+
+TCP_PORTS=(47984 47989 48010)
+UDP_PORTS=(5353 47998 47999 48000 48002 48010)
+PRIVATE_CIDRS=(10.0.0.0/8 172.16.0.0/12 192.168.0.0/16)
+SUNSHINE_ADMIN_APP="Sunshine Admin"
+HYPR_AUTOSTART_FILE="$HOME/.config/hypr/autostart.lua"
+HYPR_AUTOSTART_ENTRY='o.launch_on_start("sunshine")'
+
+close_firewall_ports() {
+  local proto port zone cidr
+
+  if fedory-cmd-missing firewall-cmd; then
+    return
+  fi
+
+  zone=$(sudo firewall-cmd --get-default-zone)
+
+  for proto in tcp udp; do
+    local -n ports_ref="${proto^^}_PORTS"
+    for port in "${ports_ref[@]}"; do
+      for cidr in "${PRIVATE_CIDRS[@]}"; do
+        sudo firewall-cmd --permanent --zone="$zone" \
+          --remove-rich-rule="rule family=\"ipv4\" source address=\"$cidr\" port port=\"$port\" protocol=\"$proto\" accept" \
+          >/dev/null 2>&1 || true
+      done
+    done
+  done
+
+  if ip link show tailscale0 >/dev/null 2>&1; then
+    sudo firewall-cmd --permanent --zone=trusted --remove-interface=tailscale0 >/dev/null 2>&1 || true
+  fi
+
+  sudo firewall-cmd --reload
+}
+
+disable_hyprland_autostart() {
+  if [[ -f $HYPR_AUTOSTART_FILE ]]; then
+    sed -i "\|^$HYPR_AUTOSTART_ENTRY$|d" "$HYPR_AUTOSTART_FILE"
+  fi
+}
+
+systemctl --user disable --now sunshine 2>/dev/null || true
+fedory-pkg-drop sunshine
+fedory-webapp-remove "$SUNSHINE_ADMIN_APP" 2>/dev/null || true
+disable_hyprland_autostart
+close_firewall_ports
+
+echo ""
+echo "Sunshine has been removed and its Fedory-managed Moonlight streaming ports have been closed."

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# fedory:summary=Remove Heroic Games Launcher and its game libraries, configs, and caches.
+#
+# Fedora-native rewrite: matches fedory-install-gaming-heroic's Flathub
+# install (no Fedora RPM for Heroic -- see packaging/package-map.tsv).
+
+set -e
+
+if fedory-cmd-present flatpak && flatpak info com.heroicgameslauncher.hgl &>/dev/null; then
+  flatpak uninstall -y --delete-data com.heroicgameslauncher.hgl
+fi
+
+rm -rf \
+  "$HOME/.config/heroic" \
+  "$HOME/.local/share/heroic" \
+  "$HOME/.cache/heroic" \
+  "$HOME/Games/Heroic"
+
+echo ""
+echo "Heroic and its data have been removed."

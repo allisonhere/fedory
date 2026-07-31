@@ -222,3 +222,4 @@ python-gpgme	python3-gpg	-	-	-	dnf	Fedora's Python binding package is named pyth
 nautilus-dropbox	nautilus-dropbox	-	-	-	dnf (RPM Fusion)	provides the Nautilus integration and downloads the Dropbox daemon on first run
 nordvpn-bin	nordvpn	-	-	official install script (downloads.nordcdn.com)	external-repo	NordVPN publish their own official install script that configures a dnf repo
 once-bin	-	-	-	investigate	dropped	first-party Basecamp/DHH AUR-only tool, same unconfirmed-source category as aether/cliamp/omacut/omawrite/tensaku/tobi-try
+symfony-cli	-	-	-	official install script (get.symfony.com/cli/installer) or their own apt/yum repo	external-repo	referenced by fedory-install-dev-env/-remove-dev-env; no confirmed Fedora dnf package

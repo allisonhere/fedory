@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# fedory:summary=Remove Lutris, Wine, and all their configs and caches.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: matches fedory-install-gaming-lutris's actual
+# installed set (lutris wine winetricks) instead of upstream's Arch-split
+# wine-staging/wine-mono/wine-gecko packages and umu-launcher, which was
+# never installed under this port (see packaging/package-map.tsv).
+
+set -e
+
+fedory-pkg-drop lutris wine winetricks
+
+rm -rf \
+  "$HOME/.config/lutris" \
+  "$HOME/.local/share/lutris" \
+  "$HOME/.cache/lutris" \
+  "$HOME/.wine" \
+  "$HOME/.cache/wine" \
+  "$HOME/.cache/winetricks"
+
+echo ""
+echo "Lutris, Wine, and their configs have been removed."

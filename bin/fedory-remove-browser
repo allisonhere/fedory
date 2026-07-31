@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# fedory:summary=Remove a supported browser and clean up Fedory browser defaults
+# fedory:args=<chrome|brave|edge|firefox|zen>
+# fedory:examples=fedory remove browser firefox | fedory remove browser brave
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: mirrors fedory-install-browser's package sources
+# (vendor dnf repos for chrome/edge/brave, Flathub for zen). Brave Origin
+# dropped -- no confirmed Fedora distribution (see packaging/package-map.tsv).
+
+set_fallback_default_browser() {
+  local current_browser
+  current_browser=$(env -u BROWSER xdg-settings get default-web-browser)
+
+  if [[ $current_browser != $1 ]]; then
+    return
+  fi
+
+  if command -v chromium >/dev/null 2>&1 || flatpak info org.chromium.Chromium >/dev/null 2>&1; then
+    env -u BROWSER xdg-settings set default-web-browser chromium.desktop || true
+  fi
+}
+
+case $1 in
+chrome)
+  echo "Removing Chrome..."
+  set_fallback_default_browser google-chrome.desktop
+  sudo dnf remove -y google-chrome-stable
+  rm -f ~/.config/chrome-flags.conf
+  sudo rm -f /etc/opt/chrome/policies/managed/color.json
+  ;;
+edge)
+  echo "Removing Edge..."
+  set_fallback_default_browser microsoft-edge.desktop
+  sudo dnf remove -y microsoft-edge-stable
+  rm -f ~/.config/microsoft-edge-stable-flags.conf
+  sudo rm -f /etc/opt/edge/policies/managed/color.json
+  ;;
+brave)
+  echo "Removing Brave..."
+  set_fallback_default_browser brave-browser.desktop
+  sudo dnf remove -y brave-browser
+  rm -f ~/.config/brave-flags.conf
+  sudo rm -rf /etc/brave
+  ;;
+firefox)
+  echo "Removing Firefox..."
+  set_fallback_default_browser firefox.desktop
+  fedory-pkg-drop firefox
+  ;;
+zen)
+  echo "Removing Zen..."
+  set_fallback_default_browser zen.desktop
+  flatpak uninstall -y app.zen_browser.zen 2>/dev/null || true
+  ;;
+*)
+  echo "Usage: fedory-remove-browser <chrome|brave|edge|firefox|zen>"
+  exit 1
+  ;;
+esac
