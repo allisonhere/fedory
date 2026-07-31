@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# fedory:summary=Open a config file in the user's editor and surface a toast
+# fedory:args=<path>
+# fedory:examples=fedory launch config-editor ~/.config/hypr/hyprland.lua
+
+path="${1-}"
+
+if [[ -z $path ]]; then
+  echo "Usage: fedory-launch-config-editor <path>" >&2
+  exit 1
+fi
+
+fedory-notification-send -u low "Editing config file" "$path"
+exec fedory-launch-editor "$path"

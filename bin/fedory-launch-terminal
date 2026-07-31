@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# fedory:summary=Launch a terminal in the active terminal's current directory
+# fedory:args=[command...]
+
+exec setsid uwsm-app -- xdg-terminal-exec --dir="$(fedory-cmd-terminal-cwd)" "$@"

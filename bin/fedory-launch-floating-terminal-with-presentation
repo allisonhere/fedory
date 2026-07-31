@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# fedory:summary=Launch a floating terminal with the Fedory presentation wrapper
+# fedory:args=<command>
+
+# Export the current theme's gum styling so gum widgets match the active theme
+# even after a theme switch (the inherited environment is captured at login).
+source fedory-restart-gum
+
+cmd="$*"
+presentation_script="fedory-show-logo; $cmd; if (( \$? != 130 )); then fedory-show-done; fi"
+
+exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.fedory.terminal --title=Fedory -e bash -c "$presentation_script"

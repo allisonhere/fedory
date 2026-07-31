@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# fedory:summary=Launch a TUI or focus an existing terminal window for it
+# fedory:args=<command> [args...]
+
+APP_ID="org.fedory.$(basename "$1")"
+LAUNCH_COMMAND="fedory-launch-tui $@"
+
+exec fedory-launch-or-focus "$APP_ID" "$LAUNCH_COMMAND"
