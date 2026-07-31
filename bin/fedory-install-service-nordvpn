@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# fedory:summary=Install the NordVPN service with optional GUI.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: NordVPN publishes its own official install
+# script that sets up its dnf repo and installs the client -- more
+# reliable than us hand-maintaining an AUR-equivalent package.
+
+echo "Installing NordVPN..."
+sh <(curl -fsSL https://downloads.nordcdn.com/apps/linux/install.sh)
+
+echo "Enabling NordVPN daemon..."
+sudo systemctl enable --now nordvpnd
+
+echo "Adding user to nordvpn group..."
+sudo usermod -aG nordvpn "$USER"
+
+echo -e "\nNordVPN installed! After reboot, run 'nordvpn login' to authenticate."
+
+echo
+gum confirm "Reboot now to make NordVPN usable?" && fedory-system-reboot

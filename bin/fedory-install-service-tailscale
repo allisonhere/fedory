@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# fedory:summary=Install the Tailscale mesh VPN service and a web app for the Tailscale Admin Console.
+# fedory:requires-sudo=true
+#
+# Fedora-native note: Tailscale isn't in Fedora's default repos and needs
+# its own dnf repo added first. Tailscale publishes and maintains an
+# official install script that detects the distro and configures that repo
+# itself (https://tailscale.com/install.sh) -- using it directly is more
+# reliable than us hand-maintaining the repo URL.
+
+set -e
+
+echo -e "\nInstalling Tailscale..."
+curl -fsSL https://tailscale.com/install.sh | sh
+
+echo -e "\nStarting Tailscale..."
+sudo systemctl enable --now tailscaled.service
+sudo tailscale up --accept-routes
+
+echo -e "\nAllowing $USER to manage Tailscale..."
+sudo tailscale set --operator="$USER"
+
+echo -e "\nReceiving Taildrop files in $HOME/Downloads..."
+systemctl --user enable --now fedory-tailscale-receive.service
+
+echo -e "\nAdding Tailscale to the bar..."
+fedory-plugin-enable fedory.tailscale
+
+fedory-webapp-install "Tailscale" "https://login.tailscale.com/admin/machines" https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/tailscale-light.png

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# fedory:summary=Install Signal and launch it.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: Signal has no official Fedora RPM; Flathub's
+# org.signal.Signal is Signal's own recommended Linux distribution
+# channel for non-Debian distros.
+
+set -e
+
+echo "Installing Signal..."
+if ! command -v flatpak >/dev/null 2>&1; then
+  sudo dnf install -y flatpak
+fi
+flatpak install -y --noninteractive flathub org.signal.Signal
+
+echo "Opening Signal..."
+setsid flatpak run org.signal.Signal >/dev/null 2>&1 &
+
+echo ""
+echo "Signal has been installed."

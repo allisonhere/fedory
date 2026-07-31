@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# fedory:summary=Install Sunshine and open Moonlight streaming ports for LAN and Tailscale.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: firewalld instead of ufw (see
+# install/config/firewall.sh), and `sunshine` routed through
+# packaging/package-map.tsv -- LizardByte (Sunshine's upstream) publish
+# their own COPR, flagged there as needing verification the same way
+# xpadneo's is.
+
+set -e
+
+TCP_PORTS=(47984 47989 48010)
+UDP_PORTS=(5353 47998 47999 48000 48002 48010)
+PRIVATE_CIDRS=(10.0.0.0/8 172.16.0.0/12 192.168.0.0/16)
+SUNSHINE_ADMIN_APP="Sunshine Admin"
+SUNSHINE_ADMIN_URL="https://localhost:47990"
+SUNSHINE_ADMIN_EXEC="fedory-launch-webapp $SUNSHINE_ADMIN_URL --ignore-certificate-errors"
+SUNSHINE_ICON_SOURCE="/usr/share/sunshine/web/images/logo-sunshine-45.png"
+HYPR_AUTOSTART_FILE="$HOME/.config/hypr/autostart.lua"
+HYPR_AUTOSTART_ENTRY='o.launch_on_start("sunshine")'
+
+open_firewall_ports() {
+  local proto port zone cidr
+
+  if fedory-cmd-missing firewall-cmd; then
+    echo "firewalld is not installed; skipping Sunshine firewall rules."
+    return
+  fi
+
+  zone=$(sudo firewall-cmd --get-default-zone)
+
+  for proto in tcp udp; do
+    local -n ports_ref="${proto^^}_PORTS"
+    for port in "${ports_ref[@]}"; do
+      for cidr in "${PRIVATE_CIDRS[@]}"; do
+        sudo firewall-cmd --permanent --zone="$zone" \
+          --add-rich-rule="rule family=\"ipv4\" source address=\"$cidr\" port port=\"$port\" protocol=\"$proto\" accept"
+      done
+    done
+  done
+
+  # Tailscale traffic: assign the whole tailscale0 interface to the trusted
+  # zone rather than trying to match its port range per-rule (same pattern
+  # as the Docker bridge interface in install/config/firewall.sh).
+  if ip link show tailscale0 >/dev/null 2>&1; then
+    sudo firewall-cmd --permanent --zone=trusted --add-interface=tailscale0 2>/dev/null || true
+  fi
+
+  sudo firewall-cmd --reload
+}
+
+install_admin_webapp() {
+  fedory-webapp-install "$SUNSHINE_ADMIN_APP" "$SUNSHINE_ADMIN_URL" "$SUNSHINE_ICON_SOURCE" "$SUNSHINE_ADMIN_EXEC"
+}
+
+enable_hyprland_autostart() {
+  mkdir -p "$(dirname "$HYPR_AUTOSTART_FILE")"
+  touch "$HYPR_AUTOSTART_FILE"
+
+  if ! grep -Fxq "$HYPR_AUTOSTART_ENTRY" "$HYPR_AUTOSTART_FILE"; then
+    printf '\n%s\n' "$HYPR_AUTOSTART_ENTRY" >>"$HYPR_AUTOSTART_FILE"
+  fi
+}
+
+echo "Installing Sunshine..."
+fedory-pkg-add sunshine
+systemctl --user enable --now sunshine
+
+echo "Opening Sunshine firewall ports..."
+open_firewall_ports
+
+echo "Installing Sunshine admin web app..."
+install_admin_webapp
+$SUNSHINE_ADMIN_EXEC >/dev/null 2>&1 &
+
+echo "Enabling Sunshine autostart..."
+enable_hyprland_autostart
+
+echo ""
+echo "Sunshine has been installed and its Moonlight streaming ports are open for private LANs and Tailscale."

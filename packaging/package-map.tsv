@@ -210,3 +210,15 @@ lutris	lutris	-	-	-	dnf (RPM Fusion)	referenced by fedory-install-gaming-lutris;
 umu-launcher	-	-	-	github.com/Open-Wine-Components/umu-launcher (pip install or prebuilt)	source-build	referenced by fedory-install-gaming-lutris/-battlenet; not confirmed in Fedora repos or a maintained COPR yet
 xpadneo-dkms	xpadneo-dkms	lizardbyte/xpadneo (unverified)	-	-	copr	referenced by fedory-install-gaming-xbox-controllers; COPR repo name not confirmed, verify before relying on it
 retroarch	retroarch	-	-	-	dnf (RPM Fusion)	referenced by fedory-install-gaming-retroarch; core coverage differs from Arch AUR, use RetroArch's own Core Downloader for cores
+1password	1password	-	-	official repo (downloads.1password.com)	external-repo	1Password/AgileBits publish their own official dnf repo for Fedora/RHEL
+1password-cli	1password-cli	-	-	official repo (downloads.1password.com)	external-repo	ships from the same 1Password repo as the GUI app
+signal-desktop	-	-	org.signal.Signal	-	flatpak	no Fedora RPM; Flathub is Signal's own recommended non-Debian channel
+spotify	-	-	com.spotify.Client	-	flatpak	no Fedora RPM; Flathub app is Flathub-verified with Spotify's cooperation
+sunshine	sunshine	lizardbyte/beta (unverified)	-	-	copr	LizardByte (Sunshine's upstream) publish their own COPR; repo name not independently confirmed here
+dropbox	-	-	-	installed by nautilus-dropbox's own first-run downloader	dropped	no Fedora RPM for the daemon itself; nautilus-dropbox pulls it down on first run
+dropbox-cli	-	-	-	installed alongside the dropbox daemon by nautilus-dropbox	dropped	see dropbox
+libappindicator-gtk3	libappindicator-gtk3	-	-	-	dnf	1:1 name match
+python-gpgme	python3-gpg	-	-	-	dnf	Fedora's Python binding package is named python3-gpg, not python-gpgme
+nautilus-dropbox	nautilus-dropbox	-	-	-	dnf (RPM Fusion)	provides the Nautilus integration and downloads the Dropbox daemon on first run
+nordvpn-bin	nordvpn	-	-	official install script (downloads.nordcdn.com)	external-repo	NordVPN publish their own official install script that configures a dnf repo
+once-bin	-	-	-	investigate	dropped	first-party Basecamp/DHH AUR-only tool, same unconfirmed-source category as aether/cliamp/omacut/omawrite/tensaku/tobi-try

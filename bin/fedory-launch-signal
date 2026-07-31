@@ -8,8 +8,10 @@ WINDOW_ADDRESS=$(hyprctl clients -j | jq -r '.[]|select((.class|test("\\bsignal\
 
 if [[ -n $WINDOW_ADDRESS ]]; then
   hyprctl dispatch "hl.dsp.focus({ window = \"address:$WINDOW_ADDRESS\" })" >/dev/null 2>&1 || hyprctl dispatch focuswindow "address:$WINDOW_ADDRESS"
-elif [[ -x /usr/bin/signal-desktop ]]; then
-  exec setsid uwsm-app -- /usr/bin/signal-desktop
+elif flatpak info org.signal.Signal >/dev/null 2>&1; then
+  # Signal ships via Flathub on Fedora (see fedory-install-service-signal),
+  # not a native /usr/bin/signal-desktop binary.
+  exec setsid flatpak run org.signal.Signal
 else
   exec fedory-launch-floating-terminal-with-presentation fedory-install-service-signal
 fi

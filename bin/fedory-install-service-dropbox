@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# fedory:summary=Install and start the Dropbox service. Must then be authenticated via the web.
+#
+# Fedora-native note: nautilus-dropbox is packaged by RPM Fusion; the
+# dropbox/dropbox-cli daemon itself has no Fedora RPM and is installed by
+# nautilus-dropbox's own first-run download, same as most distros outside
+# Dropbox's officially-supported apt targets. See packaging/package-map.tsv.
+
+echo "Installing dependencies..."
+fedory-pkg-add nautilus-dropbox python3-gpg
+
+echo "Adding Dropbox to the bar..."
+fedory-plugin-enable fedory.dropbox
+
+echo "Starting Dropbox (first run downloads the daemon itself)..."
+uwsm-app -- dropbox &>/dev/null &
+echo "See Dropbox icon behind  hover tray in top right and right-click for setup."

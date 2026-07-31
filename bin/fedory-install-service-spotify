@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# fedory:summary=Install Spotify.
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: Spotify has no official Fedora RPM; Flathub's
+# com.spotify.Client is a Flathub-verified app maintained with Spotify's
+# cooperation, the standard Linux distribution channel outside apt/snap.
+
+set -e
+
+echo "Installing Spotify..."
+if ! command -v flatpak >/dev/null 2>&1; then
+  sudo dnf install -y flatpak
+fi
+flatpak install -y --noninteractive flathub com.spotify.Client
+
+echo "Opening Spotify..."
+setsid flatpak run com.spotify.Client >/dev/null 2>&1 &
+
+echo ""
+echo "Spotify has been installed."

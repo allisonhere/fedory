@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# fedory:summary=Install the ONCE service (not yet available)
+#
+# Upstream installs `once-bin`, an AUR-only package with no confirmed
+# independent public source repo (same category as the other first-party
+# Basecamp/DHH tools noted in packaging/package-map.tsv: aether, cliamp,
+# omacut, omawrite, tensaku, tobi-try). Left unimplemented rather than
+# guessed at.
+
+echo "fedory-install-service-once is not available yet: 'once-bin' has no" >&2
+echo "confirmed independent source to build a Fedora package from. See" >&2
+echo "packaging/package-map.tsv for the same gap on related first-party tools." >&2
+exit 1
