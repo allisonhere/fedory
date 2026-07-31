@@ -7,6 +7,21 @@
 #
 set -eEo pipefail
 
+# When run as `curl | bash`, stdin is the script content from the pipe, not
+# the terminal -- every `read` and `gum confirm`/`gum input` below would
+# silently read EOF instead of prompting, making the very first confirm()
+# look like the user said no. Reopen stdin from the controlling terminal so
+# prompts work the same whether this is piped or run as a local file.
+if [[ ! -t 0 ]]; then
+  if [[ -r /dev/tty ]]; then
+    exec </dev/tty
+  else
+    echo "Error: fedory bootstrap needs an interactive terminal to ask a couple of questions." >&2
+    echo "Run it in a normal terminal session, not from a non-interactive pipe." >&2
+    exit 1
+  fi
+fi
+
 FEDORY_REPO="${FEDORY_REPO:-allisonhere/fedory}"
 FEDORY_REF="${FEDORY_REF:-master}"
 FEDORY_PATH="${FEDORY_PATH:-$HOME/.local/share/fedory}"
