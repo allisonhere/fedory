@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# fedory:summary=Show the current Fedory dev-link state
+# fedory:group=dev
+
+set -euo pipefail
+
+default_target="/usr/share/fedory"
+configured="$default_target"
+conf_present=0
+linked=0
+
+if [[ -f /etc/fedory.conf ]]; then
+  conf_present=1
+  configured=$(
+    FEDORY_PATH=
+    # shellcheck disable=SC1091
+    . /etc/fedory.conf
+    printf '%s' "${FEDORY_PATH:-<empty>}"
+  )
+  if [[ $configured != "$default_target" ]]; then
+    linked=1
+  fi
+fi
+
+if (( linked )); then
+  echo "dev-link: configured"
+  echo "  /etc/fedory.conf -> FEDORY_PATH=$configured"
+  echo "  status: reboot required before all session layers use this checkout"
+else
+  echo "dev-link: inactive"
+  if (( conf_present )); then
+    echo "  /etc/fedory.conf -> FEDORY_PATH=$configured (default guard)"
+  fi
+fi
+
+echo "  current shell:       FEDORY_PATH=${FEDORY_PATH:-<unset>}"
+
+if [[ ${FEDORY_PATH:-$default_target} != "$configured" ]]; then
+  echo
+  echo "Note: the running session does not match /etc/fedory.conf. Reboot to settle it."
+fi

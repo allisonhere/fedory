@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# fedory:summary=Build and install a Fedory package from a local checkout (not applicable)
+# fedory:group=dev
+#
+# Upstream's version builds a real Arch package (via makepkg from a
+# PKGBUILD) from a local checkout, for testing changes that land at fixed
+# system paths a dev-link can't shadow (/etc/, /usr/lib/systemd/, udev rule
+# bodies, Plymouth).
+#
+# Fedory has no equivalent because it isn't packaged at all yet: per
+# docs/scope.md, bootstrap.sh clones straight to ~/.local/share/fedory as a
+# live, mutable git checkout -- there's no immutable RPM tree at
+# /usr/share/fedory to diverge from in the first place. That's also why
+# fedory-dev-link/-unlink/-status still make sense (pointing FEDORY_PATH at
+# some *other* checkout) while this command doesn't: there's no package
+# build step to test. If Fedory ever ships real .rpm packaging (fedory.spec
+# + rpmbuild), this command's job would be rebuilding and installing that
+# RPM from a local checkout the same way upstream does with makepkg/pacman.
+
+echo "fedory-dev-pkg-test is not applicable: Fedory has no RPM packaging yet." >&2
+echo "See this script's header comment for why, and what a real" >&2
+echo "implementation would need once fedory.spec exists." >&2
+exit 1
