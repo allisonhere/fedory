@@ -58,7 +58,16 @@ fedory theme list
 fedory theme set "Tokyo Night"
 ```
 
-<!-- Theme preview grid goes here once themes/ assets are ported — Phase 4 -->
+All 22 themes are ported and fully functional: Catppuccin (+ Latte),
+Ethereal, Everforest, Flexoki Light, Gruvbox, Hackerman, Kanagawa, Last
+Horizon, Lumon, Lupine, Matte Black, Miasma, Nord, Osaka Jade, Retro '82,
+Ristretto, Rosé Pine, Solitude, Tokyo Night, Vantablack, and White.
+
+A preview image grid isn't here yet — upstream's theme screenshots are tied
+up in a wallpaper-licensing question this port hasn't resolved (see
+[`themes/README.md`](themes/README.md)), and new previews need to be shot
+against Fedory's own shell once that exists. Every theme works today
+without one; only the wallpaper cycling and this grid are pending.
 
 ## Documentation
 
