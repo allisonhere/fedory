@@ -1,6 +1,7 @@
 UPDATEDB_CONF_PATH="${FEDORY_UPDATEDB_CONF_PATH:-/etc/updatedb.conf}"
 
-echo "Configuring locate to skip Btrfs snapshots and index Btrfs subvolumes"
+source "$FEDORY_INSTALL/helpers/ui.sh"
+ui_info "Configuring locate to skip Btrfs snapshots and index Btrfs subvolumes"
 
 [[ -f $UPDATEDB_CONF_PATH ]] || exit 0
 

@@ -25,21 +25,21 @@
 # legacy path for follow-up rather than guessing at an unverified package
 # name.
 
+source "$FEDORY_INSTALL/helpers/ui.sh"
+
 if lspci | grep -qi 'nvidia'; then
   fedory-pkg-add kernel-devel
 
   if fedory-hw-nvidia-gsp; then
     PACKAGES=(akmod-nvidia xorg-x11-drv-nvidia-cuda xorg-x11-drv-nvidia-libs.i686)
   elif fedory-hw-nvidia-without-gsp; then
-    echo "Note: this GPU predates NVIDIA's GSP firmware. RPM Fusion's plain"
-    echo "akmod-nvidia may not support it -- verify whether akmod-nvidia-470xx"
-    echo "or akmod-nvidia-390xx is needed instead (see this script's header)."
+    ui_warn "This GPU predates NVIDIA's GSP firmware. RPM Fusion's plain akmod-nvidia may not support it -- verify whether akmod-nvidia-470xx or akmod-nvidia-390xx is needed instead (see this script's header)."
     PACKAGES=(akmod-nvidia xorg-x11-drv-nvidia-cuda xorg-x11-drv-nvidia-libs.i686)
   fi
 
   # Bail if no supported GPU
   if [[ -z ${PACKAGES+x} ]]; then
-    echo "No compatible driver for your NVIDIA GPU."
+    ui_warn "No compatible driver for your NVIDIA GPU."
     exit 0
   fi
 
@@ -53,6 +53,5 @@ if lspci | grep -qi 'nvidia'; then
 options nvidia_drm modeset=1
 EOF
 
-  echo "NVIDIA akmod will build on first boot after this install completes"
-  echo "(or run: sudo akmods --force), then reboot."
+  ui_info "NVIDIA akmod will build on first boot after this install completes (or run: sudo akmods --force), then reboot."
 fi

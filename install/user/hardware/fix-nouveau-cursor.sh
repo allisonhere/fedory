@@ -12,7 +12,8 @@ if [[ ! -f $nvidia_config ]] &&
   looknfeel="$HOME/.config/hypr/looknfeel.lua"
 
   if [[ -f $looknfeel ]] && ! grep -q 'no_hardware_cursors' "$looknfeel"; then
-    echo "Detected nouveau driver. Forcing software cursors so the mouse pointer stays visible."
+    source "$FEDORY_INSTALL/helpers/ui.sh"
+    ui_info "Detected nouveau driver. Forcing software cursors so the mouse pointer stays visible."
 
     cat >>"$looknfeel" <<'EOF'
 

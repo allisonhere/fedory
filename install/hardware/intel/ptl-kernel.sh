@@ -15,8 +15,8 @@
 # that's tracked upstream in the mainline kernel / Fedora's own kernel
 # packaging, not solved by this installer.
 
+source "$FEDORY_INSTALL/helpers/ui.sh"
+
 if fedory-hw-match "XPS" && fedory-hw-intel-ptl; then
-  echo "Detected Dell XPS Panther Lake. Fedora has no separate PTL-patched"
-  echo "kernel package to install here (see this script's header comment) --"
-  echo "using the stock Fedora kernel."
+  ui_warn "Detected Dell XPS Panther Lake. Fedora has no separate PTL-patched kernel package to install here (see this script's header comment) -- using the stock Fedora kernel."
 fi

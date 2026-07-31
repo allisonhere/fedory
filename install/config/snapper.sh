@@ -2,14 +2,15 @@ SNAPPER_CONFIG_PATH="${FEDORY_SNAPPER_CONFIG_PATH:-/etc/snapper/configs/root}"
 SNAPPER_CONF_PATH="${FEDORY_SNAPPER_CONF_PATH:-/etc/conf.d/snapper}"
 template="${FEDORY_SNAPPER_TEMPLATE:-${FEDORY_PATH:-/usr/share/fedory}/default/snapper/root}"
 
-echo "Configuring Fedory Snapper snapshot retention"
+source "$FEDORY_INSTALL/helpers/ui.sh"
+ui_info "Configuring Fedory Snapper snapshot retention"
 
 # Fedora Workstation defaults to Btrfs since Fedora 33 with a root subvolume
 # layout snapper can manage directly, same as upstream's assumption. If the
 # root filesystem isn't Btrfs (custom partitioning at install time), skip
 # quietly rather than fail the whole install over an optional feature.
 if ! findmnt -no FSTYPE / | grep -q btrfs; then
-  echo "Root filesystem is not Btrfs; skipping Snapper setup."
+  ui_warn "Root filesystem is not Btrfs; skipping Snapper setup."
   return 0 2>/dev/null || exit 0
 fi
 

@@ -6,6 +6,15 @@
 
 set -euo pipefail
 
+if [[ -f ${FEDORY_PATH:-/usr/share/fedory}/install/helpers/ui.sh ]]; then
+  source "${FEDORY_PATH:-/usr/share/fedory}/install/helpers/ui.sh"
+else
+  has_gum() { command -v gum >/dev/null 2>&1; }
+  ui_info() { if has_gum; then gum style --foreground 63 "$*"; else echo "  $*"; fi; }
+  ui_error() { if has_gum; then gum style --foreground 196 --bold "Error: $*" >&2; else echo "Error: $*" >&2; fi; }
+  ui_success() { if has_gum; then gum style --foreground 42 --bold "$*"; else echo "$*"; fi; }
+fi
+
 usage() {
   cat <<USAGE
 Usage: fedory finalize user [--force] [--first-install]
@@ -26,7 +35,7 @@ USAGE
 }
 
 if (( EUID == 0 )); then
-  echo "Error: run fedory-finalize-user as the user being configured, not as root." >&2
+  ui_error "run fedory-finalize-user as the user being configured, not as root."
   exit 1
 fi
 
@@ -48,7 +57,7 @@ while (($#)); do
       exit 0
       ;;
     *)
-      echo "Unknown option: $1" >&2
+      ui_error "Unknown option: $1"
       usage >&2
       exit 1
       ;;
@@ -59,7 +68,7 @@ state_dir="$HOME/.local/state/fedory"
 mkdir -p "$state_dir"
 
 if fedory-done check finalize-user && (( force == 0 )); then
-  echo "User finalization already complete (rerun with --force to refresh)."
+  ui_info "User finalization already complete (rerun with --force to refresh)."
   exit 0
 fi
 
@@ -115,4 +124,4 @@ if (( first_install )); then
 fi
 
 fedory-done mark finalize-user
-echo "User finalization complete."
+ui_success "User finalization complete."

@@ -7,6 +7,13 @@
 
 set -euo pipefail
 
+if [[ -f ${FEDORY_PATH:-/usr/share/fedory}/install/helpers/ui.sh ]]; then
+  source "${FEDORY_PATH:-/usr/share/fedory}/install/helpers/ui.sh"
+else
+  has_gum() { command -v gum >/dev/null 2>&1; }
+  ui_error() { if has_gum; then gum style --foreground 196 --bold "Error: $*" >&2; else echo "Error: $*" >&2; fi; }
+fi
+
 usage() {
   cat <<USAGE
 Usage: fedory setup system --install-user USER [--first-install|--upgrade]
@@ -44,7 +51,7 @@ while (($#)); do
       exit 0
       ;;
     *)
-      echo "Unknown option: $1" >&2
+      ui_error "Unknown option: $1"
       usage >&2
       exit 1
       ;;
@@ -52,17 +59,17 @@ while (($#)); do
 done
 
 if (( EUID != 0 )); then
-  echo "Error: fedory-setup-system must run as root" >&2
+  ui_error "fedory-setup-system must run as root"
   exit 1
 fi
 
 if [[ -z $install_user || $install_user == "root" ]]; then
-  echo "Error: --install-user must name the target non-root user" >&2
+  ui_error "--install-user must name the target non-root user"
   exit 1
 fi
 
 if ! getent passwd "$install_user" >/dev/null; then
-  echo "Error: user '$install_user' does not exist" >&2
+  ui_error "user '$install_user' does not exist"
   exit 1
 fi
 

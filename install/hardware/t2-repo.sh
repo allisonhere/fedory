@@ -15,8 +15,9 @@
 # user intent) -- point affected users at t2linux.org's own install
 # instructions instead.
 
+source "$FEDORY_INSTALL/helpers/ui.sh"
+
 if lspci -nn | grep -q "106b:180[12]"; then
-  echo "T2 Mac Wi-Fi/Bluetooth controller detected."
-  echo "Fedora T2 Mac support is not automated here -- see https://wiki.t2linux.org"
-  echo "for the t2linux.org project's Fedora repo and install instructions."
+  ui_info "T2 Mac Wi-Fi/Bluetooth controller detected."
+  ui_warn "Fedora T2 Mac support is not automated here -- see https://wiki.t2linux.org for the t2linux.org project's Fedora repo and install instructions."
 fi

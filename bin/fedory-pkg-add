@@ -6,8 +6,17 @@
 
 set -uo pipefail
 
+if [[ -f ${FEDORY_PATH:-}/install/helpers/ui.sh ]]; then
+  source "$FEDORY_PATH/install/helpers/ui.sh"
+else
+  has_gum() { command -v gum >/dev/null 2>&1; }
+  ui_info() { if has_gum; then gum style --foreground 63 "$*"; else echo "  $*"; fi; }
+  ui_warn() { if has_gum; then gum style --foreground 214 --bold "Warning: $*" >&2; else echo "Warning: $*" >&2; fi; }
+  ui_error() { if has_gum; then gum style --foreground 196 --bold "Error: $*" >&2; else echo "Error: $*" >&2; fi; }
+fi
+
 if (( $# == 0 )); then
-  echo "Usage: fedory-pkg-add <packages...>" >&2
+  ui_error "Usage: fedory-pkg-add <packages...>"
   exit 1
 fi
 
@@ -52,7 +61,7 @@ for requested in "$@"; do
       fedora_pkg=$(lookup_map "$requested" fedora_pkg)
       dnf_pkgs+=("${fedora_pkg:-$requested}")
       if [[ $status == "dnf (RPM Fusion)" ]]; then
-        echo "note: $requested needs RPM Fusion enabled (see packaging/README.md)" >&2
+        ui_warn "$requested needs RPM Fusion enabled (see packaging/README.md)"
       fi
       ;;
     copr | copr-or-source)
@@ -93,9 +102,9 @@ done
 # them instead.
 declare -A copr_failed=()
 for copr in "${coprs[@]}"; do
-  echo "Enabling COPR: $copr"
+  ui_info "Enabling COPR: $copr"
   if ! sudo dnf copr enable -y "$copr"; then
-    echo "warning: could not enable COPR '$copr' -- skipping packages that need it" >&2
+    ui_warn "could not enable COPR '$copr' -- skipping packages that need it"
     copr_failed[$copr]=1
   fi
 done
@@ -125,7 +134,7 @@ if (( ${#dnf_pkgs[@]} > 0 )); then
   for pkg in "${dnf_pkgs[@]}"; do
     # Secondary check to handle states where dnf doesn't actually register an error
     if ! rpm -q "$pkg" &>/dev/null; then
-      echo -e "\033[31mError: Package '$pkg' did not install\033[0m" >&2
+      ui_error "Package '$pkg' did not install"
       exit 1
     fi
   done
@@ -133,14 +142,14 @@ fi
 
 if (( ${#flatpaks[@]} > 0 )); then
   if ! command -v flatpak >/dev/null 2>&1; then
-    echo "Error: flatpak is required to install: ${flatpaks[*]}" >&2
+    ui_error "flatpak is required to install: ${flatpaks[*]}"
     exit 1
   fi
   flatpak install -y --noninteractive flathub "${flatpaks[@]}" || exit 1
 fi
 
 for note in "${skipped_notes[@]}"; do
-  echo "skip: $note"
+  ui_warn "skipped $note"
 done
 
 exit 0

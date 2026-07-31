@@ -8,10 +8,9 @@
 # (unlike a COPR, it isn't a single `dnf copr enable` away), so this
 # leaf stops short and points at t2linux's install docs instead of
 # guessing at repo URLs, matching t2-repo.sh's same reasoning.
+source "$FEDORY_INSTALL/helpers/ui.sh"
+
 if lspci -nn | grep -q "106b:180[12]"; then
-  echo "Detected MacBook with T2 chip."
-  echo "Fedora T2 Mac support (kernel + firmware + fan/keyboard daemons) needs"
-  echo "the t2linux.org project's own Fedora repo -- see https://wiki.t2linux.org"
-  echo "This installer does not add that repo automatically since it replaces"
-  echo "the running kernel."
+  ui_info "Detected MacBook with T2 chip."
+  ui_warn "Fedora T2 Mac support (kernel + firmware + fan/keyboard daemons) needs the t2linux.org project's own Fedora repo -- see https://wiki.t2linux.org. This installer does not add that repo automatically since it replaces the running kernel."
 fi
