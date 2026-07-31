@@ -54,4 +54,25 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
+# fedora_pkg (col 2) and copr (col 3) get passed literally as arguments to
+# `dnf install`/`dnf copr enable` -- a real package name or COPR owner/repo
+# identifier never contains a space or parenthesis. Catches the exact class
+# of bug found in production: placeholder/verification notes like "hyprland
+# (verify still-current Fedora version)" or "che/nerd-fonts or similar"
+# left in the data column instead of the free-text rationale column, which
+# then get passed straight to dnf and fail with a malformed-argument or
+# "no match" error. Uncertainty belongs in column 7 (rationale), never in
+# columns 2 or 3.
+dirty_values=$(tail -n +2 "$MAP" | awk -F'\t' '
+  $2 != "-" && $2 ~ /[() ]/ { print NR+1": "$1" fedora_pkg=\""$2"\"" }
+  $3 != "-" && $3 ~ /[() ]/ { print NR+1": "$1" copr=\""$3"\"" }
+')
+if [[ -z $dirty_values ]]; then
+  echo "ok: no placeholder/note text in fedora_pkg or copr columns"
+else
+  echo "FAIL: fedora_pkg/copr columns contain spaces or parentheses (should be a bare package/repo name -- move any caveat to the rationale column):"
+  echo "$dirty_values"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 finish

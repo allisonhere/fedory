@@ -38,7 +38,8 @@ lookup_map() {
 dnf_pkgs=()
 coprs=()
 declare -A copr_seen=()
-declare -A pkg_needs_copr=() # final dnf package name -> the COPR it requires (if any)
+declare -A pkg_needs_copr=()   # final dnf package name -> COPR required before install is even attempted (status=copr/copr-or-source)
+declare -A pkg_copr_fallback=() # final dnf package name -> COPR to try only if a plain dnf install of it fails (status=dnf-or-copr)
 flatpaks=()
 skipped_notes=()
 
@@ -57,11 +58,24 @@ for requested in "$@"; do
   fi
 
   case "$status" in
-    dnf | "dnf (RPM Fusion)" | dnf-or-copr)
+    dnf | "dnf (RPM Fusion)")
       fedora_pkg=$(lookup_map "$requested" fedora_pkg)
       dnf_pkgs+=("${fedora_pkg:-$requested}")
       if [[ $status == "dnf (RPM Fusion)" ]]; then
         ui_warn "$requested needs RPM Fusion enabled (see packaging/README.md)"
+      fi
+      ;;
+    dnf-or-copr)
+      # Try a plain dnf install first (recent Fedora releases increasingly
+      # ship these directly); only enable the fallback COPR afterward, and
+      # only for this specific package, if that didn't work. See the
+      # dnf-or-copr fallback pass below the main install.
+      fedora_pkg=$(lookup_map "$requested" fedora_pkg)
+      copr=$(lookup_map "$requested" copr)
+      final_pkg="${fedora_pkg:-$requested}"
+      dnf_pkgs+=("$final_pkg")
+      if [[ -n $copr && $copr != "-" ]]; then
+        pkg_copr_fallback[$final_pkg]="$copr"
       fi
       ;;
     copr | copr-or-source)
@@ -101,12 +115,22 @@ done
 # else got installed. Track failures and drop just the packages that needed
 # them instead.
 declare -A copr_failed=()
-for copr in "${coprs[@]}"; do
-  ui_info "Enabling COPR: $copr"
-  if ! sudo dnf copr enable -y "$copr"; then
-    ui_warn "could not enable COPR '$copr' -- skipping packages that need it"
-    copr_failed[$copr]=1
+enable_copr() {
+  local copr="$1"
+  if [[ -n ${copr_failed[$copr]:-} ]]; then
+    return 1
   fi
+  ui_info "Enabling COPR: $copr"
+  if sudo dnf copr enable -y "$copr"; then
+    return 0
+  fi
+  ui_warn "could not enable COPR '$copr' -- skipping packages that need it"
+  copr_failed[$copr]=1
+  return 1
+}
+
+for copr in "${coprs[@]}"; do
+  enable_copr "$copr" || true
 done
 
 if (( ${#copr_failed[@]} > 0 )); then
@@ -122,23 +146,52 @@ if (( ${#copr_failed[@]} > 0 )); then
   dnf_pkgs=("${filtered_pkgs[@]}")
 fi
 
+still_missing=()
+
 if (( ${#dnf_pkgs[@]} > 0 )); then
   if fedory-pkg-missing "${dnf_pkgs[@]}"; then
+    # --skip-unavailable/--skip-broken keep one bad package name or one real
+    # conflict (e.g. a package that clashes with something already installed
+    # on this particular machine) from blocking every other package in the
+    # same transaction -- dnf resolves the whole batch as one unit, so
+    # without these flags a single problem anywhere aborts the lot.
     if (( EUID == 0 )); then
-      dnf install -y --setopt=install_weak_deps=False "${dnf_pkgs[@]}" || exit 1
+      dnf install -y --skip-unavailable --skip-broken --setopt=install_weak_deps=False "${dnf_pkgs[@]}" || true
     else
-      sudo dnf install -y --setopt=install_weak_deps=False "${dnf_pkgs[@]}" || exit 1
+      sudo dnf install -y --skip-unavailable --skip-broken --setopt=install_weak_deps=False "${dnf_pkgs[@]}" || true
     fi
   fi
 
   for pkg in "${dnf_pkgs[@]}"; do
     # Secondary check to handle states where dnf doesn't actually register an error
     if ! rpm -q "$pkg" &>/dev/null; then
-      ui_error "Package '$pkg' did not install"
-      exit 1
+      still_missing+=("$pkg")
     fi
   done
 fi
+
+# dnf-or-copr fallback: anything still missing that has a fallback COPR gets
+# one more try -- enable that COPR and install just this package, rather
+# than the whole batch.
+if (( ${#still_missing[@]} > 0 )); then
+  retry_missing=()
+  for pkg in "${still_missing[@]}"; do
+    fallback_copr="${pkg_copr_fallback[$pkg]:-}"
+    if [[ -z $fallback_copr ]]; then
+      retry_missing+=("$pkg")
+      continue
+    fi
+    enable_copr "$fallback_copr" && sudo dnf install -y --setopt=install_weak_deps=False "$pkg"
+    if ! rpm -q "$pkg" &>/dev/null; then
+      retry_missing+=("$pkg")
+    fi
+  done
+  still_missing=("${retry_missing[@]}")
+fi
+
+for pkg in "${still_missing[@]}"; do
+  ui_error "Package '$pkg' did not install"
+done
 
 if (( ${#flatpaks[@]} > 0 )); then
   if ! command -v flatpak >/dev/null 2>&1; then
@@ -151,5 +204,9 @@ fi
 for note in "${skipped_notes[@]}"; do
   ui_warn "skipped $note"
 done
+
+if (( ${#still_missing[@]} > 0 )); then
+  exit 1
+fi
 
 exit 0

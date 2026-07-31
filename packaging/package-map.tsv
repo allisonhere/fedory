@@ -23,7 +23,7 @@ docker-buildx	-	-	-	same Docker repo as docker	external-repo	ships as docker-bui
 docker-compose	-	-	-	same Docker repo as docker	external-repo	ships as docker-compose-plugin from the same Docker repo
 dosfstools	dosfstools	-	-	-	dnf	1:1 name match
 dotnet-runtime	dotnet-runtime	-	-	-	dnf	Fedora ships .NET officially, direct match
-dua-cli	-	dua-cli (check availability)	-	cargo install dua-cli	source-build	not consistently packaged; cargo install is the reliable fallback
+dua-cli	-	-	-	cargo install dua-cli	source-build	not consistently packaged; cargo install is the reliable fallback
 evince	evince	-	-	-	dnf	1:1 name match (GNOME's newer "Papers" may eventually replace it; revisit)
 exfatprogs	exfatprogs	-	-	-	dnf	1:1 name match
 expac	-	-	-	-	dropped	Arch-specific pacman query formatter; dnf repoquery covers the same need natively, no Fedora port needed
@@ -44,15 +44,15 @@ gnome-keyring	gnome-keyring	-	-	-	dnf	1:1 name match
 gnome-themes-extra	gnome-themes-extra	-	-	-	dnf	1:1 name match
 grim	grim	-	-	-	dnf	1:1 name match
 gpu-screen-recorder	-	dec05eba/gpu-screen-recorder	-	-	copr	not in official Fedora repos; maintainer-run COPR is the standard install path
-gum	-	charm/charm or similar Charm COPR	-	go install github.com/charmbracelet/gum@latest	copr	Charm tools generally ship via their own COPR/repo, not Fedora proper
+gum	gum	-	-	-	dnf	confirmed installable directly via dnf (bootstrap.sh installs it alongside git before this map is even consulted); no COPR needed on current Fedora
 gvfs-mtp	gvfs-mtp	-	-	-	dnf	1:1 name match
 gvfs-nfs	gvfs-nfs	-	-	-	dnf	1:1 name match
 gvfs-smb	gvfs-smb	-	-	-	dnf	1:1 name match
-hyprland	hyprland (verify still-current Fedora version)	solopasha/hyprland (fallback)	-	-	dnf-or-copr	Fedora added Hyprland to official repos in recent releases; fall back to the solopasha COPR on older Fedora
+hyprland	hyprland	solopasha/hyprland	-	-	dnf-or-copr	Fedora added Hyprland to official repos in recent releases; solopasha COPR is the fallback if plain dnf install fails on an older Fedora
 hyprland-guiutils	-	solopasha/hyprland	-	-	copr	ships alongside Hyprland in the same COPR ecosystem
 hyprland-preview-share-picker	-	solopasha/hyprland	-	-	copr	same Hyprland COPR ecosystem
-hyprpicker	hyprpicker (check availability)	solopasha/hyprland	-	-	dnf-or-copr	likely bundled once Hyprland itself is official; COPR fallback otherwise
-hyprsunset	hyprsunset (check availability)	solopasha/hyprland	-	-	dnf-or-copr	same as hyprpicker
+hyprpicker	hyprpicker	solopasha/hyprland	-	-	dnf-or-copr	likely bundled once Hyprland itself is official; COPR fallback otherwise
+hyprsunset	hyprsunset	solopasha/hyprland	-	-	dnf-or-copr	same as hyprpicker
 imagemagick	ImageMagick	-	-	-	dnf	Fedora package name is capitalized ImageMagick
 imv	imv	-	-	-	dnf	1:1 name match
 inetutils	inetutils	-	-	-	dnf	1:1 name match
@@ -89,7 +89,7 @@ obs-studio	obs-studio	-	-	-	dnf (RPM Fusion)	needs RPM Fusion free enabled
 obsidian	-	-	md.obsidian.Obsidian	-	flatpak	not in Fedora repos; Flathub is the standard install path
 omacut	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
 omawrite	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
-omarchy-nvim	fedory-nvim (planned fork)	-	-	fork the upstream Neovim config as our own default config	source-build	this is upstream's own curated Neovim distro config, not a generic tool; Fedory needs its own equivalent config rather than a packaging translation
+omarchy-nvim	-	-	-	fork the upstream Neovim config as our own default config	source-build	this is upstream's own curated Neovim distro config, not a generic tool; Fedory needs its own equivalent config rather than a packaging translation
 pacman-contrib	-	-	-	-	dropped	Arch-specific pacman helper scripts; dnf-utils already assumed present covers the equivalent need
 pamixer	pamixer	-	-	-	dnf	1:1 name match
 pinta	pinta	-	-	-	dnf	1:1 name match
@@ -101,7 +101,7 @@ python-gobject	python3-gobject	-	-	-	dnf	Fedora prefixes Python packages with py
 python-poetry-core	python3-poetry-core	-	-	-	dnf	see python-gobject naming note
 python-terminaltexteffects	-	-	-	pip install --user terminaltexteffects	source-build	not in Fedora repos; pip install is the practical fallback
 qemu-user-static-binfmt	qemu-user-static	-	-	-	dnf	Fedora bundles binfmt registration into the main qemu-user-static package
-quickshell-git	-	errornointernet/quickshell (verify current maintainer COPR)	-	build from source (git.outfoxxed.me/quickshell/quickshell)	copr	load-bearing for the entire Phase 6 shell; not in Fedora repos, needs a tracked COPR or a documented from-source build
+quickshell-git	-	errornointernet/quickshell	-	build from source (git.outfoxxed.me/quickshell/quickshell)	copr	load-bearing for the entire Phase 6 shell; not in Fedora repos; this COPR is the current best-known one but not independently confirmed maintained -- verify before relying on it in production
 ripgrep	ripgrep	-	-	-	dnf	1:1 name match
 ruby	ruby	-	-	-	dnf	1:1 name match
 rust	rust	-	-	-	dnf	1:1 name match (rustup also viable for toolchain management)
@@ -119,7 +119,7 @@ tree-sitter-cli	-	-	-	npm install -g tree-sitter-cli or cargo install tree-sitte
 tmux	tmux	-	-	-	dnf	1:1 name match
 tobi-try	-	-	-	investigate github.com/basecamp (jdx/mise author's "usage"-adjacent tool?)	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
 ttf-ia-writer	-	-	-	manual font install from iAWriter's published font files	source-build	not packaged anywhere; direct font file drop into ~/.local/share/fonts
-ttf-jetbrains-mono-nerd-basic	-	che/nerd-fonts or similar	-	-	copr	Nerd Font patched variants aren't in Fedora's official font packages
+ttf-jetbrains-mono-nerd-basic	-	che/nerd-fonts	-	-	copr	Nerd Font patched variants aren't in Fedora's official font packages; COPR name not independently confirmed, verify before relying on it
 tzupdate	-	-	-	pip install --user tzupdate	source-build	not in Fedora repos
 udiskie	udiskie	-	-	-	dnf	1:1 name match
 ufw	-	-	-	-	dropped	Fedora Workstation defaults to firewalld; install/config/firewall.sh was rewritten around firewall-cmd instead (see Phase 1)
@@ -132,12 +132,12 @@ wireless-regdb	wireless-regdb	-	-	-	dnf	1:1 name match
 wireplumber	wireplumber	-	-	-	dnf	1:1 name match
 wl-clipboard	wl-clipboard	-	-	-	dnf	1:1 name match
 wtype	wtype	-	-	-	dnf	1:1 name match if packaged, otherwise trivial from-source build
-woff2-font-awesome	fontawesome-fonts-web (verify)	-	-	-	dnf	naming likely differs; verify exact Fedora Font Awesome web-font package
+woff2-font-awesome	fontawesome-fonts-web	-	-	-	dnf	naming likely differs; not independently confirmed, verify exact Fedora Font Awesome web-font package before relying on it
 xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	-	-	-	dnf	1:1 name match
 xdg-desktop-portal-hyprland	-	solopasha/hyprland	-	-	copr	same Hyprland COPR ecosystem
 xdg-terminal-exec	-	-	-	build from source (github.com/Vladimir-csp/xdg-terminal-exec)	source-build	not in Fedora repos; small shell/C source, easy to build
 xournalpp	xournalpp	-	-	-	dnf	1:1 name match
-yaru-icon-theme	-	heliocastro/yaru or similar	-	-	copr	Ubuntu's icon theme isn't in Fedora's official repos
+yaru-icon-theme	-	heliocastro/yaru	-	-	copr	Ubuntu's icon theme isn't in Fedora's official repos; COPR name not independently confirmed, verify before relying on it
 yay	-	-	-	-	dropped	Arch AUR helper; Fedora has no AUR analog, COPR is enabled per-repository instead (see fedory-pkg-copr-add)
 yt-dlp	yt-dlp	-	-	-	dnf	1:1 name match
 zoxide	zoxide	-	-	-	dnf	1:1 name match
@@ -156,7 +156,7 @@ intel-ipu7-camera	-	-	-	track upstream kernel driver merge status	dropped	very n
 intel-lpmd	intel-lpmd	-	-	-	dnf	1:1 name match on recent Fedora
 intel-media-driver	intel-media-driver	-	-	-	dnf	1:1 name match
 libva-intel-driver	libva-intel-driver	-	-	-	dnf	1:1 name match
-libva-nvidia-driver	-	elxreno/libva-nvidia-driver or similar	-	build from source (github.com/elFarto/nvidia-vaapi-driver)	copr-or-source	not in Fedora's official repos
+libva-nvidia-driver	-	elxreno/libva-nvidia-driver	-	build from source (github.com/elFarto/nvidia-vaapi-driver)	copr-or-source	not in Fedora's official repos; COPR name not independently confirmed, verify before relying on it
 limine	-	-	-	-	dropped	Arch/Limine-specific bootloader; Fedora uses grub2/bootupd (see docs/scope.md)
 limine-mkinitcpio-hook	-	-	-	-	dropped	same rationale as limine; mkinitcpio itself has no Fedora equivalent (dracut owns this role)
 limine-snapper-sync	-	-	-	grub2-btrfs as the closest equivalent, not auto-installed (see install/config/snapper.sh)	dropped	Limine-specific; grub2-btrfs is the nearest Fedora analog but is a deliberate opt-in, not a drop-in replacement
@@ -166,9 +166,9 @@ linux-headers	kernel-devel	-	-	-	dnf	Fedora's kernel headers package is kernel-d
 linux-ptl	-	-	-	-	dropped	Arch-specific bleeding-edge kernel variant for very new Intel Panther Lake hardware; Fedora's mainline "kernel" package tracks new hardware support on its own cadence
 linux-ptl-headers	-	-	-	-	dropped	see linux-ptl
 macbook12-spi-driver-dkms	-	-	-	build from source (github.com/Dunedan/mbp-2016-linux or t2linux project)	source-build	AUR-only DKMS driver; t2linux project is the closest maintained upstream
-nvidia-580xx-dkms	akmod-nvidia	rpmfusion (official, not a 3rd-party COPR)	-	-	dnf (RPM Fusion)	Fedora's NVIDIA path is RPM Fusion's akmod-nvidia, versioned automatically rather than by driver-branch package name
+nvidia-580xx-dkms	akmod-nvidia	-	-	-	dnf (RPM Fusion)	Fedora's NVIDIA path is RPM Fusion's akmod-nvidia, versioned automatically rather than by driver-branch package name (not a COPR -- RPM Fusion is a separate official repo, see install/hardware/nvidia.sh)
 nvidia-dkms	akmod-nvidia	rpmfusion	-	-	dnf (RPM Fusion)	see nvidia-580xx-dkms
-nvidia-open-dkms	akmod-nvidia-open (verify current RPM Fusion package name)	rpmfusion	-	-	dnf (RPM Fusion)	RPM Fusion is tracking the open kernel modules split too; verify current package name at implementation time
+nvidia-open-dkms	akmod-nvidia	-	-	-	dnf (RPM Fusion)	RPM Fusion's akmod-nvidia now covers the open kernel modules too via the same unified package (matches install/hardware/nvidia.sh, not a separate akmod-nvidia-open package)
 nvidia-580xx-utils	xorg-x11-drv-nvidia-cuda	rpmfusion	-	-	dnf (RPM Fusion)	RPM Fusion doesn't split utils by driver branch the way Arch does
 nvidia-utils	xorg-x11-drv-nvidia-cuda	rpmfusion	-	-	dnf (RPM Fusion)	see nvidia-580xx-utils
 lib32-nvidia-580xx-utils	-	-	-	-	dropped	Fedora doesn't ship a lib32/multilib NVIDIA userspace package the way Arch does; 32-bit gaming NVIDIA support works differently (Steam's own runtime)
@@ -183,7 +183,7 @@ sof-firmware	alsa-sof-firmware	-	-	-	dnf	Fedora's SOF firmware package is prefix
 thermald	thermald	-	-	-	dnf	1:1 name match
 webp-pixbuf-loader	webp-pixbuf-loader	-	-	-	dnf	1:1 name match
 yay-debug	-	-	-	-	dropped	debug symbols for yay, which is itself dropped
-tuxedo-drivers-nocompatcheck-dkms	-	tuxedocomputers COPR (Tuxedo's own)	-	-	copr	TUXEDO Computers publish their own Fedora COPR for this hardware line
+tuxedo-drivers-nocompatcheck-dkms	-	-	-	TUXEDO Computers' own install docs (tuxedocomputers.com)	source-build	TUXEDO publishes Fedora support through their own install tooling; no independently-confirmed COPR repo name found -- point affected users at tuxedocomputers.com rather than guess
 yt6801-dkms	-	-	-	build from source (github.com/HowardChanBUS/yt6801, AUR-only upstream)	source-build	niche Ethernet adapter DKMS driver, AUR-only origin
 zram-generator	zram-generator-defaults	-	-	-	dnf	Fedora Workstation already ships and enables zram by default via this package
 libvpl	libvpl	-	-	-	dnf	1:1 name match (Intel media SDK)
@@ -208,13 +208,13 @@ firefox	firefox	-	-	-	dnf	1:1 name match, already installed by default on most F
 steam	steam	-	-	-	dnf (RPM Fusion)	referenced by fedory-install-gaming-steam; ships via RPM Fusion nonfree, needs RPM Fusion enabled
 lutris	lutris	-	-	-	dnf (RPM Fusion)	referenced by fedory-install-gaming-lutris; in RPM Fusion
 umu-launcher	-	-	-	github.com/Open-Wine-Components/umu-launcher (pip install or prebuilt)	source-build	referenced by fedory-install-gaming-lutris/-battlenet; not confirmed in Fedora repos or a maintained COPR yet
-xpadneo-dkms	xpadneo-dkms	lizardbyte/xpadneo (unverified)	-	-	copr	referenced by fedory-install-gaming-xbox-controllers; COPR repo name not confirmed, verify before relying on it
+xpadneo-dkms	xpadneo-dkms	lizardbyte/xpadneo	-	-	copr	referenced by fedory-install-gaming-xbox-controllers; COPR repo name not confirmed, verify before relying on it
 retroarch	retroarch	-	-	-	dnf (RPM Fusion)	referenced by fedory-install-gaming-retroarch; core coverage differs from Arch AUR, use RetroArch's own Core Downloader for cores
 1password	1password	-	-	official repo (downloads.1password.com)	external-repo	1Password/AgileBits publish their own official dnf repo for Fedora/RHEL
 1password-cli	1password-cli	-	-	official repo (downloads.1password.com)	external-repo	ships from the same 1Password repo as the GUI app
 signal-desktop	-	-	org.signal.Signal	-	flatpak	no Fedora RPM; Flathub is Signal's own recommended non-Debian channel
 spotify	-	-	com.spotify.Client	-	flatpak	no Fedora RPM; Flathub app is Flathub-verified with Spotify's cooperation
-sunshine	sunshine	lizardbyte/beta (unverified)	-	-	copr	LizardByte (Sunshine's upstream) publish their own COPR; repo name not independently confirmed here
+sunshine	sunshine	lizardbyte/beta	-	-	copr	LizardByte (Sunshine's upstream) publish their own COPR; repo name not independently confirmed here
 dropbox	-	-	-	installed by nautilus-dropbox's own first-run downloader	dropped	no Fedora RPM for the daemon itself; nautilus-dropbox pulls it down on first run
 dropbox-cli	-	-	-	installed alongside the dropbox daemon by nautilus-dropbox	dropped	see dropbox
 libappindicator-gtk3	libappindicator-gtk3	-	-	-	dnf	1:1 name match
