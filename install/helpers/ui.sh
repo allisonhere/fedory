@@ -10,12 +10,20 @@
 #
 # Every function degrades to a plain, still-readable echo when gum isn't on
 # PATH, the same defensive pattern bootstrap.sh uses.
+#
+# The `--` before "$*" in every gum call below is load-bearing, not
+# decorative: gum's flag parser treats any argument starting with "-" as an
+# unrecognized flag rather than text, so a message starting with "->" (used
+# by run_logged's step announcements) silently printed gum's own usage/error
+# instead of the message. `--` marks "everything after this is a positional
+# argument," the standard fix, and protects against any future message that
+# happens to start with a dash for any reason.
 
 has_gum() { command -v gum >/dev/null 2>&1; }
 
 ui_info() {
   if has_gum; then
-    gum style --foreground 63 "$*"
+    gum style --foreground 63 -- "$*"
   else
     echo "  $*"
   fi
@@ -23,7 +31,7 @@ ui_info() {
 
 ui_warn() {
   if has_gum; then
-    gum style --foreground 214 --bold "Warning: $*" >&2
+    gum style --foreground 214 --bold -- "Warning: $*" >&2
   else
     echo "Warning: $*" >&2
   fi
@@ -31,7 +39,7 @@ ui_warn() {
 
 ui_error() {
   if has_gum; then
-    gum style --foreground 196 --bold "Error: $*" >&2
+    gum style --foreground 196 --bold -- "Error: $*" >&2
   else
     echo "Error: $*" >&2
   fi
@@ -39,7 +47,7 @@ ui_error() {
 
 ui_success() {
   if has_gum; then
-    gum style --foreground 42 --bold "$*"
+    gum style --foreground 42 --bold -- "$*"
   else
     echo "$*"
   fi

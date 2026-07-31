@@ -39,7 +39,7 @@ step() {
   STEP_CURRENT=$((STEP_CURRENT + 1))
   local msg="[$STEP_CURRENT/$STEP_TOTAL] $*"
   if has_gum; then
-    gum style --foreground 63 --bold "$msg"
+    gum style --foreground 63 --bold -- "$msg"
   else
     echo "$msg"
   fi
@@ -47,7 +47,7 @@ step() {
 
 info() {
   if has_gum; then
-    gum style --faint "$*"
+    gum style --faint -- "$*"
   else
     echo "  $*"
   fi
@@ -55,7 +55,7 @@ info() {
 
 die() {
   if has_gum; then
-    gum style --foreground 196 --bold "Error: $*"
+    gum style --foreground 196 --bold -- "Error: $*"
   else
     echo "Error: $*" >&2
   fi
@@ -68,7 +68,7 @@ die() {
 confirm() {
   local prompt="$1"
   if has_gum; then
-    gum confirm "$prompt"
+    gum confirm -- "$prompt"
   else
     read -r -p "$prompt [y/N] " reply
     [[ $reply =~ ^[Yy]$ ]]
@@ -187,12 +187,12 @@ main() {
   echo
   if (( had_issues )); then
     if has_gum; then
-      gum style --foreground 214 --bold "Fedory is installed, but a few things need a second look -- scroll up (or check /var/log/fedory-install.log) for what to retry."
+      gum style --foreground 214 --bold -- "Fedory is installed, but a few things need a second look -- scroll up (or check /var/log/fedory-install.log) for what to retry."
     else
       echo "Fedory is installed, but a few things need a second look -- scroll up (or check /var/log/fedory-install.log) for what to retry."
     fi
   elif has_gum; then
-    gum style --foreground 42 --bold "Fedory is installed. Reboot to log into your new Hyprland desktop."
+    gum style --foreground 42 --bold -- "Fedory is installed. Reboot to log into your new Hyprland desktop."
   else
     echo "Fedory is installed. Reboot to log into your new Hyprland desktop."
   fi

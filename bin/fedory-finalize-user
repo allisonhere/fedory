@@ -10,9 +10,9 @@ if [[ -f ${FEDORY_PATH:-/usr/share/fedory}/install/helpers/ui.sh ]]; then
   source "${FEDORY_PATH:-/usr/share/fedory}/install/helpers/ui.sh"
 else
   has_gum() { command -v gum >/dev/null 2>&1; }
-  ui_info() { if has_gum; then gum style --foreground 63 "$*"; else echo "  $*"; fi; }
-  ui_error() { if has_gum; then gum style --foreground 196 --bold "Error: $*" >&2; else echo "Error: $*" >&2; fi; }
-  ui_success() { if has_gum; then gum style --foreground 42 --bold "$*"; else echo "$*"; fi; }
+  ui_info() { if has_gum; then gum style --foreground 63 -- "$*"; else echo "  $*"; fi; }
+  ui_error() { if has_gum; then gum style --foreground 196 --bold -- "Error: $*" >&2; else echo "Error: $*" >&2; fi; }
+  ui_success() { if has_gum; then gum style --foreground 42 --bold -- "$*"; else echo "$*"; fi; }
 fi
 
 usage() {
