@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# fedory:summary=Show a fuzzy-finder TUI for picking new packages to install.
+# fedory:requires-sudo=true
+#
+# Fedora-native merge of upstream's fedory-pkg-install (official repos) and
+# fedory-pkg-aur-install (AUR browser): on Arch those are genuinely two
+# different package universes needing two tools (pacman vs. yay, with AUR's
+# own PKGBUILD preview). On Fedora there's only one: `dnf repoquery` already
+# searches every enabled repo, official or COPR, once `fedory pkg copr add`
+# has turned a COPR on -- so one fzf browser over `dnf info` previews covers
+# both cases upstream splits in two.
+
+fzf_args=(
+  --multi
+  --preview 'dnf info {1}'
+  --preview-label='alt-p: toggle description, alt-j/k: scroll, tab: multi-select'
+  --preview-label-pos='bottom'
+  --preview-window 'down:65%:wrap'
+  --bind 'alt-p:toggle-preview'
+  --bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up'
+  --bind 'alt-k:preview-up,alt-j:preview-down'
+  --color 'pointer:green,marker:green'
+)
+
+pkg_names=$(dnf repoquery --qf '%{name}' 2>/dev/null | sort -u | fzf "${fzf_args[@]}")
+
+if [[ -n $pkg_names ]]; then
+  source fedory-sudo-keepalive
+
+  # Convert newline-separated selections to space-separated for dnf
+  echo "$pkg_names" | tr '\n' ' ' | xargs sudo dnf install -y
+  fedory-show-done
+fi

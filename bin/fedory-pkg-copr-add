@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# fedory:summary=Enable a COPR repo and install packages from it if missing. Returns false if it couldn't be done.
+# fedory:args=<copr-repo> <packages...>
+# fedory:examples=fedory pkg copr add solopasha/hyprland hyprland
+
+# Fedora-native rewrite of upstream's fedory-pkg-aur-add. AUR is one global,
+# implicitly-searched namespace, so upstream's version takes just package
+# names. COPR has no equivalent single namespace -- every repo is a
+# separate opt-in owner/project, so this needs the repo as an explicit
+# first argument. See packaging/README.md's `copr` column for which repo a
+# given upstream package maps to.
+
+if (( $# < 2 )); then
+  echo "Usage: fedory-pkg-copr-add <copr-repo> <packages...>" >&2
+  exit 1
+fi
+
+copr_repo="$1"
+shift
+
+if ! rpm -q dnf-plugins-core >/dev/null 2>&1 && ! command -v dnf-3 >/dev/null 2>&1; then
+  sudo dnf install -y dnf-plugins-core || exit 1
+fi
+
+sudo dnf copr enable -y "$copr_repo" || exit 1
+
+if fedory-pkg-missing "$@"; then
+  sudo dnf install -y --setopt=install_weak_deps=False "$@" || exit 1
+fi
+
+for pkg in "$@"; do
+  # Secondary check to handle states where dnf doesn't actually register an error
+  if ! rpm -q "$pkg" &>/dev/null; then
+    echo -e "\033[31mError: Package '$pkg' did not install\033[0m" >&2
+    exit 1
+  fi
+done
+
+exit 0

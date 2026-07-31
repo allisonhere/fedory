@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# fedory:summary=Show the current battery status notification
+
+fedory-notification-send -g 󰁹 -u low "$(fedory-battery-status)"

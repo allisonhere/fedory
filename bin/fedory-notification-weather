@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# fedory:summary=Toggle the current weather panel
+
+fedory-shell shell toggle fedory.weather

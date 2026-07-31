@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# fedory:summary=Wake displays and restore brightness after idle
+# fedory:group=system
+# fedory:name=wake
+# fedory:examples=fedory system wake
+
+fedory-brightness-display on
+fedory-brightness-keyboard restore
+fedory-hyprland-monitor-clamshell >/dev/null 2>&1 || true

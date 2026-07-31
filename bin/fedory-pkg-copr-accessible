@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# fedory:summary=Returns true if Fedora COPR infrastructure is up and available.
+#
+# Fedora-native rewrite of upstream's fedory-pkg-aur-accessible. AUR has one
+# global RPC endpoint to probe; COPR is per-project, so this checks the
+# hub (copr.fedorainfracloud.org) reachability instead of any specific repo.
+
+curl -sf --connect-timeout 30 --retry 3 --retry-delay 3 -A "fedory-update" \
+  "https://copr.fedorainfracloud.org/api_3/status" >/dev/null
