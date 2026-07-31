@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# fedory:summary=Install a packaged app and gtk-launch it once it finishes
+# fedory:args=<display-name> <packages> <desktop-id>
+# fedory:examples=fedory install and launch Cursor cursor-bin cursor
+
+name="${1-}"
+packages="${2-}"
+desktop_id="${3-}"
+
+if [[ -z $name || -z $packages || -z $desktop_id ]]; then
+  echo "Usage: fedory-install-and-launch <display-name> <packages> <desktop-id>" >&2
+  exit 1
+fi
+
+exec fedory-launch-floating-terminal-with-presentation \
+  "echo 'Installing ${name}...'; fedory-pkg-add ${packages} && setsid gtk-launch ${desktop_id}"

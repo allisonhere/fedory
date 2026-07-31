@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# fedory:summary=Install VS Code and configure Fedory defaults for secrets, updates, and theme
+#
+# Fedora-native rewrite: upstream installs an AUR *-bin package. Microsoft
+# publishes an official dnf repo for VS Code (the same vendor-repo pattern
+# used by fedory-install-browser for Edge), so this adds that repo directly
+# instead of routing through fedory-pkg-copr-add.
+
+set -e
+
+echo "Installing VSCode..."
+
+if ! rpm -q code >/dev/null 2>&1; then
+  sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+  sudo dnf config-manager addrepo --id=vscode --set=name="Visual Studio Code" \
+    --set=baseurl=https://packages.microsoft.com/yumrepos/vscode --set=enabled=1 --set=gpgcheck=1 \
+    --set=gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+  sudo dnf install -y code
+fi
+
+mkdir -p ~/.vscode ~/.config/Code/User
+
+cat > ~/.vscode/argv.json << 'EOF'
+// This configuration file allows you to pass permanent command line arguments to VS Code.
+// Only a subset of arguments is currently supported to reduce the likelihood of breaking
+// the installation.
+//
+// PLEASE DO NOT CHANGE WITHOUT UNDERSTANDING THE IMPACT
+//
+// NOTE: Changing this file requires a restart of VS Code.
+{
+  "password-store":"gnome-libsecret"
+}
+EOF
+
+# Ensure VSC's own auto-update feature is turned off
+printf '{\n  "update.mode": "none"\n}\n' > ~/.config/Code/User/settings.json
+
+# Apply Fedory theme to VSCode
+fedory-theme-set-vscode
+
+setsid gtk-launch code

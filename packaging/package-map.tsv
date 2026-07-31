@@ -204,3 +204,4 @@ qmk-hid	-	-	-	build from source (QMK-related AUR-only helper)	source-build	niche
 networkmanager	NetworkManager	-	-	-	dnf	Fedora capitalizes the package NetworkManager; already installed and enabled by default on Workstation
 supergfxctl	supergfxctl	lukenukem/asus-linux	-	-	copr	referenced by fedory-toggle-hybrid-gpu; same asus-linux.org COPR as asusctl, not in the original base/other package lists (installed on-demand)
 voxtype-bin	-	-	-	github.com/voxtype/voxtype releases (cargo install or prebuilt binary)	source-build	referenced by fedory-voxtype-install; not in Fedora repos, small actively-developed voice dictation tool distributed via GitHub releases
+firefox	firefox	-	-	-	dnf	1:1 name match, already installed by default on most Fedora Workstation spins

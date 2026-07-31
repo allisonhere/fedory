@@ -1,0 +1,113 @@
+#!/bin/bash
+
+# fedory:summary=Install a supported browser
+# fedory:args=<chrome|brave|edge|firefox|zen>
+# fedory:examples=fedory install browser firefox | fedory install browser brave
+#
+# Fedora-native rewrite of upstream's fedory-install-browser. Upstream
+# installs chrome/edge/brave/brave-origin/zen from AUR (*-bin packages).
+# Fedora's story here is actually simpler than Arch's: Google, Microsoft,
+# and Brave each publish their own official dnf repo (not a community
+# COPR), so those three are "add the vendor repo, then dnf install" rather
+# than routed through fedory-pkg-copr-add. brave-origin has no distinct
+# Fedora/RPM distribution that's been confirmed, so it's dropped here
+# rather than guessed at; Zen has no RPM at all and ships via Flathub.
+
+set -e
+
+setup_policy_directory() {
+  sudo mkdir -p "$1"
+  sudo chmod a+rw "$1"
+}
+
+announce_browser_installed() {
+  echo ""
+  echo "$1 browser installed. Make it the default via Setup > Defaults > Browser."
+}
+
+copy_chromium_flags() {
+  mkdir -p ~/.config
+  cp -f "$FEDORY_PATH/config/chromium-flags.conf" "$1"
+  fedory-install-chromium-copy-url
+  fedory-install-chromium-ytdlp
+}
+
+setup_firefox_preferences() {
+  local distribution_dir="$1"
+
+  setup_policy_directory "$distribution_dir"
+  sudo cp -f "$FEDORY_PATH/default/firefox/policies.json" "$distribution_dir/policies.json"
+}
+
+setup_firefox_wayland() {
+  mkdir -p ~/.config/environment.d
+  echo "MOZ_ENABLE_WAYLAND=1" > ~/.config/environment.d/fedory-firefox-wayland.conf
+}
+
+add_dnf_repo() {
+  local repo_id="$1" repo_url="$2"
+  if ! sudo dnf repolist --all 2>/dev/null | grep -q "^$repo_id"; then
+    sudo dnf config-manager addrepo --from-repofile="$repo_url"
+  fi
+}
+
+case $1 in
+chrome)
+  echo "Installing Chrome..."
+  add_dnf_repo google-chrome https://dl.google.com/linux/chrome/rpm/stable/x86_64/repodata/repomd.xml.google-chrome.repo 2>/dev/null || \
+    sudo dnf install -y fedora-workstation-repositories && sudo dnf config-manager setopt google-chrome.enabled=1
+  sudo dnf install -y google-chrome-stable || exit 1
+
+  setup_policy_directory /etc/opt/chrome/policies/managed
+  copy_chromium_flags ~/.config/chrome-flags.conf
+  fedory-theme-set-browser
+  announce_browser_installed "Chrome"
+  ;;
+edge)
+  echo "Installing Edge..."
+  sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+  sudo dnf config-manager addrepo --id=microsoft-edge --set=name="Microsoft Edge" \
+    --set=baseurl=https://packages.microsoft.com/yumrepos/edge --set=enabled=1 --set=gpgcheck=1 \
+    --set=gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+  sudo dnf install -y microsoft-edge-stable || exit 1
+
+  setup_policy_directory /etc/opt/edge/policies/managed
+  copy_chromium_flags ~/.config/microsoft-edge-stable-flags.conf
+  fedory-theme-set-browser
+  announce_browser_installed "Edge"
+  ;;
+brave)
+  echo "Installing Brave..."
+  sudo dnf install -y dnf-plugins-core
+  sudo dnf config-manager addrepo --id=brave-browser --set=name="Brave Browser" \
+    --set=baseurl=https://brave-browser-rpm-release.s3.brave.com/x86_64/ --set=enabled=1 --set=gpgcheck=1 \
+    --set=gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+  sudo dnf install -y brave-browser || exit 1
+
+  setup_policy_directory /etc/brave/policies/managed
+  copy_chromium_flags ~/.config/brave-flags.conf
+  fedory-theme-set-browser
+  announce_browser_installed "Brave"
+  ;;
+firefox)
+  echo "Installing Firefox..."
+  fedory-pkg-add firefox || exit 1
+
+  setup_firefox_preferences /usr/lib64/firefox/distribution
+  setup_firefox_wayland
+  announce_browser_installed "Firefox"
+  ;;
+zen)
+  echo "Installing Zen..."
+  if ! command -v flatpak >/dev/null 2>&1; then
+    sudo dnf install -y flatpak || exit 1
+  fi
+  flatpak install -y --noninteractive flathub app.zen_browser.zen || exit 1
+
+  announce_browser_installed "Zen"
+  ;;
+*)
+  echo "Usage: fedory-install-browser <chrome|brave|edge|firefox|zen>"
+  exit 1
+  ;;
+esac

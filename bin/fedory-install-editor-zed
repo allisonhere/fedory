@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# fedory:summary=Install Zed Editor (theme sync not yet available)
+#
+# Fedora-native rewrite: upstream installs `zed` + `omazed` (a Basecamp/DHH
+# first-party theme-sync helper, AUR-only) and runs `omazed setup` to wire
+# Zed's own theme to the active Omarchy theme. Zed has no official Fedora
+# RPM; Flathub's dev.zed.Zed is the standard install path. `omazed` itself
+# is in the same boat as omarchy-nvim in packaging/package-map.tsv --
+# Fedory doesn't have a fork of it yet, so this installs Zed but leaves
+# theme sync unset rather than faking the integration.
+
+set -e
+
+echo "Installing Zed Editor..."
+
+if ! command -v flatpak >/dev/null 2>&1; then
+  sudo dnf install -y flatpak
+fi
+flatpak install -y --noninteractive flathub dev.zed.Zed
+
+echo "Note: automatic theme sync with the active Fedory theme (upstream's"
+echo "'omazed setup') isn't available yet -- Zed's own theme picker still works."
+
+setsid flatpak run dev.zed.Zed

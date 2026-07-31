@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# fedory:summary=Install Emacs (Fedory theme/font integration not yet available)
+#
+# Fedora-native rewrite: upstream installs the AUR-only omarchy-emacs
+# package -- Omarchy's own curated Emacs config with theme/font
+# integration, in the same category as omarchy-nvim (see
+# packaging/package-map.tsv). Fedory has no fork of it yet, so this
+# installs stock Emacs from Fedora's repos rather than faking the
+# integration.
+
+set -e
+
+echo "Installing Emacs..."
+fedory-pkg-add emacs
+
+echo "Note: Fedory-theme/font integration for Emacs (upstream's omarchy-emacs"
+echo "config) isn't ported yet -- this is stock Emacs."
+
+setsid uwsm-app -- emacs
