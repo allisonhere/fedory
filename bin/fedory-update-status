@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# fedory:summary=Refresh the shell update status
+# fedory:hidden=true
+
+set -e
+
+if fedory-update-available >/dev/null; then
+  fedory-shell -q fedory.system-update refresh
+else
+  fedory-shell -q fedory.system-update clear
+fi

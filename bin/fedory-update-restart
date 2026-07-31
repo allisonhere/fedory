@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# fedory:summary=Prompt for required reboot or service restarts after updates
+#
+# Fedora-native rewrite: kernel-update detection uses rpm/grubby instead of
+# pacman -Qo against /usr/lib/modules/*/vmlinuz -- Fedora's kernel package is
+# `kernel-core`, and the newest installed one is found via `rpm -q --last`
+# rather than walking modules directories owned by pacman.
+
+echo
+
+confirm_reboot() {
+  gum confirm "$1" && { fedory-system-reboot; exit 0; }
+}
+
+running_kernel=$(uname -r)
+newest_installed_kernel=$(rpm -q --last kernel-core 2>/dev/null | head -1 | awk '{print $1}' | sed 's/^kernel-core-//')
+
+if [[ -n $newest_installed_kernel && $newest_installed_kernel != "$running_kernel" ]]; then
+  confirm_reboot "Linux kernel has been updated. Reboot?"
+elif [[ -f $HOME/.local/state/fedory/reboot-required ]]; then
+  confirm_reboot "Updates require reboot. Ready?"
+fi
+
+running_hyprland=$(readlink /proc/$(pgrep -x Hyprland)/exe 2>/dev/null)
+if [[ $running_hyprland == *"(deleted)"* ]]; then
+  confirm_reboot "Hyprland has been updated. Reboot?"
+fi
+
+for file in "$HOME"/.local/state/fedory/restart-*-required; do
+  if [[ -f $file ]]; then
+    filename=$(basename "$file")
+    service=$(echo "$filename" | sed 's/restart-\(.*\)-required/\1/')
+    echo "Restarting $service"
+    fedory-state clear "$filename"
+    fedory-restart-"$service"
+  fi
+done

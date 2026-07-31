@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# fedory:summary=Ensure Fedora's GPG signing keys are installed
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: upstream re-fetches and re-signs a dedicated
+# Omarchy keyring key plus the whole archlinux-keyring package every update,
+# because Arch's keyring rotates and pacman validates every package
+# signature against it. Fedora's base signing keys (baked into
+# fedora-gpg-keys / distribution-gpg-keys) don't rotate on this cadence --
+# each dnf repo (including RPM Fusion, COPRs, and vendor repos) imports and
+# checks its own key at add-time (see fedory-pkg-copr-add and the vendor
+# repo setup in fedory-install-browser, fedory-install-service-1password,
+# etc.), so there's no single keyring to refresh here. This just makes sure
+# the base Fedora key packages are present.
+
+set -e
+
+fedory-pkg-add fedora-gpg-keys distribution-gpg-keys
+
+echo "Fedora signing keys are present."

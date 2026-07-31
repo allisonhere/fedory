@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# fedory:summary=Check the update log for known failure conditions
+#
+# Fedora-native rewrite: upstream greps for mkinitcpio's "Updating linux
+# initcpios" / "Initcpio image generation successful" markers. dracut
+# (Fedora's initramfs builder) prints its own failure text instead when
+# `dracut --regenerate-all -f` runs as part of a kernel package's RPM
+# scriptlet during `dnf upgrade`.
+
+update_log="/tmp/fedory-update.log"
+
+if grep -qE 'dracut: (Executing|Creating) initramfs' "$update_log" 2>/dev/null; then
+  if grep -qiE 'dracut: FAILED|dracut: Something went wrong' "$update_log" 2>/dev/null; then
+    echo -e '\e[31mError: Initramfs generation may have failed. Review logs before restart.\e[0m'
+    echo
+  fi
+fi

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# fedory:summary=Update system firmware using fwupd
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: Fedora's fwupd package installs and manages its own
+# EFI capsule binary (via fwupd-efi) as part of normal package install/
+# update, unlike upstream's manual `install -D .../fwupdx64.efi` step for
+# Arch's fwupd, which doesn't do that itself.
+
+set -e
+echo -e "\e[32mUpdate Firmware\e[0m"
+
+if fedory-cmd-missing fwupdmgr; then
+  fedory-pkg-add fwupd
+fi
+
+fwupdmgr refresh --force
+sudo fwupdmgr update

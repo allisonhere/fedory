@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# fedory:summary=Compatibility wrapper for fedory-update -y.
+# fedory:hidden=true
+# fedory:requires-sudo=true
+
+exec fedory-update -y

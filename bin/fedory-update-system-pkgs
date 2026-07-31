@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# fedory:summary=Update system packages with dnf
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: upstream's version also runs a retry loop
+# (omarchy-update-system-pkgs-when-conflicted) that quarantines files pacman
+# finds "exists in filesystem, not owned by any package" and retries once.
+# That failure mode is specific to how pacman's package database claims
+# ownership of every installed path -- RPM's transaction model doesn't fail
+# the same way for unowned files (dnf/rpm generally just installs alongside
+# them, or backs up a modified config to .rpmsave/.rpmnew rather than
+# aborting), so that retry machinery isn't ported: reproducing its exact
+# unowned-file detection for RPM's different failure modes would mean
+# guessing at error text this port has no way to verify against a real
+# conflicted transaction. A real conflict here is surfaced to the user
+# instead of auto-resolved.
+
+set -e
+
+echo -e "\e[32m\nUpdate system packages\e[0m"
+
+sudo dnf upgrade -y

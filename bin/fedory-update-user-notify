@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# fedory:summary=Compatibility wrapper for fedory-migrate-notify.
+# fedory:hidden=true
+
+exec fedory-migrate-notify "$@"

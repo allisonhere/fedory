@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# fedory:summary=Check whether Fedory or system updates are available.
+#
+# Fedora-native rewrite: upstream checks a single omarchy/omarchy-dev pacman
+# package version via checkupdates. Fedory has no RPM package to version-check
+# (see docs/scope.md) -- instead this reports the dev checkout's git drift
+# (same as upstream) plus whether dnf has any pending system package updates
+# at all, which is the more general and more accurate signal for a system
+# with no single "Fedory version" to compare.
+
+set -euo pipefail
+
+updates=()
+
+if [[ $FEDORY_PATH != "/usr/share/fedory" ]]; then
+  upstream=$(git -C "$FEDORY_PATH" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)
+  if [[ -n $upstream ]]; then
+    GIT_TERMINAL_PROMPT=0 timeout 10 git -C "$FEDORY_PATH" fetch --quiet 2>/dev/null || true
+
+    behind=$(git -C "$FEDORY_PATH" rev-list --count "HEAD..$upstream" 2>/dev/null || echo 0)
+    if (( behind > 0 )); then
+      commit_label=commits
+      (( behind == 1 )) && commit_label=commit
+      updates+=("fedory-dev-checkout $behind new $commit_label on $upstream")
+    fi
+  fi
+fi
+
+pkg_count=$(dnf check-update -q --refresh 2>/dev/null | grep -cE '^\S+\.\S+\s+\S+\s+\S+$' || true)
+if [[ $pkg_count =~ ^[0-9]+$ ]] && (( pkg_count > 0 )); then
+  pkg_label=packages
+  (( pkg_count == 1 )) && pkg_label=package
+  updates+=("$pkg_count system $pkg_label have updates available")
+fi
+
+if (( ${#updates[@]} > 0 )); then
+  printf '%s\n' "${updates[@]}"
+  exit 0
+else
+  echo "Fedory is up to date"
+  exit 1
+fi

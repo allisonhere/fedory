@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# fedory:summary=Restart system time synchronization
+# fedory:requires-sudo=true
+
+echo "Updating time..."
+sudo systemctl restart systemd-timesyncd
