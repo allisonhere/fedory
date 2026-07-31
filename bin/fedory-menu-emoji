@@ -1,0 +1,6 @@
+#!/bin/bash
+# fedory:summary=Launch emojis
+# fedory:group=menu
+# fedory:examples=fedory menu emoji
+
+fedory-shell shell toggle fedory.emojis

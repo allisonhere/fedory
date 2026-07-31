@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# fedory:summary=Pick a shell plugin to enable, disable, clone, or remove
+# fedory:group=menu
+# fedory:name=plugin
+# fedory:args=<enable|disable|clone|remove>
+
+set -euo pipefail
+
+PLUGIN_ICON=$'\U000f0431'
+
+case "${1:-}" in
+  enable) filter='(.enabled | not)' ;;
+  disable) filter='.canDisable and .enabled' ;;
+  clone) filter='.firstParty and ((.id | sub("^fedory\\."; "local.")) as $clone_id | ($plugins | map(.id) | index($clone_id)) == null)' ;;
+  remove) filter='(.firstParty | not)' ;;
+  *)
+    echo "Usage: fedory-menu-plugin <enable|disable|clone|remove>" >&2
+    exit 1
+    ;;
+esac
+
+plugins=$(fedory-plugin-list --json)
+
+# Two plugins may share a name, so keep the id with the row and show it when the
+# name alone cannot identify the pick.
+rows=$(jq -r --arg icon "$PLUGIN_ICON" \
+  ". as \$plugins
+   | ([.[] | select($filter)]) as \$rows
+   | \$rows[]
+   | .name as \$name
+   | (if ([\$rows[] | select(.name == \$name)] | length) > 1 then \$name + \" (\" + .id + \")\" else \$name end) as \$label
+   | \$icon + \"\\t\" + \$label + \"\\t\" + .id" <<<"$plugins")
+[[ -n $rows ]] || { fedory-notification-send "No plugin to ${1}"; exit 0; }
+
+name=$(fedory-menu-select "${1^} plugin" < <(cut -f1,2 <<<"$rows")) || exit 0
+[[ -n $name ]] || exit 0
+
+id=$(awk -F'\t' -v label="$name" '$2 == label { print $3; exit }' <<<"$rows")
+[[ -n $id ]] || exit 1
+
+if [[ $1 == "clone" ]]; then
+  new_id="local.${id#fedory.}"
+  target="$HOME/.config/fedory/plugins/$new_id"
+  fedory-launch-floating-terminal-with-presentation \
+    "fedory-plugin-clone $(printf '%q' "$id") && exec \$EDITOR $(printf '%q' "$target")"
+elif [[ $1 == "remove" ]]; then
+  fedory-launch-floating-terminal-with-presentation "fedory-plugin-remove $(printf '%q' "$id")"
+else
+  "fedory-plugin-$1" "$id"
+fi
