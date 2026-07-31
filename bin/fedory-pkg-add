@@ -24,13 +24,17 @@ PACKAGE_MAP="${FEDORY_PATH:-}/packaging/package-map.tsv"
 
 # lookup_map <upstream_pkg> <column 2-7 name> -> prints the field, or empty
 # if the package isn't in the map (in which case callers treat the name as
-# an already-correct dnf package name -- see packaging/README.md).
+# an already-correct dnf package name -- see packaging/README.md). A "-"
+# cell (package-map.tsv's convention for "not applicable") also prints as
+# empty: callers use `${value:-$fallback}`, which only substitutes on an
+# actually-empty string -- passing through the literal dash would make
+# every caller treat "-" itself as a real package/COPR/flatpak name.
 lookup_map() {
   local pkg="$1" field="$2"
   [[ -f $PACKAGE_MAP ]] || return 0
   awk -F'\t' -v pkg="$pkg" -v field="$field" '
     NR == 1 { for (i = 1; i <= NF; i++) col[$i] = i; next }
-    $1 == pkg { print $(col[field]); found = 1; exit }
+    $1 == pkg { v = $(col[field]); if (v != "-") print v; found = 1; exit }
     END { if (!found) exit 1 }
   ' "$PACKAGE_MAP"
 }
@@ -116,11 +120,11 @@ done
 # them instead.
 declare -A copr_failed=()
 enable_copr() {
-  local copr="$1"
+  local copr="$1" progress="${2:-}"
   if [[ -n ${copr_failed[$copr]:-} ]]; then
     return 1
   fi
-  ui_info "Enabling COPR: $copr"
+  ui_info "Enabling COPR${progress:+ ($progress)}: $copr"
   if sudo dnf copr enable -y "$copr"; then
     return 0
   fi
@@ -129,8 +133,10 @@ enable_copr() {
   return 1
 }
 
+copr_index=0
 for copr in "${coprs[@]}"; do
-  enable_copr "$copr" || true
+  copr_index=$((copr_index + 1))
+  enable_copr "$copr" "$copr_index/${#coprs[@]}" || true
 done
 
 if (( ${#copr_failed[@]} > 0 )); then
@@ -150,6 +156,7 @@ still_missing=()
 
 if (( ${#dnf_pkgs[@]} > 0 )); then
   if fedory-pkg-missing "${dnf_pkgs[@]}"; then
+    ui_info "Installing ${#dnf_pkgs[@]} package(s) via dnf (this can take a while)..."
     # --skip-unavailable/--skip-broken keep one bad package name or one real
     # conflict (e.g. a package that clashes with something already installed
     # on this particular machine) from blocking every other package in the
@@ -198,6 +205,7 @@ if (( ${#flatpaks[@]} > 0 )); then
     ui_error "flatpak is required to install: ${flatpaks[*]}"
     exit 1
   fi
+  ui_info "Installing ${#flatpaks[@]} Flatpak(s)..."
   flatpak install -y --noninteractive flathub "${flatpaks[@]}" || exit 1
 fi
 

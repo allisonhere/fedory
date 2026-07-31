@@ -1,3 +1,5 @@
+source "$(dirname "${BASH_SOURCE[0]}")/ui.sh"
+
 fedory_log_to_stdout() {
   [[ ${FEDORY_LOG_TO_STDOUT:-} == "1" || -z ${FEDORY_INSTALL_LOG_FILE:-} ]]
 }
@@ -38,9 +40,22 @@ stop_install_log() {
   fi
 }
 
+FEDORY_RUN_LOGGED_STEP=${FEDORY_RUN_LOGGED_STEP:-0}
+
+# Always visible on the real terminal, independent of whether the leaf's own
+# output (dnf/flatpak progress, etc.) is streaming live or being captured
+# into $FEDORY_INSTALL_LOG_FILE below -- a bootstrap run can have 20+ of
+# these leaves, several of which run long dnf/flatpak transactions with no
+# other indication of overall progress, so this is what tells the user
+# something is still moving forward and roughly what's happening right now.
 run_logged() {
   local script="$1"
   local exit_code errexit_was_set=0
+  local label="${script#"${FEDORY_INSTALL:-}"/}"
+  label="${label%.sh}"
+
+  FEDORY_RUN_LOGGED_STEP=$((FEDORY_RUN_LOGGED_STEP + 1))
+  ui_info "-> [$FEDORY_RUN_LOGGED_STEP] $label"
 
   fedory_log_line "[$(date '+%Y-%m-%d %H:%M:%S')] Starting: $script"
 

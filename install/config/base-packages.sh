@@ -8,9 +8,8 @@
 
 source "$FEDORY_INSTALL/helpers/ui.sh"
 
-ui_info "Installing core Fedory packages (this takes a while on first run)..."
-
 mapfile -t base_packages < <(grep -v '^#' "$FEDORY_PATH/install/fedory-base.packages" | grep -v '^$')
+ui_info "Installing ${#base_packages[@]} core Fedory packages (this takes a while on first run)..."
 fedory-pkg-add "${base_packages[@]}"
 
 if fedory-cmd-missing docker; then
