@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# fedory:summary=Check if hibernation is supported
+#
+# Fedora-native rewrite: upstream checks for its own mkinitcpio drop-in
+# (/etc/mkinitcpio.conf.d/omarchy_resume.conf). Fedora uses dracut, which has
+# no per-feature conf.d directory the same way -- the resume kernel command
+# line parameters (resume=.../resume_offset=...) are the actual source of
+# truth for "hibernation is configured" on this distro, via grubby.
+
+if [[ ! -f /sys/power/image_size ]]; then
+  exit 1
+fi
+
+# Sum all swap sizes (excluding zram)
+SWAPSIZE_KB=$(awk '!/Filename|zram/ {sum += $3} END {print sum+0}' /proc/swaps)
+SWAPSIZE=$(( 1024 * ${SWAPSIZE_KB:-0} ))
+
+HIBERNATION_IMAGE_SIZE=$(cat /sys/power/image_size)
+
+if (( SWAPSIZE > HIBERNATION_IMAGE_SIZE )) && grubby --info=DEFAULT 2>/dev/null | grep -q 'resume='; then
+  exit 0
+else
+  exit 1
+fi

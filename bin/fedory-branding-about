@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# fedory:summary=Edit, set, or reset About branding
+# fedory:group=branding
+# fedory:name=about
+# fedory:args=<image|text|reset>
+# fedory:examples=fedory branding about image | fedory branding about text | fedory branding about reset
+
+set -euo pipefail
+
+SOURCE_DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}"
+
+case "${1:-}" in
+image)
+  image=$(fedory-menu-file "Pick png/svg from $SOURCE_DIR" "${SOURCE_DIR}" "svg png")
+  if [[ -n $image ]] && fedory-transcode-ascii "$image" ~/.config/fedory/branding/about.txt --width 54 --height 26; then
+    fedory-launch-about >/dev/null 2>&1
+  fi
+  ;;
+text)
+  fedory-launch-editor ~/.config/fedory/branding/about.txt >/dev/null 2>&1 && fedory-launch-about >/dev/null 2>&1
+  ;;
+reset)
+  cp "$FEDORY_PATH/icon.txt" ~/.config/fedory/branding/about.txt && fedory-launch-about >/dev/null 2>&1
+  ;;
+*)
+  echo "Usage: fedory-branding-about <image|text|reset>" >&2
+  exit 1
+  ;;
+esac

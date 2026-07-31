@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# fedory:summary=Create system snapshots with snapper
+# fedory:args=<create|restore>
+# fedory:requires-sudo=true
+
+set -e
+
+COMMAND="$1"
+
+if [[ -z $COMMAND ]]; then
+  echo "Usage: fedory-snapshot <create|restore>" >&2
+  exit 1
+fi
+
+if fedory-cmd-missing snapper; then
+  exit 127 # fedory-update can use this to just ignore if snapper is not available
+fi
+
+case "$COMMAND" in
+create)
+  # The description is just a label, so never let it abort the snapshot.
+  DESC="$(fedory-version 2>/dev/null || echo unknown)"
+
+  echo -e "\e[32mCreate system snapshot\e[0m"
+
+  # Get existing snapper config names from CSV output
+  mapfile -t CONFIGS < <(sudo snapper --csvout list-configs | awk -F, 'NR>1 {print $1}')
+
+  for config in "${CONFIGS[@]}"; do
+    sudo snapper -c "$config" create -c number -d "$DESC"
+    sudo snapper -c "$config" cleanup number
+  done
+  echo
+  ;;
+restore)
+  # Upstream shells out to `limine-snapper-restore`, a Limine-specific tool
+  # with no Fedora equivalent (see docs/scope.md and
+  # install/config/snapper.sh). Fedora's nearest analog is grub2-btrfs,
+  # which boots directly into a snapshot from the GRUB menu rather than
+  # offering a one-shot CLI restore -- a real replacement needs its own
+  # design, not a find-and-replace of the command name.
+  echo "fedory-snapshot restore is not implemented yet." >&2
+  echo "Fedora has no direct equivalent of Limine's limine-snapper-restore;" >&2
+  echo "boot into a snapshot via grub2-btrfs (if installed) or restore" >&2
+  echo "manually with 'snapper undochange' / 'btrfs subvolume snapshot'." >&2
+  exit 1
+  ;;
+esac

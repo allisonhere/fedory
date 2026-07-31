@@ -1,0 +1,6 @@
+
+  ==============================================
+   F E D O R Y
+   A beautiful, modern & opinionated Hyprland
+   desktop for Fedora.
+  ==============================================

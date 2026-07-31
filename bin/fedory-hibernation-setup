@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# fedory:summary=Set up hibernation with swap and boot resume configuration
+# fedory:requires-sudo=true
+# fedory:args=[--force] [--no-rebuild]
+#
+# Fedora-native rewrite of upstream's mkinitcpio/Limine hibernation setup.
+# The Btrfs swapfile-subvolume approach is identical (Fedora Workstation
+# defaults to Btrfs too), but the boot-integration mechanism is entirely
+# different:
+#   - mkinitcpio's HOOKS+=(resume) drop-in            -> dracut regenerates
+#     its initramfs via `dracut -f`; dracut's resume module activates
+#     automatically once a resume= kernel parameter is present, no
+#     per-feature config file needed.
+#   - Limine's KERNEL_CMDLINE[default]+="..." drop-in
+#     + `limine-mkinitcpio`                           -> `grubby
+#     --update-kernel=ALL --args="resume=... resume_offset=..."`, which
+#     writes the parameter into every installed kernel's GRUB2/BLS entry.
+# See docs/scope.md for why Fedory targets grubby/GRUB2 rather than
+# replicating Limine.
+
+FORCE=false
+NO_REBUILD=false
+for arg in "$@"; do
+  case "$arg" in
+    --force) FORCE=true ;;
+    --no-rebuild) NO_REBUILD=true ;;
+  esac
+done
+
+if [[ ! -f /sys/power/image_size ]]; then
+  echo -e "Hibernation is not supported on your system" >&2
+  exit 0
+fi
+
+if ! fedory-cmd-present grubby; then
+  echo "Skipping hibernation setup (requires grubby, which ships with Fedora's GRUB2/BLS stack)"
+  exit 0
+fi
+
+SWAP_FILE="/swap/swapfile"
+
+# Check if hibernation is already configured
+if grubby --info=DEFAULT 2>/dev/null | grep -q 'resume='; then
+  echo "Hibernation is already set up"
+  exit 0
+fi
+
+if ! $FORCE; then
+  MEM_TOTAL_HUMAN=$(free --human | awk '/Mem/ {print $2}')
+  if ! gum confirm "Use $MEM_TOTAL_HUMAN on boot drive to make hibernation available?"; then
+    exit 0
+  fi
+fi
+
+SWAP_SUBVOLUME="/swap"
+
+# Create btrfs subvolume for swap
+if ! sudo btrfs subvolume show "$SWAP_SUBVOLUME" &>/dev/null; then
+  echo "Creating Btrfs subvolume"
+  sudo btrfs subvolume create "$SWAP_SUBVOLUME"
+  sudo chattr +C "$SWAP_SUBVOLUME"
+fi
+
+# Create swapfile
+if ! sudo swaplabel "$SWAP_FILE" &>/dev/null; then
+  echo "Creating swapfile in Btrfs subvolume"
+  MEM_TOTAL_KB="$(awk '/MemTotal/ {print $2}' /proc/meminfo)k"
+  sudo btrfs filesystem mkswapfile -s "$MEM_TOTAL_KB" "$SWAP_FILE"
+fi
+
+# Add swapfile to fstab
+if ! grep -Fq "$SWAP_FILE" /etc/fstab; then
+  echo "Adding swapfile to /etc/fstab"
+  sudo cp -a /etc/fstab "/etc/fstab.$(date +%Y%m%d%H%M%S).back"
+  printf "\n# Btrfs swapfile for system hibernation\n%s none swap defaults,pri=0 0 0\n" "$SWAP_FILE" | sudo tee -a /etc/fstab >/dev/null
+fi
+
+# Enable swap
+if ! swapon --show | grep -q "$SWAP_FILE"; then
+  echo "Enabling swap on $SWAP_FILE"
+  sudo swapon -p 0 "$SWAP_FILE"
+fi
+
+# Ensure keyboard backlight doesn't prevent sleep
+sudo cp -p "$FEDORY_PATH/default/systemd/system-sleep/keyboard-backlight" /usr/lib/systemd/system-sleep/
+
+# Compute the resume= device and resume_offset= for the Btrfs swapfile, then
+# write them into every installed kernel's boot entry with grubby.
+echo "Determining resume offset"
+RESUME_DEVICE=$(findmnt -no SOURCE -T "$SWAP_FILE" | sed 's/\[.*\]//')
+RESUME_OFFSET=$(sudo btrfs inspect-internal map-swapfile -r "$SWAP_FILE")
+if [[ -n $RESUME_OFFSET ]]; then
+  echo "Adding resume kernel parameters (resume=$RESUME_DEVICE resume_offset=$RESUME_OFFSET)"
+  sudo grubby --update-kernel=ALL --args="resume=$RESUME_DEVICE resume_offset=$RESUME_OFFSET"
+else
+  echo "Warning: Could not determine resume offset for $SWAP_FILE" >&2
+  exit 1
+fi
+
+# Use ACPI alarm for RTC wakeup on s2idle systems (needed for suspend-then-hibernate)
+if grep -q "\[s2idle\]" /sys/power/mem_sleep 2>/dev/null; then
+  if ! grubby --info=DEFAULT 2>/dev/null | grep -q 'rtc_cmos.use_acpi_alarm=1'; then
+    echo "Enabling ACPI RTC alarm for s2idle suspend"
+    sudo grubby --update-kernel=ALL --args="rtc_cmos.use_acpi_alarm=1"
+  fi
+fi
+
+if ! $NO_REBUILD; then
+  echo "Regenerating initramfs..."
+  sudo dracut -f
+  echo
+fi
+
+if ! $FORCE && ! $NO_REBUILD && gum confirm "Reboot to enable hibernation?"; then
+  fedory-system-reboot
+fi
