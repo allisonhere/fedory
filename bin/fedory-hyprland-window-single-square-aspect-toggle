@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# fedory:summary=Toggle single-window square aspect ratio.
+
+case $(fedory-hyprland-toggle single-window-aspect-ratio) in
+  on) fedory-notification-send -g  "Enable single-window square aspect ratio" ;;
+  off) fedory-notification-send -g  "Disable single-window square aspect ratio" ;;
+esac

@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# fedory:summary=Enable, disable, toggle, or recover the internal laptop display
+# fedory:args=<on|off|toggle|recover>
+
+TOGGLE="internal-monitor-disable"
+TOGGLE_FLAG="$HOME/.local/state/fedory/toggles/hypr/$TOGGLE.lua"
+MIRROR_TOGGLE="internal-monitor-mirror"
+
+INTERNAL=$(fedory-hyprland-monitor-laptop)
+
+wake() {
+  hyprctl dispatch 'hl.dsp.dpms({ action = "enable" })' >/dev/null 2>&1 || true
+}
+
+on() {
+  if fedory-hyprland-toggle-enabled $TOGGLE; then
+    fedory-hyprland-toggle $TOGGLE off
+    fedory-notification-send -g 󰍹 "Laptop display enabled"
+  fi
+
+  wake
+}
+
+off() {
+  if [[ -z $INTERNAL ]]; then
+    fedory-notification-send -g 󰍹 "No laptop display found"
+    exit 1
+  fi
+
+  if ! fedory-hyprland-monitor-external-active; then
+    fedory-notification-send -g 󰍹 "Can't disable the only active display"
+    exit 1
+  fi
+
+  if fedory-hyprland-toggle-disabled $TOGGLE && fedory-hyprland-toggle-disabled $MIRROR_TOGGLE; then
+    printf 'hl.monitor({ output = "%s", disabled = true })\n' "$INTERNAL" >"$TOGGLE_FLAG"
+    fedory-notification-send -g 󰍹 "Laptop display disabled"
+    hyprctl reload
+  fi
+}
+
+recover() {
+  # Runs from the clamshell watcher every few seconds, so it must be a no-op
+  # unless it actually re-enables a display: an unconditional wake here undoes
+  # lock-screen blanking and races the resume modeset into a visible flash.
+  fedory-hyprland-monitor-external-active && return 0
+  fedory-hyprland-toggle-enabled $TOGGLE || return 0
+
+  fedory-hyprland-toggle $TOGGLE off
+  wake
+}
+
+toggle() {
+  if fedory-hyprland-toggle-enabled $TOGGLE; then
+    on
+  else
+    off
+  fi
+}
+
+case "$1" in
+  on) on ;;
+  off) off ;;
+  toggle) toggle ;;
+  recover) recover ;;
+  *)
+    echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
+    exit 1
+    ;;
+esac
