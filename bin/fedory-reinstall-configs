@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# fedory:summary=Reset Fedory user configs and shipped defaults in $HOME (destructive)
+
+set -euo pipefail
+
+if (( EUID == 0 )); then
+  echo "Error: This script should not be run as root"
+  exit 1
+fi
+
+echo "Resetting Fedory user configs to shipped defaults..."
+
+# Fedora-native rewrite: upstream replays /etc/skel, which it gets for free
+# from the omarchy/omarchy-settings pacman packages. Fedory has no package
+# install to seed /etc/skel from (see docs/scope.md), so this instead
+# force-overwrites ~/.config from the same $FEDORY_PATH/config tree that
+# install/user/config-seed.sh seeds non-destructively on first install --
+# this is the explicit, destructive "yes really reset everything" path.
+cp -af "$FEDORY_PATH/config/." ~/.config/
+fedory-refresh-applications
+
+fedory-refresh-grub || echo "Skipping GRUB refresh (not yet implemented -- see fedory-refresh-grub)."
+fedory-refresh-plymouth
+
+# Note: upstream also refreshes omarchy-nvim here if present. omarchy-nvim
+# is one of Basecamp's first-party AUR-only tools with no confirmed Fedora
+# build (see packaging/package-map.tsv) and was never ported, so there's
+# nothing to refresh.

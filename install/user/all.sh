@@ -1,3 +1,4 @@
+run_logged "$FEDORY_INSTALL/user/config-seed.sh"
 run_logged "$FEDORY_INSTALL/user/theme.sh"
 run_logged "$FEDORY_INSTALL/user/chromium.sh"
 run_logged "$FEDORY_INSTALL/user/git.sh"

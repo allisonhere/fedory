@@ -14,8 +14,9 @@ Runs the per-user setup steps that a skel-style seed can't do:
 dev-aware skill symlinks, xdg-user-dirs + gtk bookmarks (need \$HOME),
 default browser/mailto, and install/user/all.sh.
 
-For shipped configs see default/ (new users, copied by bootstrap.sh) and
-fedory-reinstall-configs (existing users explicitly resyncing).
+For shipped user configs see install/user/config-seed.sh (run as part of
+install/user/all.sh below -- non-destructive) and fedory-reinstall-configs
+(existing users explicitly resyncing, destructive).
 
 --first-install is used by bootstrap.sh on first install. It marks shipped
 migrations complete for the freshly-bootstrapped user.

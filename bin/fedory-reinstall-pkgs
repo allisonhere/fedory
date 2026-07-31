@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# fedory:summary=Re-run Fedory system setup to ensure all packages and system config are applied
+# fedory:requires-sudo=true
+#
+# Fedora-native rewrite: upstream re-reads a single omarchy-base.packages
+# manifest and pacman -Syu --needed's every entry. Fedory has no equivalent
+# manifest -- its install is leaf-script driven, and each leaf under
+# install/ (theme-system.sh, docker.sh, hardware/*.sh, etc.) already ensures
+# its own packages via fedory-pkg-add. Re-running fedory-setup-system in
+# --upgrade mode replays every one of those leaves, which is the real
+# Fedory equivalent of "make sure everything's installed."
+
+set -e
+
+sudo fedory-setup-system --install-user "$USER" --upgrade
+
+echo ""
+echo "System packages and config have been reapplied."
