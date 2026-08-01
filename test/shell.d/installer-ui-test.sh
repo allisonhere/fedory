@@ -76,4 +76,16 @@ assert_eq "Hardware / Nvidia" \
   "$(fedory_task_label "$FEDORY_INSTALL/hardware/nvidia.sh")" \
   "hardware scripts receive a readable category label"
 
+FEDORY_RUN_LOGGED_STEP=7
+chmod 0400 "$FEDORY_PROGRESS_FILE"
+assert_eq "7" "$(fedory_progress_advance)" \
+  "an unwritable progress counter falls back without failing setup"
+
+if rg -F 'FEDORY_PROGRESS_DIR=$(mktemp -d)' "$ROOT_DIR/bootstrap.sh" >/dev/null; then
+  echo "ok: bootstrap keeps the cross-privilege counter outside sticky /tmp"
+else
+  echo "FAIL: bootstrap creates the cross-privilege counter directly in sticky /tmp"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 finish

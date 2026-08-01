@@ -91,7 +91,11 @@ fedory_progress_advance() {
     read -r current <"$FEDORY_PROGRESS_FILE" || current=0
     [[ $current =~ ^[0-9]+$ ]] || current=0
     current=$((current + 1))
-    printf '%s\n' "$current" >"$FEDORY_PROGRESS_FILE"
+    if ! printf '%s\n' "$current" 2>/dev/null >"$FEDORY_PROGRESS_FILE"; then
+      # Progress is presentation only. A stale or unexpectedly protected
+      # counter must never interrupt package, hardware, or login setup.
+      current=$FEDORY_RUN_LOGGED_STEP
+    fi
   fi
 
   printf '%s\n' "$current"

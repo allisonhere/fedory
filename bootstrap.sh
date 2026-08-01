@@ -253,11 +253,16 @@ main() {
     "$FEDORY_PATH"/install/{config,hardware,login,post-install,user}/all.sh \
     | wc -l)
   FEDORY_PROGRESS_TOTAL=${FEDORY_PROGRESS_TOTAL//[[:space:]]/}
-  FEDORY_PROGRESS_FILE=$(mktemp)
+  # Keep the shared counter out of sticky /tmp itself. Fedora's
+  # fs.protected_regular policy blocks root from truncating a user-owned file
+  # there even when it is mode 0666; a private subdirectory is not sticky and
+  # remains accessible to both the invoking user and sudo.
+  FEDORY_PROGRESS_DIR=$(mktemp -d)
+  FEDORY_PROGRESS_FILE="$FEDORY_PROGRESS_DIR/current"
   printf '0\n' >"$FEDORY_PROGRESS_FILE"
   chmod 0666 "$FEDORY_PROGRESS_FILE"
   export FEDORY_PROGRESS_TOTAL FEDORY_PROGRESS_FILE
-  trap 'rm -f "${FEDORY_PROGRESS_FILE:-}"' EXIT
+  trap 'rm -rf "${FEDORY_PROGRESS_DIR:-}"' EXIT
 
   # --- step 3: collect a little identity info up front ----------------------
   phase "Personalize your setup" "Optional Git identity used by development tools."
