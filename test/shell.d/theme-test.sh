@@ -26,6 +26,14 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
+if [[ $(rg -c 'fedory-theme-set "Fedory Vesper"' "$ROOT_DIR/install/user/theme.sh") == "2" ]] &&
+  ! rg -F 'fedory-theme-set "Tokyo Night"' "$ROOT_DIR/install/user/theme.sh" >/dev/null; then
+  echo "ok: fresh users default to Fedory Vesper"
+else
+  echo "FAIL: fresh users do not consistently default to Fedory Vesper"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 run_templater_for() {
   local theme="$1"
   local fake_home

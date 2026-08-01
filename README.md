@@ -58,14 +58,17 @@ fedory theme list
 fedory theme set "Tokyo Night"
 ```
 
-All 22 themes are ported and fully functional: Catppuccin (+ Latte),
+All 22 upstream themes are ported and fully functional: Catppuccin (+ Latte),
 Ethereal, Everforest, Flexoki Light, Gruvbox, Hackerman, Kanagawa, Last
 Horizon, Lumon, Lupine, Matte Black, Miasma, Nord, Osaka Jade, Retro '82,
 Ristretto, Rosé Pine, Solitude, Tokyo Night, Vantablack, and White.
 
-Fedory ships five pieces of original wallpaper artwork shared across the 22
-palettes. The Theme and Background entries in the desktop menu use those
-assets for visual selection immediately after a clean installation.
+Fedory Vesper is the default theme and the first Fedory-original theme,
+pairing a dark aubergine palette with four cosmic-botanical wallpapers.
+Together with the five shared wallpapers used by the upstream ports, Fedory
+ships nine pieces of original artwork. The Theme and Background entries in the
+desktop menu use those assets for visual selection immediately after a clean
+installation.
 
 ## Documentation
 

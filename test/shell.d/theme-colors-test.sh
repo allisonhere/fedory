@@ -50,10 +50,14 @@ for dir in "$ROOT_DIR"/themes/*/; do
   fi
 done
 
-assert_eq 22 "$theme_count" "22 themes are ported"
+assert_eq 23 "$theme_count" "22 upstream themes and Fedory Vesper are shipped"
 
 wallpaper_count=$(find "$ROOT_DIR/default/wallpapers" -maxdepth 1 -type f \
-  -name '*.png' | wc -l)
-assert_eq 5 "$wallpaper_count" "five original wallpaper families are shipped"
+  \( -name '*.png' -o -name '*.webp' \) | wc -l)
+assert_eq 9 "$wallpaper_count" "nine original wallpapers are shipped"
+
+vesper_background_count=$(find -L "$ROOT_DIR/themes/fedory-vesper/backgrounds" \
+  -maxdepth 1 -type f -name '*.webp' | wc -l)
+assert_eq 4 "$vesper_background_count" "Fedory Vesper ships four backgrounds"
 
 finish
