@@ -61,6 +61,10 @@ export FEDORY_PROGRESS_BAR_WIDTH=10
 run_logged "$FEDORY_INSTALL/config/theme-system.sh" >"$tmp_dir/progress-output"
 run_logged "$FEDORY_INSTALL/config/firewall.sh" >"$tmp_dir/failure-output" 2>&1
 
+printf '[10/10] Complete\n' >"$tmp_dir/completed-task.log"
+fedory_render_progress 1 2 "Apply the system theme" \
+  "$tmp_dir/completed-task.log" "$(date +%s)" 3 >"$tmp_dir/finishing-output"
+
 assert_file_exists "$tmp_dir/success-marker"
 assert_file_exists "$tmp_dir/failure-marker"
 assert_eq "2" "$(<"$FEDORY_PROGRESS_FILE")" \
@@ -76,10 +80,18 @@ else
 fi
 
 if sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g' "$tmp_dir/progress-output" \
-  | rg -F 'TOTAL    [#####-----] 01/02' >/dev/null; then
+  | rg -F 'TOTAL    [----------] 00/02' >/dev/null; then
   echo "ok: installer renders an overall progress bar"
 else
   echo "FAIL: installer overall progress bar is missing"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g' "$tmp_dir/finishing-output" \
+  | rg -F 'finishing 00:00  Apply the system theme' >/dev/null; then
+  echo "ok: completed transactions show finishing activity until the task exits"
+else
+  echo "FAIL: completed transaction appears frozen while follow-up checks run"
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 

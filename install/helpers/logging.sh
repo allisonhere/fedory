@@ -171,7 +171,7 @@ fedory_progress_ui_enabled() {
 
 fedory_render_progress() {
   local progress_current=$1 progress_total=$2 display_label=$3 task_log=$4
-  local started_at=$5 tick=$6 final=${7:-0}
+  local started_at=$5 tick=$6
   local width=${FEDORY_PROGRESS_BAR_WIDTH:-24}
   local columns label_width now elapsed task_current task_total snapshot
   local current_bar current_text overall_current overall_bar overall_text fitted_label
@@ -181,11 +181,17 @@ fedory_render_progress() {
   now=$(date +%s)
   elapsed=$((now - started_at))
 
-  columns=${FEDORY_PROGRESS_COLUMNS:-${COLUMNS:-80}}
+  if [[ ${FEDORY_PROGRESS_COLUMNS:-} =~ ^[0-9]+$ ]]; then
+    columns=$FEDORY_PROGRESS_COLUMNS
+  elif columns=$(tput cols 2>/dev/null) && [[ $columns =~ ^[0-9]+$ ]]; then
+    :
+  else
+    columns=${COLUMNS:-80}
+  fi
   [[ $columns =~ ^[0-9]+$ ]] || columns=80
-  (( columns < width + 36 )) && width=$((columns - 36))
+  (( columns < width + 39 )) && width=$((columns - 39))
   (( width < 8 )) && width=8
-  label_width=$((columns - width - 28))
+  label_width=$((columns - width - 31))
   (( label_width < 8 )) && label_width=8
   if (( ${#display_label} > label_width )); then
     fitted_label="${display_label:0:label_width-3}..."
@@ -193,17 +199,16 @@ fedory_render_progress() {
     fitted_label=$display_label
   fi
 
-  overall_current=$progress_current
-  if (( ! final && overall_current > 0 )); then
-    overall_current=$((overall_current - 1))
-  fi
+  overall_current=$((progress_current > 0 ? progress_current - 1 : 0))
   overall_bar=$(fedory_progress_bar "$overall_current" "$progress_total" "$width")
   overall_text=$(printf 'TOTAL    [%s] %02d/%02d' \
     "$overall_bar" "$overall_current" "$progress_total")
 
-  if (( final )); then
-    current_bar=$(fedory_progress_bar 1 1 "$width")
-    current_text=$(printf 'CURRENT  [%s] done  %s' "$current_bar" "$fitted_label")
+  if [[ $task_current =~ ^[0-9]+$ && $task_total =~ ^[0-9]+$ ]] \
+    && (( task_total > 0 && task_current >= task_total )); then
+    current_bar=$(fedory_activity_bar "$tick" "$width")
+    current_text=$(printf 'CURRENT  [%s] finishing %02d:%02d  %s' \
+      "$current_bar" "$((elapsed / 60))" "$((elapsed % 60))" "$fitted_label")
   elif [[ $task_current =~ ^[0-9]+$ && $task_total =~ ^[0-9]+$ ]] && (( task_total > 0 )); then
     current_bar=$(fedory_progress_bar "$task_current" "$task_total" "$width")
     current_text=$(printf 'CURRENT  [%s] %s/%s  %s' \
@@ -235,10 +240,7 @@ fedory_watch_progress() {
     fedory_render_progress "$progress_current" "$progress_total" \
       "$display_label" "$task_log" "$started_at" "$tick"
   done
-  tick=$((tick + 1))
-  fedory_render_progress "$progress_current" "$progress_total" \
-    "$display_label" "$task_log" "$started_at" "$tick" 1
-  printf '\n'
+  printf '\r\033[2K\033[1A\r\033[2K'
 }
 
 # Always visible on the real terminal, independent of whether the leaf's own
