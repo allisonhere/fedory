@@ -34,6 +34,9 @@ EOF
 chmod +x "$tmp_dir/bin/gum"
 
 cat >"$tmp_dir/install/config/theme-system.sh" <<EOF
+printf '[ 2/10] Installing package files\n'
+sleep 0.06
+printf '[10/10] Complete\n'
 printf 'success ran\n' >"$tmp_dir/success-marker"
 EOF
 
@@ -52,20 +55,39 @@ printf '0\n' >"$FEDORY_PROGRESS_FILE"
 
 source "$ROOT_DIR/install/helpers/logging.sh"
 start_install_log
-run_logged "$FEDORY_INSTALL/config/theme-system.sh"
-run_logged "$FEDORY_INSTALL/config/firewall.sh"
+export FEDORY_PROGRESS_UI=always
+export FEDORY_PROGRESS_INTERVAL=0.02
+export FEDORY_PROGRESS_BAR_WIDTH=10
+run_logged "$FEDORY_INSTALL/config/theme-system.sh" >"$tmp_dir/progress-output"
+run_logged "$FEDORY_INSTALL/config/firewall.sh" >"$tmp_dir/failure-output" 2>&1
 
 assert_file_exists "$tmp_dir/success-marker"
 assert_file_exists "$tmp_dir/failure-marker"
 assert_eq "2" "$(<"$FEDORY_PROGRESS_FILE")" \
   "installer progress advances across successful and failed tasks"
 assert_eq "1" "${#FEDORY_FAILED_LEAVES[@]}" \
-  "failed spinner tasks remain recorded for the final report"
+  "failed progress tasks remain recorded for the final report"
 
 if rg -F "intentional test failure" "$FEDORY_INSTALL_LOG_FILE" >/dev/null; then
-  echo "ok: spinner task output is retained in the install log"
+  echo "ok: live progress task output is retained in the install log"
 else
-  echo "FAIL: spinner task output is missing from the install log"
+  echo "FAIL: live progress task output is missing from the install log"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g' "$tmp_dir/progress-output" \
+  | rg -F 'TOTAL    [#####-----] 01/02' >/dev/null; then
+  echo "ok: installer renders an overall progress bar"
+else
+  echo "FAIL: installer overall progress bar is missing"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g' "$tmp_dir/progress-output" \
+  | rg -F 'CURRENT  [##--------] 2/10  Apply the system theme' >/dev/null; then
+  echo "ok: installer renders parsed current-task progress"
+else
+  echo "FAIL: installer current-task progress bar is missing"
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 

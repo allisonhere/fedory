@@ -101,6 +101,146 @@ fedory_progress_advance() {
   printf '%s\n' "$current"
 }
 
+fedory_progress_bar() {
+  local current=${1:-0} total=${2:-0} width=${3:-24}
+  local filled empty bar
+
+  (( total > 0 )) || total=1
+  (( current < 0 )) && current=0
+  (( current > total )) && current=$total
+  (( width > 0 )) || width=1
+
+  filled=$((current * width / total))
+  empty=$((width - filled))
+  printf -v bar '%*s' "$filled" ''
+  printf '%s' "${bar// /#}"
+  printf -v bar '%*s' "$empty" ''
+  printf '%s' "${bar// /-}"
+}
+
+fedory_activity_bar() {
+  local tick=${1:-0} width=${2:-24} segment=5 position direction bar
+
+  (( width > 0 )) || width=1
+  (( segment > width )) && segment=$width
+  if (( width == segment )); then
+    position=0
+  else
+    direction=$((tick % (2 * (width - segment))))
+    if (( direction > width - segment )); then
+      position=$((2 * (width - segment) - direction))
+    else
+      position=$direction
+    fi
+  fi
+
+  printf -v bar '%*s' "$position" ''
+  printf '%s' "${bar// /-}"
+  printf -v bar '%*s' "$segment" ''
+  printf '%s' "${bar// /#}"
+  printf -v bar '%*s' "$((width - position - segment))" ''
+  printf '%s' "${bar// /-}"
+}
+
+fedory_task_progress() {
+  local task_log=$1 clean current="" total=""
+
+  [[ -s $task_log ]] || return 0
+  while IFS= read -r clean; do
+    clean=${clean//$'\r'/}
+    [[ -n ${clean//[[:space:]]/} ]] || continue
+
+    if [[ $clean =~ \[[[:space:]]*([0-9]+)/([0-9]+)\] ]]; then
+      current=${BASH_REMATCH[1]}
+      total=${BASH_REMATCH[2]}
+    elif [[ $clean =~ (^|[[:space:]])([0-9]+)/([0-9]+)([[:space:]]|$) ]]; then
+      current=${BASH_REMATCH[2]}
+      total=${BASH_REMATCH[3]}
+    fi
+  done < <(tail -n 80 "$task_log" | tr '\r' '\n' \
+    | sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g')
+
+  printf '%s|%s\n' "$current" "$total"
+}
+
+fedory_progress_ui_enabled() {
+  [[ ${FEDORY_PROGRESS_UI:-auto} == "always" ]] || {
+    [[ ${FEDORY_PROGRESS_UI:-auto} != "never" && -t 1 ]]
+  }
+}
+
+fedory_render_progress() {
+  local progress_current=$1 progress_total=$2 display_label=$3 task_log=$4
+  local started_at=$5 tick=$6 final=${7:-0}
+  local width=${FEDORY_PROGRESS_BAR_WIDTH:-24}
+  local columns label_width now elapsed task_current task_total snapshot
+  local current_bar current_text overall_current overall_bar overall_text fitted_label
+
+  snapshot=$(fedory_task_progress "$task_log")
+  IFS='|' read -r task_current task_total <<<"$snapshot"
+  now=$(date +%s)
+  elapsed=$((now - started_at))
+
+  columns=${FEDORY_PROGRESS_COLUMNS:-${COLUMNS:-80}}
+  [[ $columns =~ ^[0-9]+$ ]] || columns=80
+  (( columns < width + 36 )) && width=$((columns - 36))
+  (( width < 8 )) && width=8
+  label_width=$((columns - width - 28))
+  (( label_width < 8 )) && label_width=8
+  if (( ${#display_label} > label_width )); then
+    fitted_label="${display_label:0:label_width-3}..."
+  else
+    fitted_label=$display_label
+  fi
+
+  overall_current=$progress_current
+  if (( ! final && overall_current > 0 )); then
+    overall_current=$((overall_current - 1))
+  fi
+  overall_bar=$(fedory_progress_bar "$overall_current" "$progress_total" "$width")
+  overall_text=$(printf 'TOTAL    [%s] %02d/%02d' \
+    "$overall_bar" "$overall_current" "$progress_total")
+
+  if (( final )); then
+    current_bar=$(fedory_progress_bar 1 1 "$width")
+    current_text=$(printf 'CURRENT  [%s] done  %s' "$current_bar" "$fitted_label")
+  elif [[ $task_current =~ ^[0-9]+$ && $task_total =~ ^[0-9]+$ ]] && (( task_total > 0 )); then
+    current_bar=$(fedory_progress_bar "$task_current" "$task_total" "$width")
+    current_text=$(printf 'CURRENT  [%s] %s/%s  %s' \
+      "$current_bar" "$task_current" "$task_total" "$fitted_label")
+  else
+    current_bar=$(fedory_activity_bar "$tick" "$width")
+    current_text=$(printf 'CURRENT  [%s] %02d:%02d  %s' \
+      "$current_bar" "$((elapsed / 60))" "$((elapsed % 60))" "$fitted_label")
+  fi
+
+  if (( tick > 0 )); then
+    printf '\r\033[1A'
+  fi
+  printf '\r\033[2K\033[38;5;63m%s\033[0m\n' "$overall_text"
+  printf '\r\033[2K\033[38;5;252m%s\033[0m' "$current_text"
+}
+
+fedory_watch_progress() {
+  local runner_pid=$1 progress_current=$2 progress_total=$3
+  local display_label=$4 task_log=$5
+  local interval=${FEDORY_PROGRESS_INTERVAL:-0.2} started_at tick=0
+
+  started_at=$(date +%s)
+  fedory_render_progress "$progress_current" "$progress_total" \
+    "$display_label" "$task_log" "$started_at" "$tick"
+  while kill -0 "$runner_pid" 2>/dev/null; do
+    sleep "$interval"
+    tick=$((tick + 1))
+    fedory_render_progress "$progress_current" "$progress_total" \
+      "$display_label" "$task_log" "$started_at" "$tick"
+  done
+  tick=$((tick + 1))
+  fedory_render_progress "$progress_current" "$progress_total" \
+    "$display_label" "$task_log" "$started_at" "$tick" 1
+  printf '\n'
+}
+
 # Always visible on the real terminal, independent of whether the leaf's own
 # output (dnf/flatpak progress, etc.) is streaming live or being captured
 # into $FEDORY_INSTALL_LOG_FILE below -- a bootstrap run can have 20+ of
@@ -123,7 +263,7 @@ run_logged() {
   local script="$1"
   local exit_code errexit_was_set=0
   local label="${script#"${FEDORY_INSTALL:-}"/}"
-  local display_label progress_current progress_label
+  local display_label progress_current progress_label task_log runner_pid
   label="${label%.sh}"
 
   FEDORY_RUN_LOGGED_STEP=$((FEDORY_RUN_LOGGED_STEP + 1))
@@ -153,23 +293,28 @@ run_logged() {
   if fedory_log_to_stdout; then
     PS4='+ ${BASH_SOURCE[0]##*/}:${LINENO}:${FUNCNAME[0]:-main}: ' \
       "${runner[@]}" -c 'source "$1"' bash "$script" </dev/null 2>&1
-  elif has_gum; then
-    gum spin --spinner dot --spinner.foreground 63 \
-      --title.foreground 252 --title "$progress_label" -- \
-      bash -c '
-        log_file=$1
-        shift
-        PS4="+ ${BASH_SOURCE[0]##*/}:${LINENO}:${FUNCNAME[0]:-main}: " \
-          "$@" </dev/null >>"$log_file" 2>&1
-      ' bash "$FEDORY_INSTALL_LOG_FILE" \
-      "${runner[@]}" -c 'source "$1"' bash "$script"
+  elif fedory_progress_ui_enabled; then
+    task_log=$(mktemp "${FEDORY_PROGRESS_DIR:-${TMPDIR:-/tmp}}/task.XXXXXX")
+    (
+      set -o pipefail
+      PS4='+ ${BASH_SOURCE[0]##*/}:${LINENO}:${FUNCNAME[0]:-main}: ' \
+        "${runner[@]}" -c 'source "$1"' bash "$script" </dev/null 2>&1 \
+        | tee -a "$FEDORY_INSTALL_LOG_FILE" "$task_log" >/dev/null
+    ) &
+    runner_pid=$!
+    fedory_watch_progress "$runner_pid" "$progress_current" \
+      "${FEDORY_PROGRESS_TOTAL:-$progress_current}" "$display_label" "$task_log"
+    wait "$runner_pid"
+    exit_code=$?
+    rm -f "$task_log"
+    (( errexit_was_set )) && set -e
   else
     ui_info "$progress_label"
     PS4='+ ${BASH_SOURCE[0]##*/}:${LINENO}:${FUNCNAME[0]:-main}: ' \
       "${runner[@]}" -c 'source "$1"' bash "$script" </dev/null >>"$FEDORY_INSTALL_LOG_FILE" 2>&1
   fi
 
-  exit_code=$?
+  exit_code=${exit_code:-$?}
   (( errexit_was_set )) && set -e
 
   if (( exit_code == 0 )); then
