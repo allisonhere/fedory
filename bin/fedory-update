@@ -17,9 +17,20 @@
 
 set -e
 
+update_log="${FEDORY_UPDATE_LOG_FILE:-/tmp/fedory-update.log}"
+
 if [[ -z ${FEDORY_UPDATE_LOGGED:-} ]]; then
   script_command=$(printf '%q ' "$0" "$@")
-  exec env FEDORY_UPDATE_LOGGED=1 script -qefc "$script_command" "/tmp/fedory-update.log"
+  if fedory-cmd-present script; then
+    exec env FEDORY_UPDATE_LOGGED=1 script -qefc "$script_command" "$update_log"
+  fi
+
+  # Fedora splits `script` into util-linux-script, which older Fedory
+  # installations did not include. Keep their first repair update usable and
+  # retain a plain-text log; the normal DNF pass installs the missing package.
+  FEDORY_UPDATE_LOGGED=1 "$0" "$@" 2>&1 | tee "$update_log"
+  update_status=${PIPESTATUS[0]}
+  exit "$update_status"
 fi
 
 if ! fedory-update-lock held; then

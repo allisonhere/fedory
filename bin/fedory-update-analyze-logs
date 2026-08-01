@@ -8,7 +8,7 @@
 # `dracut --regenerate-all -f` runs as part of a kernel package's RPM
 # scriptlet during `dnf upgrade`.
 
-update_log="/tmp/fedory-update.log"
+update_log="${FEDORY_UPDATE_LOG_FILE:-/tmp/fedory-update.log}"
 
 if grep -qE 'dracut: (Executing|Creating) initramfs' "$update_log" 2>/dev/null; then
   if grep -qiE 'dracut: FAILED|dracut: Something went wrong' "$update_log" 2>/dev/null; then

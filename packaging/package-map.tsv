@@ -126,6 +126,7 @@ udiskie	udiskie	-	-	-	dnf	1:1 name match
 ufw	-	-	-	-	dropped	Fedora Workstation defaults to firewalld; install/config/firewall.sh was rewritten around firewall-cmd instead (see Phase 1)
 ufw-docker	-	-	-	-	dropped	same rationale as ufw; firewalld's zone/interface assignment covers the same Docker-firewall need without an extra package
 unzip	unzip	-	-	-	dnf	1:1 name match
+util-linux-script	util-linux-script	-	-	-	dnf	Fedora split package providing script, scriptlive, and scriptreplay for update session logging
 usage	-	-	-	cargo install usage-cli (jdx/usage, mise's author)	source-build	not in Fedora repos; same author/ecosystem as mise
 uwsm	uwsm	-	-	-	dnf	Fedora added uwsm to official repos
 whois	whois	-	-	-	dnf	1:1 name match
