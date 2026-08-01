@@ -23,7 +23,7 @@ docker-buildx	-	-	-	same Docker repo as docker	external-repo	ships as docker-bui
 docker-compose	-	-	-	same Docker repo as docker	external-repo	ships as docker-compose-plugin from the same Docker repo
 dosfstools	dosfstools	-	-	-	dnf	1:1 name match
 dotnet-runtime	dotnet-runtime-9.0	-	-	-	dnf	Fedora versions its .NET packages (dotnet-runtime-X.Y); a real bootstrap run showed the bare "dotnet-runtime" meta-package doesn't exist. Not independently confirmed which LTS version is current on every Fedora release -- verify before relying on it
-dua-cli	-	-	-	cargo install dua-cli	source-build	not consistently packaged; cargo install is the reliable fallback
+dua-cli	-	-	-	mise registry wrapper as dua (install/user/source-tools.sh)	source-build	not consistently packaged; installed per-user from upstream releases through mise
 evince	evince	-	-	-	dnf	1:1 name match (GNOME's newer "Papers" may eventually replace it; revisit)
 exfatprogs	exfatprogs	-	-	-	dnf	1:1 name match
 expac	-	-	-	-	dropped	Arch-specific pacman query formatter; dnf repoquery covers the same need natively, no Fedora port needed
@@ -61,8 +61,8 @@ inxi	inxi	-	-	-	dnf	1:1 name match
 jq	jq	-	-	-	dnf	1:1 name match
 kdenlive	kdenlive	-	-	-	dnf	1:1 name match
 kernel-modules-hook	-	-	-	-	dropped	Arch pacman hook for kernel module cleanup; dnf/dracut already handles this on Fedora
-lazydocker	-	-	-	go install github.com/jesseduffield/lazydocker@latest	source-build	not in Fedora repos; upstream ships prebuilt binaries too as an alternative
-lazygit	-	-	-	go install github.com/jesseduffield/lazygit@latest	source-build	a real bootstrap run showed lazygit isn't actually in Fedora's official repos despite this row previously claiming otherwise; go install is upstream's documented fallback, same pattern as lazydocker
+lazydocker	-	-	-	mise registry wrapper (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user from upstream releases through mise
+lazygit	-	-	-	mise registry wrapper (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user from upstream releases through mise
 less	less	-	-	-	dnf	1:1 name match
 libsecret	libsecret	-	-	-	dnf	1:1 name match
 libyaml	libyaml	-	-	-	dnf	1:1 name match
@@ -99,7 +99,7 @@ postgresql-libs	libpq	-	-	-	dnf	Fedora's client library package is named differe
 power-profiles-daemon	power-profiles-daemon	-	-	-	dnf	1:1 name match
 python-gobject	python3-gobject	-	-	-	dnf	Fedora prefixes Python packages with python3-
 python-poetry-core	python3-poetry-core	-	-	-	dnf	see python-gobject naming note
-python-terminaltexteffects	-	-	-	pip install --user terminaltexteffects	source-build	not in Fedora repos; pip install is the practical fallback
+python-terminaltexteffects	-	-	-	mise pipx wrapper for terminaltexteffects (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user in an isolated Python environment through mise
 qemu-user-static-binfmt	qemu-user-static	-	-	-	dnf	Fedora bundles binfmt registration into the main qemu-user-static package
 quickshell-git	-	errornointernet/quickshell	-	build from source (git.outfoxxed.me/quickshell/quickshell)	copr	load-bearing for the entire Phase 6 shell; not in Fedora repos; this COPR is the current best-known one but not independently confirmed maintained -- verify before relying on it in production
 ripgrep	ripgrep	-	-	-	dnf	1:1 name match
@@ -109,25 +109,25 @@ tensaku	-	-	-	investigate github.com/basecamp	dropped	Basecamp first-party AUR-o
 sddm	sddm	-	-	-	dnf	1:1 name match
 slurp	slurp	-	-	-	dnf	1:1 name match
 socat	socat	-	-	-	dnf	1:1 name match
-starship	-	-	-	official install script (starship.rs) or cargo install starship	source-build	a real bootstrap run showed starship isn't actually in Fedora's official repos despite this row previously claiming otherwise; upstream's own install script is the documented path, same pattern as mise
+starship	-	-	-	mise registry wrapper (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user from upstream releases through mise
 sushi	sushi	-	-	-	dnf	1:1 name match
 system-config-printer	system-config-printer	-	-	-	dnf	1:1 name match
 tesseract	tesseract	-	-	-	dnf	1:1 name match
 tesseract-data-eng	tesseract-langpack-eng	-	-	-	dnf	Fedora names language packs langpack-<lang>
 tldr	tldr	-	-	-	dnf	1:1 name match (tealdeer is a faster Rust alternative if tldr proves unpackaged)
-tree-sitter-cli	-	-	-	npm install -g tree-sitter-cli or cargo install tree-sitter-cli	source-build	not in Fedora repos
+tree-sitter-cli	-	-	-	mise registry wrapper (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user from upstream releases through mise
 tmux	tmux	-	-	-	dnf	1:1 name match
 tobi-try	-	-	-	investigate github.com/basecamp (jdx/mise author's "usage"-adjacent tool?)	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
 ttf-ia-writer	-	-	-	manual font install from iAWriter's published font files	source-build	not packaged anywhere; direct font file drop into ~/.local/share/fonts
 ttf-jetbrains-mono-nerd-basic	jetbrains-mono-fonts-all	-	-	-	dnf	Fedora family name is JetBrains Mono; nerd-fonts is installed separately for symbol fallback
 nerd-fonts	nerd-fonts	che/nerd-fonts	-	-	copr	Fedory installs the COPR symbol font package alongside Fedora's JetBrains Mono family
-tzupdate	-	-	-	pip install --user tzupdate	source-build	not in Fedora repos
+tzupdate	-	-	-	mise pipx wrapper (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user in an isolated Python environment through mise
 udiskie	udiskie	-	-	-	dnf	1:1 name match
 ufw	-	-	-	-	dropped	Fedora Workstation defaults to firewalld; install/config/firewall.sh was rewritten around firewall-cmd instead (see Phase 1)
 ufw-docker	-	-	-	-	dropped	same rationale as ufw; firewalld's zone/interface assignment covers the same Docker-firewall need without an extra package
 unzip	unzip	-	-	-	dnf	1:1 name match
 util-linux-script	util-linux-script	-	-	-	dnf	Fedora split package providing script, scriptlive, and scriptreplay for update session logging
-usage	-	-	-	cargo install usage-cli (jdx/usage, mise's author)	source-build	not in Fedora repos; same author/ecosystem as mise
+usage	-	-	-	mise registry wrapper (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user from upstream releases through mise
 uwsm	uwsm	-	-	-	dnf	Fedora added uwsm to official repos
 whois	whois	-	-	-	dnf	1:1 name match
 wireless-regdb	wireless-regdb	-	-	-	dnf	1:1 name match

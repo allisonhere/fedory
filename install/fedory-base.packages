@@ -18,13 +18,11 @@
 #   - aether, cliamp, omacut, omawrite, omarchy-nvim, tensaku, tobi-try:
 #     Basecamp first-party AUR-only tools with no confirmed independent
 #     source repo (see packaging/package-map.tsv) -- not installable yet.
-#   - asdcontrol, dua-cli, lazydocker, lua51, python-terminaltexteffects,
-#     tree-sitter-cli, ttf-ia-writer, tzupdate, usage:
-#     source-build status -- each needs its own from-source install step
-#     (cargo/go/pip/npm install, or a manual font drop). Not yet built here;
-#     fedory-pkg-add skips these with a note if ever passed to it. A real
-#     follow-up worth its own pass -- see packaging/package-map.tsv for the
-#     documented build path for each.
+#   - dua-cli, lazydocker, lazygit, python-terminaltexteffects, starship,
+#     tree-sitter-cli, tzupdate, usage: installed per-user through mise wrappers by
+#     install/user/source-tools.sh.
+#   - asdcontrol, lua51, ttf-ia-writer: hardware-specific, compatibility-only,
+#     or manually licensed assets that still need dedicated setup.
 #   - bluez-utils, expac, kernel-modules-hook, pacman-contrib, ufw,
 #     ufw-docker, yay: dropped status -- Arch-specific tooling with no
 #     Fedora equivalent needed (see packaging/package-map.tsv for why each
@@ -83,7 +81,6 @@ inotify-tools
 inxi
 jq
 kdenlive
-lazygit
 less
 libreoffice-fresh
 libsecret
@@ -122,7 +119,6 @@ rust
 sddm
 slurp
 socat
-starship
 sushi
 system-config-printer
 tesseract

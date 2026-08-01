@@ -7,19 +7,46 @@ default_browser=$(env -u BROWSER xdg-settings get default-web-browser)
 if [[ -z $default_browser ]]; then
   default_browser=$(xdg-mime query default x-scheme-handler/https)
 fi
-browser_exec=$(sed -n 's/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr}/share/applications/$default_browser 2>/dev/null | head -1)
 
-if $browser_exec --help 2>/dev/null | grep -q MOZ_LOG; then
+browser_command=()
+focus_pattern=""
+case $default_browser in
+chromium.desktop | org.chromium.Chromium.desktop)
+  browser_command=(flatpak run org.chromium.Chromium)
+  focus_pattern="^chromium.*$"
+  ;;
+*)
+  browser_exec=$(sed -n 's/^Exec=\([^ ]*\).*/\1/p' \
+    {~/.local,~/.nix-profile,/usr/local,/usr}/share/applications/"$default_browser" 2>/dev/null | head -1)
+  [[ -n $browser_exec ]] || {
+    echo "Could not resolve browser desktop entry: $default_browser" >&2
+    exit 1
+  }
+  browser_command=("$browser_exec")
+  focus_pattern="^$(basename "$browser_exec" -stable).*$"
+  ;;
+esac
+
+if [[ $default_browser == firefox* ]]; then
   private_flag="--private-window"
-elif [[ $browser_exec =~ edge ]]; then
+elif [[ $default_browser == microsoft-edge* ]]; then
   private_flag="--inprivate"
 else
   private_flag="--incognito"
 fi
 
+browser_args=()
+for argument in "$@"; do
+  if [[ $argument == "--private" ]]; then
+    browser_args+=("$private_flag")
+  else
+    browser_args+=("$argument")
+  fi
+done
+
 systemd-run --user --quiet --collect --unit="fedory-browser-$(date +%s%N)" \
   --property=StandardOutput=null --property=StandardError=null \
-  uwsm app -- "$browser_exec" "${@/--private/$private_flag}"
+  uwsm app -- "${browser_command[@]}" "${browser_args[@]}"
 
 url=""
 for argument in "$@"; do
@@ -30,5 +57,5 @@ for argument in "$@"; do
 done
 
 if [[ -n $url && -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
-  fedory-hyprland-focus-app "^$(basename "$browser_exec" -stable).*$" || true
+  fedory-hyprland-focus-app "$focus_pattern" || true
 fi

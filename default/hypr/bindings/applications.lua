@@ -12,12 +12,13 @@ if o.preinstalled_bindings_enabled() then
   -- Bindings for preinstalled Fedory applications, TUIs, and web apps.
   o.bind("SUPER + ALT + RETURN", "Tmux", { fedory = "terminal-tmux" })
   o.bind("SUPER + SHIFT + M", "Music", { fedory = "spotify" })
-  o.bind("SUPER + SHIFT + ALT + M", "Music TUI", { tui = "cliamp", focus = true })
   o.bind("SUPER + SHIFT + D", "Docker", { tui = "lazydocker" })
   o.bind("SUPER + SHIFT + G", "Signal", { fedory = "signal" })
-  o.bind("SUPER + SHIFT + O", "Obsidian", { launch = "obsidian", focus = "^obsidian$" })
-  o.bind("SUPER + SHIFT + W", "Omawrite", { launch = "omawrite" })
+  o.bind("SUPER + SHIFT + O", "Obsidian", { fedory = "obsidian" })
   o.bind("SUPER + SHIFT + SLASH", "Passwords", { fedory = "1password" })
+
+  -- Upstream's cliamp and omawrite bindings are intentionally omitted until
+  -- those Basecamp tools have a confirmed source distribution for Fedora.
 
   o.bind("SUPER + SHIFT + A", "ChatGPT", { webapp = "https://chatgpt.com" })
   o.bind("SUPER + SHIFT + ALT + A", "Grok", { webapp = "https://grok.com" })

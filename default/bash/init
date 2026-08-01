@@ -1,0 +1,14 @@
+# Based on basecamp/omarchy default/bash/init. Fedory keeps only integrations
+# provided by its default package and per-user tool set.
+
+if fedory-cmd-present mise; then
+  eval "$(mise activate bash)"
+fi
+
+if [[ $- == *i* ]] && [[ ${TERM:-} != "dumb" ]] && fedory-cmd-present starship; then
+  eval "$(starship init bash)"
+fi
+
+if fedory-cmd-present zoxide; then
+  eval "$(zoxide init bash)"
+fi

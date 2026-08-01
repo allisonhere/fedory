@@ -18,8 +18,6 @@ o.window({
   class = "(sublime_text|DesktopEditors|org.gnome.Nautilus)",
   title = "^(Open.*Files?|Open [F|f]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[C|c]hoose.*)",
 }, { tag = "+floating-window" })
-o.window("dev.tensaku.Tensaku", { float = true })
-o.window("dev.tensaku.Tensaku", { center = true })
 o.window("org.gnome.Calculator", { float = true })
 
 -- Fullscreen screensaver.

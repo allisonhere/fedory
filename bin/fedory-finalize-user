@@ -116,7 +116,7 @@ done
 source "$FEDORY_INSTALL/user/all.sh"
 
 fedory-refresh-applications
-env -u BROWSER xdg-settings set default-web-browser chromium.desktop || true
+env -u BROWSER xdg-settings set default-web-browser org.chromium.Chromium.desktop || true
 xdg-mime default org.mozilla.Thunderbird.desktop x-scheme-handler/mailto || true
 
 if (( first_install )); then

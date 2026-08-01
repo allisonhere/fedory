@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# fedory:summary=Launch Obsidian
+
+# Obsidian is a base Flatpak on Fedora rather than a native command.
+exec setsid flatpak run md.obsidian.Obsidian

@@ -18,7 +18,7 @@ set_fallback_default_browser() {
   fi
 
   if command -v chromium >/dev/null 2>&1 || flatpak info org.chromium.Chromium >/dev/null 2>&1; then
-    env -u BROWSER xdg-settings set default-web-browser chromium.desktop || true
+    env -u BROWSER xdg-settings set default-web-browser org.chromium.Chromium.desktop || true
   fi
 }
 
