@@ -17,6 +17,12 @@ chmod +x "$fake_bin/fedory-notification-send"
 export HOME="$fake_home"
 export PATH="$fake_bin:$ROOT_DIR/bin:$PATH"
 
+# Existing users have already seen this invitation, so the update migration
+# records it before first-run retries on their next login.
+bash -euo pipefail "$ROOT_DIR/migrations/1785591425.sh" >/dev/null
+assert_file_exists "$fake_home/.local/state/fedory/done/learn-keybindings-invitation"
+rm "$fake_home/.local/state/fedory/done/learn-keybindings-invitation"
+
 bash "$ROOT_DIR/install/user/first-run/welcome.sh"
 bash "$ROOT_DIR/install/user/first-run/welcome.sh"
 
