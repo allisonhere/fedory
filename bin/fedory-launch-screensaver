@@ -61,13 +61,13 @@ for m in $(hyprctl monitors -j | jq -r '.[] | .name'); do
     hypr_exec alacritty --class=org.fedory.screensaver --config-file "$FEDORY_PATH/default/alacritty/screensaver.toml" -e fedory-screensaver
     ;;
   *ghostty*)
-    hypr_exec ghostty --class=org.fedory.screensaver --config-file="$FEDORY_PATH/default/ghostty/screensaver" --font-size=18 -e fedory-screensaver
+    hypr_exec ghostty --class=org.fedory.screensaver --config-file="$FEDORY_PATH/default/ghostty/screensaver" --font-size=14 -e fedory-screensaver
     ;;
   *foot*)
     hypr_exec foot --app-id=org.fedory.screensaver --config="$FEDORY_PATH/default/foot/screensaver.ini" -e fedory-screensaver
     ;;
   *kitty*)
-    hypr_exec kitty --class=org.fedory.screensaver --override font_size=18 --override window_padding_width=0 -e fedory-screensaver
+    hypr_exec kitty --class=org.fedory.screensaver --override font_size=14 --override window_padding_width=0 -e fedory-screensaver
     ;;
   esac
 
