@@ -84,6 +84,17 @@ fedory_task_label() {
   esac
 }
 
+fedory_task_notice() {
+  local script=$1 relative
+  relative=${script#"${FEDORY_INSTALL:-}"/}
+
+  case $relative in
+    config/base-packages.sh)
+      echo "This is the longest install step and may take several minutes on a fresh system. Keep this terminal open."
+      ;;
+  esac
+}
+
 fedory_progress_advance() {
   local current=$FEDORY_RUN_LOGGED_STEP
 
@@ -143,7 +154,7 @@ fedory_activity_bar() {
 }
 
 fedory_task_progress() {
-  local task_log=$1 clean current="" total=""
+  local task_log=$1 clean rest current="" total="" activity=""
 
   [[ -s $task_log ]] || return 0
   while IFS= read -r clean; do
@@ -153,14 +164,25 @@ fedory_task_progress() {
     if [[ $clean =~ \[[[:space:]]*([0-9]+)/([0-9]+)\] ]]; then
       current=${BASH_REMATCH[1]}
       total=${BASH_REMATCH[2]}
+      rest=${clean#*]}
+      rest=${rest#"${rest%%[![:space:]]*}"}
+      rest=${rest%%100%*}
+      rest=${rest%"${rest##*[![:space:]]}"}
+      if [[ -n $rest ]]; then
+        activity=${rest//|/ }
+      fi
     elif [[ $clean =~ (^|[[:space:]])([0-9]+)/([0-9]+)([[:space:]]|$) ]]; then
       current=${BASH_REMATCH[2]}
       total=${BASH_REMATCH[3]}
+    elif [[ $clean =~ ^[[:space:]]*(Installing|Downloading|Running[[:space:]]transaction|Preparing[[:space:]]transaction|Verifying)([[:space:]]|$) ]]; then
+      activity=${clean#"${clean%%[![:space:]]*}"}
     fi
   done < <(tail -n 80 "$task_log" | tr '\r' '\n' \
     | sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g')
 
-  printf '%s|%s\n' "$current" "$total"
+  activity=${activity//$'\t'/ }
+  activity=${activity//|/ }
+  printf '%s|%s|%s\n' "$current" "$total" "$activity"
 }
 
 fedory_progress_ui_enabled() {
@@ -174,10 +196,12 @@ fedory_render_progress() {
   local started_at=$5 tick=$6
   local width=${FEDORY_PROGRESS_BAR_WIDTH:-24}
   local columns label_width now elapsed task_current task_total snapshot
+  local task_activity show_activity=0 activity_width fitted_activity activity_text
   local current_bar current_text overall_current overall_bar overall_text fitted_label
 
   snapshot=$(fedory_task_progress "$task_log")
-  IFS='|' read -r task_current task_total <<<"$snapshot"
+  IFS='|' read -r task_current task_total task_activity <<<"$snapshot"
+  [[ $display_label == "Install core desktop packages" ]] && show_activity=1
   now=$(date +%s)
   elapsed=$((now - started_at))
 
@@ -219,11 +243,31 @@ fedory_render_progress() {
       "$current_bar" "$((elapsed / 60))" "$((elapsed % 60))" "$fitted_label")
   fi
 
+  if (( show_activity )); then
+    [[ -n $task_activity ]] || task_activity="Resolving package transaction..."
+    activity_width=$((columns - 23))
+    (( activity_width < 8 )) && activity_width=8
+    if (( ${#task_activity} > activity_width )); then
+      fitted_activity="${task_activity:0:activity_width-3}..."
+    else
+      fitted_activity=$task_activity
+    fi
+    activity_text=$(printf 'PACKAGE  %-*s  %02d:%02d' \
+      "$activity_width" "$fitted_activity" "$((elapsed / 60))" "$((elapsed % 60))")
+  fi
+
   if (( tick > 0 )); then
-    printf '\r\033[1A'
+    if (( show_activity )); then
+      printf '\r\033[2A'
+    else
+      printf '\r\033[1A'
+    fi
   fi
   printf '\r\033[2K\033[38;5;63m%s\033[0m\n' "$overall_text"
   printf '\r\033[2K\033[38;5;252m%s\033[0m' "$current_text"
+  if (( show_activity )); then
+    printf '\n\r\033[2K\033[38;5;245m%s\033[0m' "$activity_text"
+  fi
 }
 
 fedory_watch_progress() {
@@ -240,7 +284,11 @@ fedory_watch_progress() {
     fedory_render_progress "$progress_current" "$progress_total" \
       "$display_label" "$task_log" "$started_at" "$tick"
   done
-  printf '\r\033[2K\033[1A\r\033[2K'
+  if [[ $display_label == "Install core desktop packages" ]]; then
+    printf '\r\033[2K\033[1A\r\033[2K\033[1A\r\033[2K'
+  else
+    printf '\r\033[2K\033[1A\r\033[2K'
+  fi
 }
 
 # Always visible on the real terminal, independent of whether the leaf's own
@@ -265,7 +313,7 @@ run_logged() {
   local script="$1"
   local exit_code errexit_was_set=0
   local label="${script#"${FEDORY_INSTALL:-}"/}"
-  local display_label progress_current progress_label task_log runner_pid
+  local display_label progress_current progress_label task_log runner_pid task_notice
   label="${label%.sh}"
 
   FEDORY_RUN_LOGGED_STEP=$((FEDORY_RUN_LOGGED_STEP + 1))
@@ -279,6 +327,8 @@ run_logged() {
   fi
 
   fedory_log_line "[$(date '+%Y-%m-%d %H:%M:%S')] Starting: $script"
+  task_notice=$(fedory_task_notice "$script")
+  [[ -z $task_notice ]] || ui_warn "$task_notice"
 
   case $- in
     *e*)

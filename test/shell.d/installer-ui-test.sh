@@ -27,6 +27,22 @@ if [[ $mode == "spin" ]]; then
         ;;
     esac
   done
+elif [[ $mode == "style" ]]; then
+  while (($#)); do
+    if [[ $1 == "--" ]]; then
+      shift
+      printf '%s\n' "$*"
+      exit 0
+    fi
+    case $1 in
+      --foreground)
+        shift 2
+        ;;
+      *)
+        shift
+        ;;
+    esac
+  done
 fi
 
 exit 0
@@ -65,6 +81,25 @@ printf '[10/10] Complete\n' >"$tmp_dir/completed-task.log"
 fedory_render_progress 1 2 "Apply the system theme" \
   "$tmp_dir/completed-task.log" "$(date +%s)" 3 >"$tmp_dir/finishing-output"
 
+cat >"$tmp_dir/package-task.log" <<'EOF'
+Downloading Packages:
+[121/443] foot-1.22.3-1.fc44.x86_64        100% | 2.1 MiB/s | 1.2 MiB | 00m01s
+Running transaction
+[271/443] Installing quickshell-git-0.2.1-1.fc44.x86_64 100% | 4.0 KiB/s | 8.0 KiB | 00m00s
+EOF
+package_snapshot=$(fedory_task_progress "$tmp_dir/package-task.log")
+assert_eq "271|443|Installing quickshell-git-0.2.1-1.fc44.x86_64" \
+  "$package_snapshot" "installer extracts the current DNF package"
+
+printf '[34/115] Checking installed package: foot\n' >"$tmp_dir/package-task.log"
+verification_snapshot=$(fedory_task_progress "$tmp_dir/package-task.log")
+assert_eq "34|115|Checking installed package: foot" \
+  "$verification_snapshot" "installer reports post-DNF package verification"
+
+FEDORY_PROGRESS_COLUMNS=80 fedory_render_progress 1 2 \
+  "Install core desktop packages" "$tmp_dir/package-task.log" \
+  "$(date +%s)" 0 >"$tmp_dir/package-progress-output"
+
 assert_file_exists "$tmp_dir/success-marker"
 assert_file_exists "$tmp_dir/failure-marker"
 assert_eq "2" "$(<"$FEDORY_PROGRESS_FILE")" \
@@ -85,6 +120,22 @@ if sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g' "$tmp_dir/progress-output" \
 else
   echo "FAIL: installer overall progress bar is missing"
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g' "$tmp_dir/package-progress-output" \
+  | rg -F 'PACKAGE  Checking installed package: foot' >/dev/null; then
+  echo "ok: core package progress renders a stable package activity line"
+else
+  echo "FAIL: core package progress activity line is missing"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g' "$tmp_dir/progress-output" \
+  | rg -F 'PACKAGE  ' >/dev/null; then
+  echo "FAIL: non-package tasks unexpectedly render a package activity line"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+else
+  echo "ok: non-package tasks retain the two-line progress display"
 fi
 
 if sed $'s/\033\\[[0-9;?]*[[:alpha:]]//g' "$tmp_dir/finishing-output" \
@@ -109,6 +160,13 @@ assert_eq "Install core desktop packages" \
 assert_eq "Hardware / Nvidia" \
   "$(fedory_task_label "$FEDORY_INSTALL/hardware/nvidia.sh")" \
   "hardware scripts receive a readable category label"
+
+cat >"$tmp_dir/install/config/base-packages.sh" <<'EOF'
+sleep 0.03
+EOF
+run_logged "$FEDORY_INSTALL/config/base-packages.sh" >"$tmp_dir/package-notice-output" 2>&1
+assert_eq "1" "$(rg -c 'This is the longest install step' "$tmp_dir/package-notice-output")" \
+  "core package warning appears once before progress"
 
 FEDORY_RUN_LOGGED_STEP=7
 chmod 0400 "$FEDORY_PROGRESS_FILE"
