@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# fedory:summary=Display the Fedory logo in the terminal using green color.
+# fedory:summary=Display the Fedory ASCII logo in the terminal
 
 clear
-echo -e "\033[32m"
-cat <$FEDORY_PATH/logo.txt
-echo -e "\033[0m"
+printf '\033[1;38;5;63m'
+cat <"$FEDORY_PATH/logo.txt"
+printf '\033[0m\n'
 echo

@@ -36,34 +36,25 @@ ansi() {
 banner() {
   if has_gum; then
     gum style --margin "1 0 0 0" --foreground 63 --bold \
-      '  ______        __                 '
+      '    ______ __________  ____  ______  __'
     gum style --foreground 63 --bold \
-      ' |  ____|      / _|                '
+      '   / ____// ____/ __ \/ __ \/ __ \ \/ /'
     gum style --foreground 63 --bold \
-      ' | |__ ___  __| |_ ___  _ __ _   _ '
+      '  / /_   / __/ / / / / / / /_/ /\  /'
     gum style --foreground 63 --bold \
-      ' |  __/ _ \/ _` |/ _ \| "__| | | |'
+      ' / __/  / /___/ /_/ / /_/ / _, _/ / /'
     gum style --foreground 63 --bold \
-      ' | | |  __/ (_| | (_) | |  | |_| |'
-    gum style --foreground 63 --bold \
-      ' |_|  \___|\__,_|\___/|_|   \__, |'
-    gum style --foreground 63 --bold \
-      '                              __/ |'
-    gum style --foreground 63 --bold \
-      '                             |___/ '
+      '/_/    /_____/_____/\____/_/ |_| /_/'
     gum style --margin "1 0" --faint \
-      "A focused Hyprland desktop, built for Fedora."
+      "            FEDORA. REFINED."
   else
     echo
-    ansi '1;38;5;63' '  ______        __                 '
-    ansi '1;38;5;63' ' |  ____|      / _|                '
-    ansi '1;38;5;63' ' | |__ ___  __| |_ ___  _ __ _   _ '
-    ansi '1;38;5;63' ' |  __/ _ \/ _` |/ _ \| "__| | | |'
-    ansi '1;38;5;63' ' | | |  __/ (_| | (_) | |  | |_| |'
-    ansi '1;38;5;63' ' |_|  \___|\__,_|\___/|_|   \__, |'
-    ansi '1;38;5;63' '                              __/ |'
-    ansi '1;38;5;63' '                             |___/ '
-    ansi '2' '  A focused Hyprland desktop, built for Fedora.'
+    ansi '1;38;5;63' '    ______ __________  ____  ______  __'
+    ansi '1;38;5;63' '   / ____// ____/ __ \/ __ \/ __ \ \/ /'
+    ansi '1;38;5;63' '  / /_   / __/ / / / / / / /_/ /\  /'
+    ansi '1;38;5;63' ' / __/  / /___/ /_/ / /_/ / _, _/ / /'
+    ansi '1;38;5;63' '/_/    /_____/_____/\____/_/ |_| /_/'
+    ansi '2' '            FEDORA. REFINED.'
     echo
   fi
 }
