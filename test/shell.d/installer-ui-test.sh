@@ -180,4 +180,13 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
+if rg -F -- '-f $HOME/.config/fedory/branding/screensaver.txt' "$ROOT_DIR/bootstrap.sh" >/dev/null &&
+  rg -F 'setup_mode=(--upgrade)' "$ROOT_DIR/bootstrap.sh" >/dev/null &&
+  rg -F 'fedory-migrate || had_issues=1' "$ROOT_DIR/bootstrap.sh" >/dev/null; then
+  echo "ok: bootstrap reruns apply migrations to existing user state"
+else
+  echo "FAIL: bootstrap reruns can skip migrations for existing user state"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 finish

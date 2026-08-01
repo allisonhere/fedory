@@ -204,6 +204,9 @@ confirm() {
 # consumed from the pipe, so reassigning stdin inside main is safe: there's
 # nothing left on fd 0 that bash still needs for parsing.
 main() {
+  local existing_install=0
+  local -a setup_mode finalize_mode
+
   if [[ ! -t 0 ]]; then
     if [[ -r /dev/tty ]]; then
       exec </dev/tty
@@ -241,6 +244,15 @@ main() {
   if ! confirm "Install Fedory on $(hostname)?"; then
     echo "Cancelled."
     exit 0
+  fi
+
+  # A rerun must apply migrations instead of marking every newly fetched
+  # migration complete as though this were a fresh user. The branding file
+  # also catches installs whose first finalization was interrupted before its
+  # completion marker was written.
+  if [[ -f $HOME/.local/state/fedory/done/finalize-user || \
+    -f $HOME/.config/fedory/branding/screensaver.txt ]]; then
+    existing_install=1
   fi
 
   # --- step 1: bootstrap dependencies ---------------------------------------
@@ -305,19 +317,30 @@ main() {
   # needs follow-up, so step 5 (per-user setup) still gets a chance to run
   # even when step 4 wasn't 100% clean.
   had_issues=0
+  setup_mode=(--first-install)
+  finalize_mode=(--first-install)
+  if (( existing_install )); then
+    setup_mode=(--upgrade)
+    finalize_mode=(--force)
+  fi
+
   phase "Build the desktop" \
     "Packages, services, hardware support, login, and system integration."
   sudo env FEDORY_PATH="$FEDORY_PATH" PATH="$FEDORY_PATH/bin:$PATH" \
     FEDORY_PROGRESS_TOTAL="$FEDORY_PROGRESS_TOTAL" \
     FEDORY_PROGRESS_FILE="$FEDORY_PROGRESS_FILE" \
-    fedory-setup-system --install-user "$USER" --first-install \
+    fedory-setup-system --install-user "$USER" "${setup_mode[@]}" \
     || had_issues=1
 
   # --- step 5: per-user finalization -----------------------------------------
   phase "Configure your workspace" \
     "Seed user defaults, applications, theme, and development integrations."
-  FEDORY_SETUP_CONTEXT=bootstrap fedory-finalize-user --first-install \
+  FEDORY_SETUP_CONTEXT=bootstrap fedory-finalize-user "${finalize_mode[@]}" \
     || had_issues=1
+
+  if (( existing_install )); then
+    fedory-migrate || had_issues=1
+  fi
 
   # --- step 6: done -----------------------------------------------------------
   phase "Installation complete"
