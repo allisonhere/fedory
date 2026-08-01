@@ -34,16 +34,19 @@ done_file=$(mktemp)
 rm -f "$done_file"
 trap 'rm -f "$selection_file" "$done_file"' EXIT
 
-payload=$(perl -MEncode=decode -MJSON::PP=encode_json -e '
-  my $payload = {
-    mode => "input",
-    prompt => decode("UTF-8", $ARGV[0]),
-    selectionFile => decode("UTF-8", $ARGV[1]),
-    doneFile => decode("UTF-8", $ARGV[2])
-  };
-  $payload->{width} = int($ARGV[3]) if length($ARGV[3] // "");
-  print encode_json($payload)
-' "$prompt" "$selection_file" "$done_file" "$menu_width")
+payload=$(jq -cn \
+  --arg mode "input" \
+  --arg prompt "$prompt" \
+  --arg selectionFile "$selection_file" \
+  --arg doneFile "$done_file" \
+  --arg width "$menu_width" \
+  '{
+    mode: $mode,
+    prompt: $prompt,
+    selectionFile: $selectionFile,
+    doneFile: $doneFile
+  }
+  + (if $width == "" then {} else {width: ($width | tonumber)} end)')
 
 fedory-shell shell summon fedory.menu "$payload" >/dev/null
 

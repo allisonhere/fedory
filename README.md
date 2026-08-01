@@ -63,15 +63,13 @@ Ethereal, Everforest, Flexoki Light, Gruvbox, Hackerman, Kanagawa, Last
 Horizon, Lumon, Lupine, Matte Black, Miasma, Nord, Osaka Jade, Retro '82,
 Ristretto, Rosé Pine, Solitude, Tokyo Night, Vantablack, and White.
 
-A preview image grid isn't here yet — upstream's theme screenshots are tied
-up in a wallpaper-licensing question this port hasn't resolved (see
-[`themes/README.md`](themes/README.md)), and new previews need to be shot
-against Fedory's own shell once that exists. Every theme works today
-without one; only the wallpaper cycling and this grid are pending.
+Fedory ships five pieces of original wallpaper artwork shared across the 22
+palettes. The Theme and Background entries in the desktop menu use those
+assets for visual selection immediately after a clean installation.
 
 ## Documentation
 
-- [`docs/file-layout.md`](docs/file-layout.md) — where everything lives, and how `config/`/`default/`/`etc/` map onto your system
+- [`docs/file-layout.md`](docs/file-layout.md) — where everything lives, and how repository assets map onto your system
 - [`docs/theming.md`](docs/theming.md) — how the theme + template system works
 - [`docs/migrations.md`](docs/migrations.md) — how `fedory update` keeps your config current
 - [`docs/scope.md`](docs/scope.md) — how Fedory's install model differs from upstream Omarchy's, and why

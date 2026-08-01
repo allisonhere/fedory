@@ -143,8 +143,10 @@ flock 9
 rm -rf "$NEXT_THEME_PATH"
 mkdir -p "$NEXT_THEME_PATH"
 
-# Copy official theme first, then overlay user customizations on top
-cp -r "$FEDORY_THEMES_PATH/$THEME_NAME/"* "$NEXT_THEME_PATH/" 2>/dev/null
+# Copy official theme first, then overlay user customizations on top. Shipped
+# backgrounds are linked to the shared original-art library in the source
+# tree, so dereference those links into the self-contained active theme.
+cp -rL "$FEDORY_THEMES_PATH/$THEME_NAME/"* "$NEXT_THEME_PATH/" 2>/dev/null
 cp -r "$USER_THEMES_PATH/$THEME_NAME/"* "$NEXT_THEME_PATH/" 2>/dev/null
 
 # Generate colors.toml from alacritty.toml if theme is missing colors.toml

@@ -38,8 +38,22 @@ for dir in "$ROOT_DIR"/themes/*/; do
     echo "$bad_hex"
     ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
   fi
+
+  background=$(find -L "$dir/backgrounds" -maxdepth 1 -type f \
+    \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+    -print -quit 2>/dev/null)
+  if [[ -n $background ]]; then
+    echo "ok: $theme has a usable background"
+  else
+    echo "FAIL: $theme has no usable background"
+    ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+  fi
 done
 
 assert_eq 22 "$theme_count" "22 themes are ported"
+
+wallpaper_count=$(find "$ROOT_DIR/default/wallpapers" -maxdepth 1 -type f \
+  -name '*.png' | wc -l)
+assert_eq 5 "$wallpaper_count" "five original wallpaper families are shipped"
 
 finish

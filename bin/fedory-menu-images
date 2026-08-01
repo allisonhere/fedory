@@ -223,6 +223,12 @@ if [[ $cache_only == true || $prepare_only == true ]]; then
   exit 0
 fi
 
+if [[ -z $rows ]]; then
+  fedory-notification-send "No images found" \
+    "Add an image to one of the selected background folders." || true
+  exit 1
+fi
+
 # Image rows can contain newlines and tabs, which don't survive positional
 # shell IPC arguments. Base64-encode for transit; the ImagePicker plugin
 # Qt.atob()s on the other side.

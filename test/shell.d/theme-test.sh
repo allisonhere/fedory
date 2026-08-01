@@ -10,6 +10,22 @@ source "$(dirname "${BASH_SOURCE[0]}")/base-test.sh"
 export FEDORY_PATH="$ROOT_DIR"
 export PATH="$ROOT_DIR/bin:$PATH"
 
+if rg -F 'cp -rL "$FEDORY_THEMES_PATH/$THEME_NAME/"*' \
+  "$ROOT_DIR/bin/fedory-theme-set" >/dev/null; then
+  echo "ok: theme activation carries linked first-party backgrounds"
+else
+  echo "FAIL: theme activation does not dereference shared backgrounds"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if rg -F 'fedory-notification-send "No images found"' \
+  "$ROOT_DIR/bin/fedory-menu-images" >/dev/null; then
+  echo "ok: empty image selectors report why they cannot open"
+else
+  echo "FAIL: empty image selectors still fail silently"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 run_templater_for() {
   local theme="$1"
   local fake_home
