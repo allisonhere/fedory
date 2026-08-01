@@ -12,8 +12,28 @@ export PATH="$ROOT_DIR/bin:$PATH"
 
 fake_fedory_path=$(mktemp -d)
 fake_home=$(mktemp -d)
-cleanup() { rm -rf "$fake_fedory_path" "$fake_home"; }
+fake_bin=$(mktemp -d)
+cleanup() { rm -rf "$fake_fedory_path" "$fake_home" "$fake_bin"; }
 trap cleanup EXIT
+
+# Simulate an idle PackageKit daemon. The migration guard must not treat the
+# daemon's presence as an active transaction; PackageKit activity is detected
+# through RPM's database lock instead. Fake sleep keeps a regression fast
+# rather than making the test wait through the full timeout.
+cat > "$fake_bin/fuser" <<'EOF'
+#!/bin/bash
+exit 1
+EOF
+cat > "$fake_bin/pgrep" <<'EOF'
+#!/bin/bash
+[[ $* == *"packagekitd"* ]]
+EOF
+cat > "$fake_bin/sleep" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+chmod +x "$fake_bin/fuser" "$fake_bin/pgrep" "$fake_bin/sleep"
+export PATH="$fake_bin:$PATH"
 
 mkdir -p "$fake_fedory_path/migrations"
 marker_file="$fake_home/migration-ran"

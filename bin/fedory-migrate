@@ -79,7 +79,10 @@ wait_for_package_transaction() {
     if command -v fuser >/dev/null 2>&1 && [[ -e $rpm_lock ]]; then
       fuser "$rpm_lock" >/dev/null 2>&1 && return 0
     fi
-    pgrep -x 'dnf|dnf-3|dnf5|packagekitd|rpm' >/dev/null 2>&1
+    # packagekitd remains alive while idle, so its process alone does not
+    # indicate a package transaction. An active PackageKit transaction still
+    # holds RPM's database lock and is detected by fuser above.
+    pgrep -x 'dnf|dnf-3|dnf5|rpm' >/dev/null 2>&1
   }
 
   transaction_active || return 0
