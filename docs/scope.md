@@ -23,7 +23,7 @@ most of its life, before the ISO split:
   bootstrap/finalize time instead of at `useradd -m` time:
   `install/user/config-seed.sh` seeds `~/.config` from `config/`
   (non-destructive), and `fedory-refresh-applications` seeds
-  `~/.local/share/applications` from `default/applications` -- both run as
+  `~/.local/share/applications` from `applications/*.desktop` -- both run as
   part of `fedory-finalize-user`. `fedory-reinstall-configs` is the
   explicit, destructive "reset everything" path `/etc/skel` gives upstream
   for free on a fresh `useradd`.

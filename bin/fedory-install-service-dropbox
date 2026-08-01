@@ -14,5 +14,5 @@ echo "Adding Dropbox to the bar..."
 fedory-plugin-enable fedory.dropbox
 
 echo "Starting Dropbox (first run downloads the daemon itself)..."
-uwsm-app -- dropbox &>/dev/null &
+uwsm app -- dropbox &>/dev/null &
 echo "See Dropbox icon behind  hover tray in top right and right-click for setup."

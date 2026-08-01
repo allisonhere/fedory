@@ -16,7 +16,7 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
-for dir in bin install packaging migrations config default etc applications themes shell test; do
+for dir in bin install packaging migrations config default applications themes shell test; do
   assert_file_exists "$ROOT_DIR/$dir"
 done
 

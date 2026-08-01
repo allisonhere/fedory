@@ -52,3 +52,19 @@ ui_success() {
     echo "$*"
   fi
 }
+
+ui_task_success() {
+  if has_gum; then
+    gum style --foreground 42 --bold -- "  DONE  $*"
+  else
+    echo "  DONE  $*"
+  fi
+}
+
+ui_task_failure() {
+  if has_gum; then
+    gum style --foreground 196 --bold -- "  FAIL  $*" >&2
+  else
+    echo "  FAIL  $*" >&2
+  fi
+}

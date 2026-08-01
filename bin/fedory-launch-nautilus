@@ -2,4 +2,4 @@
 
 # fedory:summary=Launch Files
 
-exec setsid uwsm-app -- nautilus --new-window
+exec setsid uwsm app -- nautilus --new-window

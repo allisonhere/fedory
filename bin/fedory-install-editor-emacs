@@ -17,4 +17,4 @@ fedory-pkg-add emacs
 echo "Note: Fedory-theme/font integration for Emacs (upstream's omarchy-emacs"
 echo "config) isn't ported yet -- this is stock Emacs."
 
-setsid uwsm-app -- emacs
+setsid uwsm app -- emacs

@@ -8,6 +8,16 @@
 
 source "$FEDORY_INSTALL/helpers/ui.sh"
 
+# Fedora 44 Workstation uses tuned-ppd as its Power Profiles D-Bus provider,
+# while Fedory's runtime commands use powerprofilesctl from
+# power-profiles-daemon. The two providers conflict. Remove only the shim and
+# preserve tuned's dependencies; a normal dnf remove would autoremove tuned,
+# kernel-tools, and other still-useful packages with it.
+if rpm -q tuned-ppd &>/dev/null; then
+  ui_info "Replacing tuned-ppd with power-profiles-daemon"
+  dnf remove -y --no-autoremove tuned-ppd
+fi
+
 mapfile -t base_packages < <(grep -v '^#' "$FEDORY_PATH/install/fedory-base.packages" | grep -v '^$')
 ui_info "Installing ${#base_packages[@]} core Fedory packages (this takes a while on first run)..."
 fedory-pkg-add "${base_packages[@]}"

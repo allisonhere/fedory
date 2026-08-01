@@ -3,4 +3,4 @@
 # fedory:summary=Launch a TUI command in the default terminal with Fedory styling
 # fedory:args=<command> [args...]
 
-exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.fedory.$(basename $1) -e "$1" "${@:2}"
+exec setsid uwsm app -- xdg-terminal-exec --app-id=org.fedory.$(basename $1) -e "$1" "${@:2}"

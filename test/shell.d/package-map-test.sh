@@ -75,4 +75,18 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
+map_field() {
+  local package="$1"
+  local column="$2"
+  awk -F'\t' -v package="$package" -v column="$column" '
+    NR == 1 { for (i = 1; i <= NF; i++) columns[$i] = i; next }
+    $1 == package { print $(columns[column]); exit }
+  ' "$MAP"
+}
+
+assert_eq "nett00n/hyprland" "$(map_field hyprland copr)" "Hyprland uses the Fedora 44-compatible COPR"
+assert_eq "nett00n/hyprland" "$(map_field xdg-desktop-portal-hyprland copr)" "Hyprland portal uses the matching COPR"
+assert_eq "jetbrains-mono-fonts-all" "$(map_field ttf-jetbrains-mono-nerd-basic fedora_pkg)" "JetBrains alias resolves to Fedora's complete font package"
+assert_eq "che/nerd-fonts" "$(map_field nerd-fonts copr)" "Nerd Font symbols enable their COPR source"
+
 finish

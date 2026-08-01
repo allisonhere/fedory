@@ -4,10 +4,11 @@
 
 # Copy .desktop declarations
 mkdir -p ~/.local/share/applications
-cp "$FEDORY_PATH"/applications/*.desktop ~/.local/share/applications/
-
-if fedory-cmd-present alacritty; then
-  cp "$FEDORY_PATH/default/alacritty/Alacritty.desktop" ~/.local/share/applications/
+shopt -s nullglob
+application_files=("$FEDORY_PATH"/applications/*.desktop)
+shopt -u nullglob
+if (( ${#application_files[@]} > 0 )); then
+  cp "${application_files[@]}" ~/.local/share/applications/
 fi
 
 if [[ -f "$FEDORY_PATH/install/user/mise.sh" ]]; then

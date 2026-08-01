@@ -48,11 +48,11 @@ gum	gum	-	-	-	dnf	confirmed installable directly via dnf (bootstrap.sh installs 
 gvfs-mtp	gvfs-mtp	-	-	-	dnf	1:1 name match
 gvfs-nfs	gvfs-nfs	-	-	-	dnf	1:1 name match
 gvfs-smb	gvfs-smb	-	-	-	dnf	1:1 name match
-hyprland	hyprland	solopasha/hyprland	-	-	dnf-or-copr	Fedora added Hyprland to official repos in recent releases; solopasha COPR is the fallback if plain dnf install fails on an older Fedora
-hyprland-guiutils	-	-	-	-	dropped	a real bootstrap run showed this exact name doesn't exist in the solopasha/hyprland COPR; not investigated further -- unclear what Fedora/COPR package (if any) provides the same utilities
+hyprland	hyprland	nett00n/hyprland	-	-	copr	nett00n/hyprland actively builds the complete Hyprland stack for Fedora 44; the former solopasha fallback is stale and currently has unsatisfied libdisplay-info dependencies
+hyprland-guiutils	hyprland-guiutils	nett00n/hyprland	-	-	copr	provided by the same Fedora 44-ready COPR as Hyprland
 hyprland-preview-share-picker	-	-	-	-	dropped	same functionality as xdg-desktop-portal-hyprland, already a separate working entry in install/fedory-base.packages -- this upstream name doesn't exist as a distinct package in the solopasha COPR (confirmed via a real bootstrap run), and doesn't need to
-hyprpicker	hyprpicker	solopasha/hyprland	-	-	dnf-or-copr	likely bundled once Hyprland itself is official; COPR fallback otherwise
-hyprsunset	hyprsunset	solopasha/hyprland	-	-	dnf-or-copr	same as hyprpicker
+hyprpicker	hyprpicker	nett00n/hyprland	-	-	copr	keep the Hyprland component stack on one Fedora 44-compatible COPR
+hyprsunset	hyprsunset	nett00n/hyprland	-	-	copr	keep the Hyprland component stack on one Fedora 44-compatible COPR
 imagemagick	ImageMagick	-	-	-	dnf	Fedora package name is capitalized ImageMagick
 imv	imv	-	-	-	dnf	1:1 name match
 inetutils	-	-	-	-	dropped	a real bootstrap run showed this package name doesn't exist on Fedora 44; legacy network tools (telnet, ftp, rsh) that aren't essential to the desktop, not worth guessing an alternate name for
@@ -119,7 +119,8 @@ tree-sitter-cli	-	-	-	npm install -g tree-sitter-cli or cargo install tree-sitte
 tmux	tmux	-	-	-	dnf	1:1 name match
 tobi-try	-	-	-	investigate github.com/basecamp (jdx/mise author's "usage"-adjacent tool?)	dropped	Basecamp first-party AUR-only tool; needs upstream-source investigation
 ttf-ia-writer	-	-	-	manual font install from iAWriter's published font files	source-build	not packaged anywhere; direct font file drop into ~/.local/share/fonts
-ttf-jetbrains-mono-nerd-basic	-	che/nerd-fonts	-	-	copr	COPR itself loads correctly (confirmed via a real bootstrap run), but this exact package name isn't in it; real package name in that COPR not yet identified -- investigate before relying on Nerd Font glyphs
+ttf-jetbrains-mono-nerd-basic	jetbrains-mono-fonts-all	-	-	-	dnf	Fedora family name is JetBrains Mono; nerd-fonts is installed separately for symbol fallback
+nerd-fonts	nerd-fonts	che/nerd-fonts	-	-	copr	Fedory installs the COPR symbol font package alongside Fedora's JetBrains Mono family
 tzupdate	-	-	-	pip install --user tzupdate	source-build	not in Fedora repos
 udiskie	udiskie	-	-	-	dnf	1:1 name match
 ufw	-	-	-	-	dropped	Fedora Workstation defaults to firewalld; install/config/firewall.sh was rewritten around firewall-cmd instead (see Phase 1)
@@ -134,8 +135,8 @@ wl-clipboard	wl-clipboard	-	-	-	dnf	1:1 name match
 wtype	wtype	-	-	-	dnf	1:1 name match if packaged, otherwise trivial from-source build
 woff2-font-awesome	fontawesome-fonts-web	-	-	-	dnf	naming likely differs; not independently confirmed, verify exact Fedora Font Awesome web-font package before relying on it
 xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	-	-	-	dnf	1:1 name match
-xdg-desktop-portal-hyprland	-	solopasha/hyprland	-	-	copr	same Hyprland COPR ecosystem
-xdg-terminal-exec	-	-	-	build from source (github.com/Vladimir-csp/xdg-terminal-exec)	source-build	not in Fedora repos; small shell/C source, easy to build
+xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	nett00n/hyprland	-	-	copr	keep the Hyprland component stack on one Fedora 44-compatible COPR
+xdg-terminal-exec	-	-	-	install/config/xdg-terminal-exec.sh	source-build	pinned checksum-verified upstream shell implementation
 xournalpp	xournalpp	-	-	-	dnf	1:1 name match
 yaru-icon-theme	-	heliocastro/yaru	-	-	copr	Ubuntu's icon theme isn't in Fedora's official repos; COPR name not independently confirmed, verify before relying on it
 yay	-	-	-	-	dropped	Arch AUR helper; Fedora has no AUR analog, COPR is enabled per-repository instead (see fedory-pkg-copr-add)

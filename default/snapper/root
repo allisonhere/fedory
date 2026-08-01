@@ -1,0 +1,7 @@
+# Based on basecamp/omarchy default/snapper/root. Fedory keeps only the five
+# pre-update recovery snapshots and does not create timeline snapshots.
+SUBVOLUME="/"
+FSTYPE="btrfs"
+NUMBER_LIMIT="5"
+NUMBER_LIMIT_IMPORTANT="5"
+TIMELINE_CREATE="no"

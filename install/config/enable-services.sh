@@ -2,14 +2,17 @@ source "$FEDORY_INSTALL/helpers/ui.sh"
 
 # Fedora Workstation ships and enables GDM by default. Hyprland runs under
 # SDDM (upstream's assumption throughout), so swap the default display
-# manager rather than leaving both enabled. Deliberately first in this
+# manager rather than leaving both enabled after the next reboot. Do not stop
+# GDM here: bootstrap runs inside the user's current desktop, and --now would
+# terminate that live session before installation has finished. Deliberately
+# first in this
 # script and independently fault-tolerant: a real bootstrap run showed
 # `systemctl enable docker.socket` below failing (Docker CE hadn't actually
 # installed) and aborting the rest of the script under -e -- since this was
 # originally the *last* thing in the file, the switch that matters most
 # never ran, and the reboot landed right back on GDM/GNOME with no visible
 # change at all.
-systemctl disable --now gdm.service >/dev/null 2>&1 || true
+systemctl disable gdm.service >/dev/null 2>&1 || true
 systemctl enable sddm.service || ui_warn "could not enable sddm.service"
 
 # Everything below is independently best-effort for the same reason: one

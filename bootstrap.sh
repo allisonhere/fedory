@@ -8,6 +8,7 @@
 set -eEo pipefail
 
 FEDORY_REPO="${FEDORY_REPO:-allisonhere/fedory}"
+FEDORY_REPO_URL="${FEDORY_REPO_URL:-https://github.com/$FEDORY_REPO.git}"
 FEDORY_REF="${FEDORY_REF:-master}"
 FEDORY_PATH="${FEDORY_PATH:-$HOME/.local/share/fedory}"
 
@@ -16,32 +17,69 @@ STEP_CURRENT=0
 STEP_START_EPOCH=$(date +%s)
 
 # --- output helpers -----------------------------------------------------
-# gum isn't installed yet on step 1, so every helper below degrades to plain
-# echo/read until has_gum starts reporting true.
+# gum isn't installed yet in the first phase, so the initial screen and
+# dependency spinner use ANSI when attached to a terminal. Everything after
+# that uses gum and retains a readable plain-text fallback.
 
 has_gum() { command -v gum >/dev/null 2>&1; }
 
-banner() {
-  if has_gum; then
-    gum style --border double --margin "1 0" --padding "1 4" --border-foreground 63 --bold \
-      "FEDORY" "A beautiful, modern & opinionated Hyprland desktop for Fedora."
+ansi() {
+  local code=$1
+  shift
+  if [[ -t 1 ]]; then
+    printf '\033[%sm%s\033[0m\n' "$code" "$*"
   else
-    cat <<'BANNER'
-==========================================================
-  FEDORY
-  A beautiful, modern & opinionated Hyprland desktop for Fedora.
-==========================================================
-BANNER
+    printf '%s\n' "$*"
   fi
 }
 
-step() {
-  STEP_CURRENT=$((STEP_CURRENT + 1))
-  local msg="[$STEP_CURRENT/$STEP_TOTAL] $*"
+banner() {
   if has_gum; then
-    gum style --foreground 63 --bold -- "$msg"
+    gum style --margin "1 0 0 0" --foreground 63 --bold \
+      '  ______        __                 '
+    gum style --foreground 63 --bold \
+      ' |  ____|      / _|                '
+    gum style --foreground 63 --bold \
+      ' | |__ ___  __| |_ ___  _ __ _   _ '
+    gum style --foreground 63 --bold \
+      ' |  __/ _ \/ _` |/ _ \| "__| | | |'
+    gum style --foreground 63 --bold \
+      ' | | |  __/ (_| | (_) | |  | |_| |'
+    gum style --foreground 63 --bold \
+      ' |_|  \___|\__,_|\___/|_|   \__, |'
+    gum style --foreground 63 --bold \
+      '                              __/ |'
+    gum style --foreground 63 --bold \
+      '                             |___/ '
+    gum style --margin "1 0" --faint \
+      "A focused Hyprland desktop, built for Fedora."
   else
-    echo "$msg"
+    echo
+    ansi '1;38;5;63' '  ______        __                 '
+    ansi '1;38;5;63' ' |  ____|      / _|                '
+    ansi '1;38;5;63' ' | |__ ___  __| |_ ___  _ __ _   _ '
+    ansi '1;38;5;63' ' |  __/ _ \/ _` |/ _ \| "__| | | |'
+    ansi '1;38;5;63' ' | | |  __/ (_| | (_) | |  | |_| |'
+    ansi '1;38;5;63' ' |_|  \___|\__,_|\___/|_|   \__, |'
+    ansi '1;38;5;63' '                              __/ |'
+    ansi '1;38;5;63' '                             |___/ '
+    ansi '2' '  A focused Hyprland desktop, built for Fedora.'
+    echo
+  fi
+}
+
+phase() {
+  STEP_CURRENT=$((STEP_CURRENT + 1))
+  local title=$1 detail=${2:-}
+  if has_gum; then
+    echo
+    gum style --foreground 245 --bold -- \
+      "PHASE $(printf '%02d' "$STEP_CURRENT") / $(printf '%02d' "$STEP_TOTAL")"
+    gum style --foreground 63 --bold -- "$title"
+    [[ -z $detail ]] || gum style --faint -- "$detail"
+  else
+    ansi '1;38;5;63' "[$STEP_CURRENT/$STEP_TOTAL] $title"
+    [[ -z $detail ]] || info "$detail"
   fi
 }
 
@@ -50,6 +88,62 @@ info() {
     gum style --faint -- "$*"
   else
     echo "  $*"
+  fi
+}
+
+success() {
+  if has_gum; then
+    gum style --foreground 42 --bold -- "  OK  $*"
+  else
+    ansi '1;32' "  OK  $*"
+  fi
+}
+
+run_task() {
+  local title=$1 output pid frame=0 status=0
+  local frames='|/-\\'
+  shift
+
+  if has_gum; then
+    gum spin --spinner dot --spinner.foreground 63 \
+      --title.foreground 252 --title "$title" --show-error -- "$@"
+    status=$?
+  else
+    output=$(mktemp)
+    "$@" >"$output" 2>&1 &
+    pid=$!
+    while kill -0 "$pid" 2>/dev/null; do
+      printf '\r  \033[38;5;63m%s\033[0m  %s' \
+        "${frames:frame++%${#frames}:1}" "$title"
+      sleep 0.12
+    done
+    wait "$pid" || status=$?
+    printf '\r\033[2K'
+    if (( status != 0 )); then
+      cat "$output" >&2
+    fi
+    rm -f "$output"
+  fi
+
+  (( status == 0 )) || return "$status"
+  success "$title"
+}
+
+preflight_card() {
+  local host=$1 os=$2 target=$3
+  if has_gum; then
+    gum style --border rounded --border-foreground 240 --padding "1 2" \
+      "INSTALL SUMMARY" \
+      "Machine   $host" \
+      "System    $os" \
+      "User      $USER" \
+      "Target    $target"
+  else
+    ansi '38;5;240' '  +----------------------------------------------------------+'
+    ansi '1' '    INSTALL SUMMARY'
+    printf '    Machine   %s\n    System    %s\n    User      %s\n    Target    %s\n' \
+      "$host" "$os" "$USER" "$target"
+    ansi '38;5;240' '  +----------------------------------------------------------+'
   fi
 }
 
@@ -104,11 +198,6 @@ main() {
 
   # --- preflight ------------------------------------------------------------
   banner
-  echo
-  info "This installs Fedory onto the Fedora system you're currently logged into."
-  info "Expect roughly 15-30 minutes depending on your connection and how many"
-  info "packages are already cached. It's safe to re-run if it fails partway."
-  echo
 
   if (( EUID == 0 )); then
     die "Don't run bootstrap.sh as root. Run it as the user who will use this desktop; it will prompt for sudo when it needs it."
@@ -124,37 +213,59 @@ main() {
     die "Could not read /etc/os-release to confirm this is Fedora."
   fi
 
-  if ! confirm "Ready to install Fedory on $(hostname)?"; then
+  preflight_card "$(hostname)" "${PRETTY_NAME:-Fedora}" "$FEDORY_PATH"
+  echo
+  info "Usually 15-30 minutes. Completed work is reused if you run it again."
+  echo
+
+  if ! confirm "Install Fedory on $(hostname)?"; then
     echo "Cancelled."
     exit 0
   fi
 
   # --- step 1: bootstrap dependencies ---------------------------------------
-  step "Installing bootstrap dependencies (git, gum)"
-  sudo dnf install -y --quiet git gum || die "failed to install git/gum via dnf"
+  phase "Prepare the installer" "Authenticate once, then install the small bootstrap toolset."
+  info "Administrator access is required for system packages and services."
+  sudo -v || die "administrator authentication failed"
+  run_task "Install Git and the terminal UI" \
+    sudo dnf install -y --quiet git gum \
+    || die "failed to install git/gum via dnf"
 
-  # From here on, has_gum is true and every helper above gets the styled path.
-  banner
+  # From here on, gum is available and every helper uses the styled path.
 
   # --- step 2: clone the repo -------------------------------------------
-  step "Fetching Fedory ($FEDORY_REF)"
+  phase "Fetch Fedory" "Download the selected source and prepare its command environment."
   if [[ -d $FEDORY_PATH/.git ]]; then
-    info "Existing checkout found at $FEDORY_PATH, updating instead of re-cloning."
-    git -C "$FEDORY_PATH" fetch --depth 1 origin "$FEDORY_REF"
-    git -C "$FEDORY_PATH" checkout "$FEDORY_REF"
-    git -C "$FEDORY_PATH" reset --hard "origin/$FEDORY_REF"
+    run_task "Update the existing $FEDORY_REF checkout" \
+      git -C "$FEDORY_PATH" fetch --depth 1 origin "$FEDORY_REF"
+    run_task "Select the latest $FEDORY_REF revision" \
+      git -C "$FEDORY_PATH" checkout -B "$FEDORY_REF" "origin/$FEDORY_REF"
   else
     mkdir -p "$(dirname "$FEDORY_PATH")"
-    git clone --depth 1 --branch "$FEDORY_REF" "https://github.com/$FEDORY_REPO.git" "$FEDORY_PATH"
+    run_task "Download Fedory $FEDORY_REF" \
+      git clone --quiet --depth 1 --branch "$FEDORY_REF" \
+        "$FEDORY_REPO_URL" "$FEDORY_PATH"
   fi
   export FEDORY_PATH
   export PATH="$FEDORY_PATH/bin:$PATH"
 
+  FEDORY_PROGRESS_TOTAL=$(grep -h '^run_logged ' \
+    "$FEDORY_PATH"/install/{config,hardware,login,post-install,user}/all.sh \
+    | wc -l)
+  FEDORY_PROGRESS_TOTAL=${FEDORY_PROGRESS_TOTAL//[[:space:]]/}
+  FEDORY_PROGRESS_FILE=$(mktemp)
+  printf '0\n' >"$FEDORY_PROGRESS_FILE"
+  chmod 0666 "$FEDORY_PROGRESS_FILE"
+  export FEDORY_PROGRESS_TOTAL FEDORY_PROGRESS_FILE
+  trap 'rm -f "${FEDORY_PROGRESS_FILE:-}"' EXIT
+
   # --- step 3: collect a little identity info up front ----------------------
-  step "A couple of quick questions"
+  phase "Personalize your setup" "Optional Git identity used by development tools."
   if has_gum; then
-    FEDORY_USER_NAME=$(gum input --placeholder "Your name (for git commits, optional)")
-    FEDORY_USER_EMAIL=$(gum input --placeholder "Your email (for git commits, optional)")
+    FEDORY_USER_NAME=$(gum input --header "Git author name" \
+      --placeholder "Optional - leave blank to configure later")
+    FEDORY_USER_EMAIL=$(gum input --header "Git author email" \
+      --placeholder "Optional - leave blank to configure later")
   else
     read -r -p "Your name (for git commits, optional): " FEDORY_USER_NAME
     read -r -p "Your email (for git commits, optional): " FEDORY_USER_EMAIL
@@ -169,38 +280,55 @@ main() {
   # needs follow-up, so step 5 (per-user setup) still gets a chance to run
   # even when step 4 wasn't 100% clean.
   had_issues=0
-  step "Applying system setup (needs sudo)"
-  info "Package installs, services, firewall, display manager, hardware setup."
+  phase "Build the desktop" \
+    "Packages, services, hardware support, login, and system integration."
   sudo env FEDORY_PATH="$FEDORY_PATH" PATH="$FEDORY_PATH/bin:$PATH" \
+    FEDORY_PROGRESS_TOTAL="$FEDORY_PROGRESS_TOTAL" \
+    FEDORY_PROGRESS_FILE="$FEDORY_PROGRESS_FILE" \
     fedory-setup-system --install-user "$USER" --first-install \
     || had_issues=1
 
   # --- step 5: per-user finalization -----------------------------------------
-  step "Finalizing your user setup"
+  phase "Configure your workspace" \
+    "Seed user defaults, applications, theme, and development integrations."
   FEDORY_SETUP_CONTEXT=bootstrap fedory-finalize-user --first-install \
     || had_issues=1
 
   # --- step 6: done -----------------------------------------------------------
-  step "Done"
+  phase "Installation complete"
   elapsed=$(( $(date +%s) - STEP_START_EPOCH ))
-  info "Finished in $(( elapsed / 60 ))m $(( elapsed % 60 ))s."
-  echo
   if (( had_issues )); then
     if has_gum; then
-      gum style --foreground 214 --bold -- "Fedory is installed, but a few things need a second look -- scroll up (or check /var/log/fedory-install.log) for what to retry."
+      gum style --border rounded --border-foreground 214 --padding "1 2" \
+        "FINISHED WITH WARNINGS" \
+        "Elapsed   $(( elapsed / 60 ))m $(( elapsed % 60 ))s" \
+        "Log       /var/log/fedory-install.log" \
+        "Review the failed tasks above, then rerun the installer."
     else
       echo "Fedory is installed, but a few things need a second look -- scroll up (or check /var/log/fedory-install.log) for what to retry."
     fi
   elif has_gum; then
-    gum style --foreground 42 --bold -- "Fedory is installed. Reboot to log into your new Hyprland desktop."
+    gum style --border rounded --border-foreground 42 --padding "1 2" \
+      "FEDORY IS READY" \
+      "Elapsed   $(( elapsed / 60 ))m $(( elapsed % 60 ))s" \
+      "Log       /var/log/fedory-install.log" \
+      "Reboot to enter your new Hyprland desktop."
   else
-    echo "Fedory is installed. Reboot to log into your new Hyprland desktop."
+    success "Fedory is installed in $(( elapsed / 60 ))m $(( elapsed % 60 ))s."
+    info "Log: /var/log/fedory-install.log"
   fi
   echo
   if confirm "Reboot now?"; then
     sudo systemctl reboot
   else
     info "Remember to reboot before logging into Hyprland."
+  fi
+
+  # The installer deliberately continues through independent leaves so one
+  # failure does not hide the rest of the machine's setup state. Preserve that
+  # behavior while still giving automation a truthful final result.
+  if (( had_issues )); then
+    exit 1
   fi
 }
 

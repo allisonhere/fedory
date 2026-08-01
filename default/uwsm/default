@@ -1,0 +1,17 @@
+# Based on basecamp/omarchy default/uwsm/default with Fedory commands.
+# Changes require a restart to take effect.
+
+# Install other terminals via Install > Terminal
+export TERMINAL=xdg-terminal-exec
+
+# Used by terminal programs (like gh) to open URLs detached from the terminal process tree
+export BROWSER=fedory-launch-browser
+
+# Used by terminal programs to open files with the selected Fedory default editor
+export EDITOR="fedory-launch-editor --inline"
+
+# Use a custom directory for screenshots (remember to make the directory!)
+# export FEDORY_SCREENSHOT_DIR="$HOME/Pictures/Screenshots"
+
+# Use a custom directory for screenrecordings (remember to make the directory!)
+# export FEDORY_SCREENRECORD_DIR="$HOME/Videos/Screencasts"

@@ -19,7 +19,7 @@ fi
 
 systemd-run --user --quiet --collect --unit="fedory-browser-$(date +%s%N)" \
   --property=StandardOutput=null --property=StandardError=null \
-  uwsm-app -- "$browser_exec" "${@/--private/$private_flag}"
+  uwsm app -- "$browser_exec" "${@/--private/$private_flag}"
 
 url=""
 for argument in "$@"; do

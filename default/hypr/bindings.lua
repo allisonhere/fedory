@@ -1,0 +1,5 @@
+-- Based on basecamp/omarchy default/hypr/bindings.lua with Fedory command and path names.
+local paths = require("default.hypr.paths")
+local require_all = require("default.hypr.require_all")
+
+require_all.files(paths.fedory_path .. "/default/hypr/bindings", "default.hypr.bindings")

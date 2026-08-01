@@ -3,8 +3,9 @@
 A single long-running [Quickshell](https://quickshell.org/) instance
 that hosts the Fedory desktop. The bar, panels, overlays, menus, and
 services all run inside as plugins. IPC is the canonical way for CLIs
-to talk to a running shell — `fedory-shell-ipc` auto-starts it on
-first call.
+to talk to the running shell. `fedory-shell` forwards calls to that process
+and reports an error when the shell is not running; it never starts another
+Quickshell instance.
 
 ## Plugin manifest
 

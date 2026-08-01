@@ -10,4 +10,4 @@ source fedory-restart-gum
 cmd="$*"
 presentation_script="fedory-show-logo; $cmd; if (( \$? != 130 )); then fedory-show-done; fi"
 
-exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.fedory.terminal --title=Fedory -e bash -c "$presentation_script"
+exec setsid uwsm app -- xdg-terminal-exec --app-id=org.fedory.terminal --title=Fedory -e bash -c "$presentation_script"

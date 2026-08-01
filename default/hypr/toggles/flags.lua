@@ -1,0 +1,3 @@
+-- Based on basecamp/omarchy default/hypr/toggles/flags.lua with Fedory command and path names.
+-- This directory is intended for permanent config toggle flags.
+-- Do not remove this file; the directory always needs at least one file.

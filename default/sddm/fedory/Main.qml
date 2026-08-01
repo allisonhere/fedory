@@ -7,7 +7,6 @@ Rectangle {
   height: 480
   color: "#1a1b26"
 
-  property string currentUser: userModel.lastUser
   property bool loginFailed: false
   property int sessionIndex: {
     for (var i = 0; i < sessionModel.rowCount(); i++) {
@@ -43,68 +42,92 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
     }
 
-    Row {
+    Column {
       anchors.horizontalCenter: parent.horizontalCenter
-      spacing: 15
+      spacing: 12
 
-      Image {
-        source: root.loginFailed ? "lock-failed.png" : "lock.png"
-        width: 34
-        height: 38
-        fillMode: Image.PreserveAspectFit
-        anchors.verticalCenter: parent.verticalCenter
-      }
+      TextInput {
+        id: username
+        width: 300
+        anchors.horizontalCenter: parent.horizontalCenter
+        horizontalAlignment: TextInput.AlignHCenter
+        text: userModel.lastUser
+        color: "#c0caf5"
+        selectionColor: "#7aa2f7"
+        selectedTextColor: "#1a1b26"
+        font.family: "JetBrains Mono"
+        font.pixelSize: 18
 
-      Item {
-        width: entry.width
-        height: entry.height
-
-        Image {
-          id: entry
-          source: root.loginFailed ? "entry-failed.png" : "entry.png"
-          anchors.centerIn: parent
-        }
-
-        Row {
-          anchors.left: parent.left
-          anchors.leftMargin: 20
-          anchors.verticalCenter: parent.verticalCenter
-          spacing: 5
-
-          Repeater {
-            model: Math.min(password.text.length, 21)
-
-            Image {
-              source: "bullet.png"
-              width: 7
-              height: 7
-            }
+        Keys.onPressed: {
+          if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            password.forceActiveFocus()
+            event.accepted = true
           }
         }
+      }
 
-        TextInput {
-          id: password
-          anchors.fill: parent
-          anchors.leftMargin: 20
-          anchors.rightMargin: 20
-          verticalAlignment: TextInput.AlignVCenter
-          echoMode: TextInput.Password
-          font.family: "JetBrainsMono Nerd Font"
-          font.pixelSize: 24
-          font.letterSpacing: 5
-          passwordCharacter: "\u2022"
-          color: "transparent"
-          selectionColor: "transparent"
-          selectedTextColor: "transparent"
-          cursorDelegate: Item {}
-          focus: true
+      Row {
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 15
 
-          onTextChanged: root.loginFailed = false
+        Image {
+          source: root.loginFailed ? "lock-failed.png" : "lock.png"
+          width: 34
+          height: 38
+          fillMode: Image.PreserveAspectFit
+          anchors.verticalCenter: parent.verticalCenter
+        }
 
-          Keys.onPressed: {
-            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-              sddm.login(root.currentUser, password.text, root.sessionIndex)
-              event.accepted = true
+        Item {
+          width: entry.width
+          height: entry.height
+
+          Image {
+            id: entry
+            source: root.loginFailed ? "entry-failed.png" : "entry.png"
+            anchors.centerIn: parent
+          }
+
+          Row {
+            anchors.left: parent.left
+            anchors.leftMargin: 20
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 5
+
+            Repeater {
+              model: Math.min(password.text.length, 21)
+
+              Image {
+                source: "bullet.png"
+                width: 7
+                height: 7
+              }
+            }
+          }
+
+          TextInput {
+            id: password
+            anchors.fill: parent
+            anchors.leftMargin: 20
+            anchors.rightMargin: 20
+            verticalAlignment: TextInput.AlignVCenter
+            echoMode: TextInput.Password
+            font.family: "JetBrains Mono"
+            font.pixelSize: 24
+            font.letterSpacing: 5
+            passwordCharacter: "\u2022"
+            color: "transparent"
+            selectionColor: "transparent"
+            selectedTextColor: "transparent"
+            cursorDelegate: Item {}
+
+            onTextChanged: root.loginFailed = false
+
+            Keys.onPressed: {
+              if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                sddm.login(username.text, password.text, root.sessionIndex)
+                event.accepted = true
+              }
             }
           }
         }
@@ -113,5 +136,10 @@ Rectangle {
 
   }
 
-  Component.onCompleted: password.forceActiveFocus()
+  Component.onCompleted: {
+    if (username.text.length > 0)
+      password.forceActiveFocus()
+    else
+      username.forceActiveFocus()
+  }
 }

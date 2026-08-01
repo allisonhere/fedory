@@ -1,7 +1,8 @@
 -- Learn how to configure Hyprland: https://wiki.hypr.land/Configuring/Start/
 
 -- Fedory's bootstrap keeps path setup out of this user config.
-dofile((os.getenv("FEDORY_PATH") or "/usr/share/fedory") .. "/default/hypr/bootstrap.lua")
+local fedory_path = assert(os.getenv("FEDORY_PATH"), "FEDORY_PATH is not set by the uwsm session")
+dofile(fedory_path .. "/default/hypr/bootstrap.lua")
 
 -- Disable all Fedory default bindings. Add your own in hypr/bindings.lua.
 -- fedory_default_bindings = false

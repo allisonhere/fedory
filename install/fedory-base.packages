@@ -19,7 +19,7 @@
 #     Basecamp first-party AUR-only tools with no confirmed independent
 #     source repo (see packaging/package-map.tsv) -- not installable yet.
 #   - asdcontrol, dua-cli, lazydocker, lua51, python-terminaltexteffects,
-#     tree-sitter-cli, ttf-ia-writer, tzupdate, usage, xdg-terminal-exec:
+#     tree-sitter-cli, ttf-ia-writer, tzupdate, usage:
 #     source-build status -- each needs its own from-source install step
 #     (cargo/go/pip/npm install, or a manual font drop). Not yet built here;
 #     fedory-pkg-add skips these with a note if ever passed to it. A real
@@ -130,6 +130,7 @@ tesseract-data-eng
 tldr
 tmux
 ttf-jetbrains-mono-nerd-basic
+nerd-fonts
 udiskie
 unzip
 uwsm

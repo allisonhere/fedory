@@ -1,0 +1,7 @@
+[Desktop Entry]
+# Based on basecamp/omarchy default/wayland-sessions/omarchy.desktop.
+Name=Fedory (Hyprland uwsm)
+Comment=Fedory Hyprland session managed by uwsm
+Exec=uwsm start -g -1 -e -D Hyprland hyprland.desktop
+TryExec=uwsm
+Type=Application
