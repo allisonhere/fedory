@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# fedory:summary=Check whether the system exposes an accelerometer
+
+sys_root="${FEDORY_SYS_ROOT:-/sys}"
+
+shopt -s nullglob
+accelerometer_files=("$sys_root"/bus/iio/devices/iio:device*/in_accel_*)
+((${#accelerometer_files[@]} > 0))

@@ -1,0 +1,139 @@
+#!/bin/bash
+
+# fedory:summary=Enable, disable, or inspect the optional tablet profile
+# fedory:args=[enable|disable|status]
+# fedory:examples=fedory setup tablet enable | fedory setup tablet status
+
+set -euo pipefail
+
+state_dir="$HOME/.local/state/fedory/tablet"
+enabled_file="$state_dir/enabled"
+previous_size_file="$state_dir/previous-text-size"
+toggle_file="$HOME/.local/state/fedory/toggles/hypr/tablet.lua"
+keyboard_unit="fedory-tablet-keyboard.service"
+rotation_unit="fedory-tablet-rotation.service"
+tablet_size=16
+
+current_text_size() {
+  fedory-display-text-size | sed -n 's/^text size: \([0-9][0-9]*\).*/\1/p'
+}
+
+install_unit() {
+  local unit=$1
+  local source="$FEDORY_PATH/config/systemd/user/$unit"
+  local target="$HOME/.config/systemd/user/$unit"
+
+  mkdir -p "$(dirname "$target")"
+  if [[ ! -f $target ]] || ! cmp -s "$source" "$target"; then
+    cp -f "$source" "$target"
+  fi
+}
+
+write_hyprland_profile() {
+  mkdir -p "$(dirname "$toggle_file")"
+  cat >"$toggle_file" <<'LUA'
+-- Optional Fedory tablet profile.
+hl.config({
+  gestures = {
+    workspace_swipe_touch = true,
+  },
+  input = {
+    virtualkeyboard = {
+      release_pressed_on_close = true,
+    },
+  },
+})
+LUA
+}
+
+enable_profile() {
+  if ! fedory-hw-touchscreen >/dev/null 2>&1; then
+    echo "Tablet mode needs a touchscreen, but none was detected." >&2
+    exit 1
+  fi
+
+  echo "Installing tablet support..."
+  fedory-pkg-add iio-sensor-proxy maliit-keyboard
+
+  mkdir -p "$state_dir"
+  if [[ ! -f $enabled_file ]]; then
+    current_text_size >"$previous_size_file"
+  fi
+  touch "$enabled_file"
+
+  install_unit "$keyboard_unit"
+  install_unit "$rotation_unit"
+  write_hyprland_profile
+
+  fedory-display-text-size "$tablet_size"
+  systemctl --user daemon-reload
+  systemctl --user enable --now "$keyboard_unit"
+
+  if fedory-hw-accelerometer; then
+    systemctl --user enable --now "$rotation_unit"
+  else
+    systemctl --user disable --now "$rotation_unit" >/dev/null 2>&1 || true
+    echo "No accelerometer found; automatic rotation was skipped."
+  fi
+
+  hyprctl reload >/dev/null
+  fedory-restart-shell
+  echo "Tablet profile enabled."
+}
+
+disable_profile() {
+  systemctl --user disable --now "$keyboard_unit" "$rotation_unit" >/dev/null 2>&1 || true
+  rm -f "$enabled_file" "$toggle_file"
+
+  if [[ -s $previous_size_file ]] && [[ $(current_text_size) == "$tablet_size" ]]; then
+    fedory-display-text-size "$(<"$previous_size_file")"
+  fi
+  rm -f "$previous_size_file"
+
+  hyprctl reload >/dev/null 2>&1 || true
+  fedory-restart-shell || true
+  echo "Tablet profile disabled. Installed packages were left in place."
+}
+
+show_status() {
+  if [[ -f $enabled_file ]]; then
+    echo "tablet profile: enabled"
+  else
+    echo "tablet profile: disabled"
+  fi
+  if fedory-hw-touchscreen >/dev/null 2>&1; then
+    echo "touchscreen: detected"
+  else
+    echo "touchscreen: not detected"
+  fi
+  if fedory-hw-accelerometer; then
+    echo "accelerometer: detected"
+  else
+    echo "accelerometer: not detected"
+  fi
+  echo "on-screen keyboard: $(systemctl --user is-active "$keyboard_unit" 2>/dev/null || true)"
+  echo "automatic rotation: $(systemctl --user is-active "$rotation_unit" 2>/dev/null || true)"
+  echo "text size: $(current_text_size) px"
+}
+
+case "${1:-}" in
+  enable)
+    enable_profile
+    ;;
+  disable)
+    disable_profile
+    ;;
+  status)
+    show_status
+    ;;
+  "")
+    read -r -p "Enable Fedory's tablet profile? [Y/n] " answer
+    if [[ -z $answer || $answer =~ ^[Yy]$ ]]; then
+      enable_profile
+    fi
+    ;;
+  *)
+    echo "Usage: fedory-setup-tablet [enable|disable|status]" >&2
+    exit 1
+    ;;
+esac

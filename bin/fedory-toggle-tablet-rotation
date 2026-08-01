@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# fedory:summary=Enable or disable automatic tablet rotation
+
+if ! fedory-hw-accelerometer; then
+  echo "No accelerometer found" >&2
+  exit 1
+fi
+
+if systemctl --user is-active --quiet fedory-tablet-rotation.service; then
+  systemctl --user stop fedory-tablet-rotation.service
+  fedory-osd -i rotation-lock -m "Automatic rotation disabled"
+else
+  systemctl --user start fedory-tablet-rotation.service
+  fedory-osd -i rotation-allowed -m "Automatic rotation enabled"
+fi

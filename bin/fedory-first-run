@@ -71,6 +71,8 @@ run_first_run_step "install Voxtype post-update hook" \
   fedory-hook-install post-update "$FEDORY_PATH/install/user/first-run/install-voxtype.hook"
 run_first_run_step "install fingerprint setup post-update hook" \
   fedory-hook-install post-update "$FEDORY_PATH/install/user/first-run/setup-fingerprint.hook"
+run_first_run_step "install tablet setup post-update hook" \
+  fedory-hook-install post-update "$FEDORY_PATH/install/user/first-run/setup-tablet.hook"
 
 run_first_run_step "enable user systemd units" \
   bash "$FEDORY_PATH/install/user/first-run/enable-user-units.sh"
@@ -90,6 +92,8 @@ run_first_run_step "show welcome notification" \
 sleep 0.3
 run_first_run_step "show Wi-Fi/update notifications" \
   bash "$FEDORY_PATH/install/user/first-run/wifi.sh"
+run_first_run_step "offer tablet setup when supported" \
+  bash "$FEDORY_PATH/install/user/first-run/setup-tablet.hook"
 
 if (( first_run_failed == 0 )); then
   fedory-done mark "$FIRST_RUN_DONE"

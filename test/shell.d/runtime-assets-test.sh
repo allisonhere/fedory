@@ -15,6 +15,8 @@ required_assets=(
   default/wayland-sessions/fedory.desktop
   default/xdg-terminal-exec/hyprland-xdg-terminals.list
   default/xcompose
+  config/systemd/user/fedory-tablet-keyboard.service
+  config/systemd/user/fedory-tablet-rotation.service
 )
 
 for asset in "${required_assets[@]}"; do

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+show_invitation() {
+  if [[ -n $(fedory-notification-send -u critical -g input-tablet "Make Fedory tablet friendly" "Enable touch gestures, larger controls, an on-screen keyboard, and automatic rotation when supported." -a) ]]; then
+    systemd-run --user --collect --quiet -p KillMode=process \
+      --unit=fedory-setup-tablet \
+      fedory-launch-floating-terminal-with-presentation fedory-setup-tablet enable
+  fi
+}
+
+if [[ ${1:-} == "--show" ]]; then
+  show_invitation
+elif fedory-hw-tablet && [[ ! -f $HOME/.local/state/fedory/tablet/enabled ]] &&
+  fedory-done ensure tablet-setup-invitation; then
+  systemd-run --user --collect --quiet --service-type=exec \
+    --unit=fedory-tablet-setup-invitation \
+    bash "$0" --show
+fi

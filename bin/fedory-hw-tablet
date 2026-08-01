@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# fedory:summary=Check whether this is a touchscreen tablet or convertible
+
+sys_root="${FEDORY_SYS_ROOT:-/sys}"
+chassis_type=""
+
+fedory-hw-touchscreen >/dev/null 2>&1 || exit 1
+
+if [[ -r $sys_root/class/dmi/id/chassis_type ]]; then
+  read -r chassis_type <"$sys_root/class/dmi/id/chassis_type"
+fi
+
+case "$chassis_type" in
+  30|31|32)
+    exit 0
+    ;;
+esac
+
+fedory-hw-accelerometer

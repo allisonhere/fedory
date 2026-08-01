@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# fedory:summary=Follow the orientation sensor and rotate the tablet display
+# fedory:hidden=true
+
+set -euo pipefail
+
+stdbuf -oL monitor-sensor --accel | while IFS= read -r line; do
+  orientation=${line##* }
+  case "$orientation" in
+    normal|right-up|bottom-up|left-up)
+      fedory-tablet-rotate "$orientation"
+      ;;
+  esac
+done

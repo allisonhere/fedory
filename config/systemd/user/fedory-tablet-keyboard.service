@@ -1,0 +1,13 @@
+[Unit]
+Description=Fedory tablet on-screen keyboard
+PartOf=graphical-session.target
+After=graphical-session.target
+ConditionPathExists=%h/.local/state/fedory/tablet/enabled
+
+[Service]
+ExecStart=/usr/bin/maliit-keyboard
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

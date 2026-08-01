@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# fedory:summary=Rotate the built-in display and tablet input devices
+# fedory:args=<normal|right-up|bottom-up|left-up>
+# fedory:hidden=true
+
+set -euo pipefail
+
+case "${1:-}" in
+  normal) transform=0 ;;
+  right-up) transform=1 ;;
+  bottom-up) transform=2 ;;
+  left-up) transform=3 ;;
+  *)
+    echo "Usage: fedory-tablet-rotate <normal|right-up|bottom-up|left-up>" >&2
+    exit 1
+    ;;
+esac
+
+monitor_json=$(hyprctl monitors all -j)
+output=$(jq -r '.[] | select(.name | test("^(eDP|LVDS|DSI)-")) | .name' <<<"$monitor_json" | head -n 1)
+[[ -n $output ]] || exit 0
+
+monitor=$(jq -c --arg output "$output" '.[] | select(.name == $output)' <<<"$monitor_json")
+width=$(jq -r '.width' <<<"$monitor")
+height=$(jq -r '.height' <<<"$monitor")
+refresh_rate=$(jq -r '.refreshRate' <<<"$monitor")
+x=$(jq -r '.x' <<<"$monitor")
+y=$(jq -r '.y' <<<"$monitor")
+scale=$(jq -r '.scale' <<<"$monitor")
+
+hyprctl eval "hl.monitor({ output = \"$output\", mode = \"${width}x${height}@${refresh_rate}\", position = \"${x}x${y}\", scale = $scale, transform = $transform })" >/dev/null
+
+while IFS= read -r device; do
+  [[ -n $device ]] || continue
+  hyprctl eval "hl.device({ name = \"$device\", output = \"$output\", transform = $transform })" >/dev/null
+done < <(hyprctl devices -j | jq -r '.touch[]?.name, .tablets[]?.name')
