@@ -57,7 +57,7 @@ wallpaper_count=$(find "$ROOT_DIR/default/wallpapers" -maxdepth 1 -type f \
 assert_eq 9 "$wallpaper_count" "nine original wallpapers are shipped"
 
 vesper_background_count=$(find -L "$ROOT_DIR/themes/fedory-vesper/backgrounds" \
-  -maxdepth 1 -type f -name '*.webp' | wc -l)
+  -maxdepth 1 -type f -name '*.png' | wc -l)
 assert_eq 4 "$vesper_background_count" "Fedory Vesper ships four backgrounds"
 
 finish

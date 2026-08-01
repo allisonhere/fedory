@@ -40,7 +40,41 @@ for command in lazygit lazydocker starship dua tree-sitter usage uv tte tzupdate
     echo "FAIL: source tool wrapper is not executable: $command"
     ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
   fi
+
+  if rg -F 'mise use -g' "$wrapper" >/dev/null ||
+    ! rg -F 'exec mise --quiet x' "$wrapper" >/dev/null; then
+    echo "FAIL: source tool wrapper mutates mise config or leaks setup output: $command"
+    ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+  else
+    echo "ok: source tool wrapper uses quiet mise exec: $command"
+  fi
 done
+
+cat >"$fake_bin/mise" <<EOF
+#!/bin/bash
+printf '%s\n' "\$*" >"$fake_home/mise-args"
+printf 'shell-init\n'
+EOF
+chmod +x "$fake_bin/mise"
+
+assert_eq "shell-init" "$("$fake_home/.local/bin/starship" init bash)" \
+  "starship wrapper returns only starship output"
+assert_eq "--quiet x starship -- starship init bash" "$(<"$fake_home/mise-args")" \
+  "starship wrapper invokes quiet mise exec"
+
+cat >"$fake_home/.local/bin/starship" <<'EOF'
+#!/bin/bash
+mise use -g "starship" || exit 1
+exec mise x "starship" -- "starship" "$@"
+EOF
+FEDORY_PATH="$ROOT_DIR" bash -euo pipefail "$ROOT_DIR/migrations/1785602840.sh" >/dev/null
+if ! rg -F 'mise use -g' "$fake_home/.local/bin/starship" >/dev/null &&
+  rg -F 'exec mise --quiet x' "$fake_home/.local/bin/starship" >/dev/null; then
+  echo "ok: existing mise wrappers migrate to quiet execution"
+else
+  echo "FAIL: existing mise wrapper was not repaired"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
 
 FEDORY_PATH="$ROOT_DIR" bash -euo pipefail "$ROOT_DIR/migrations/1785591485.sh" >/dev/null
 FEDORY_PATH="$ROOT_DIR" bash -euo pipefail "$ROOT_DIR/migrations/1785591485.sh" >/dev/null

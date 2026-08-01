@@ -34,6 +34,23 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
+vesper_migration_home=$(mktemp -d)
+vesper_migration_bin=$(mktemp -d)
+mkdir -p "$vesper_migration_home/.local/state/fedory/current"
+printf 'fedory-vesper\n' >"$vesper_migration_home/.local/state/fedory/current/theme.name"
+ln -s "$vesper_migration_home/missing-background.webp" \
+  "$vesper_migration_home/.local/state/fedory/current/background"
+cat >"$vesper_migration_bin/fedory-theme-set" <<EOF
+#!/bin/bash
+printf '%s\n' "\$*" >"$vesper_migration_home/theme-set"
+EOF
+chmod +x "$vesper_migration_bin/fedory-theme-set"
+HOME="$vesper_migration_home" PATH="$vesper_migration_bin:$PATH" FEDORY_PATH="$ROOT_DIR" \
+  bash -euo pipefail "$ROOT_DIR/migrations/1785602840.sh" >/dev/null
+assert_eq "Fedory Vesper" "$(<"$vesper_migration_home/theme-set")" \
+  "existing Fedory Vesper users migrate away from unsupported WebP"
+rm -rf "$vesper_migration_home" "$vesper_migration_bin"
+
 run_templater_for() {
   local theme="$1"
   local fake_home

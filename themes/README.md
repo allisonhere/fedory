@@ -21,7 +21,7 @@ follow the upstream code license.
 Fedory instead ships nine pieces of original artwork under
 `default/wallpapers/`. The upstream theme ports link their
 `backgrounds/fedory.png` to the family that best matches each palette. Fedory
-Vesper links four WebP scenes into its background directory. `fedory-theme-set`
+Vesper links four PNG scenes into its background directory. `fedory-theme-set`
 dereferences those links while staging the active theme, keeping the runtime
 state self-contained without storing duplicate images in Git.
 
