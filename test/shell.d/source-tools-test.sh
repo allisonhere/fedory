@@ -16,7 +16,11 @@ else
   printf '%s\n' "\$3" > "$browser_state"
 fi
 EOF
-chmod +x "$fake_bin/xdg-settings"
+cat > "$fake_bin/fedory-pkg-add" <<EOF
+#!/bin/bash
+printf '%s\n' "\$*" >> "$fake_home/packages"
+EOF
+chmod +x "$fake_bin/xdg-settings" "$fake_bin/fedory-pkg-add"
 
 export HOME="$fake_home"
 export PATH="$fake_bin:$ROOT_DIR/bin:$PATH"
@@ -40,6 +44,7 @@ done
 
 FEDORY_PATH="$ROOT_DIR" bash -euo pipefail "$ROOT_DIR/migrations/1785591485.sh" >/dev/null
 FEDORY_PATH="$ROOT_DIR" bash -euo pipefail "$ROOT_DIR/migrations/1785591485.sh" >/dev/null
+FEDORY_PATH="$ROOT_DIR" bash -euo pipefail "$ROOT_DIR/migrations/1785592782.sh" >/dev/null
 assert_file_exists "$fake_home/.config/starship.toml"
 shell_integration_count=$(grep -c '^# Fedory shell integrations$' "$fake_home/.bashrc")
 assert_eq 1 "$shell_integration_count" "the Bash integration is added idempotently"
@@ -51,6 +56,8 @@ else
 fi
 assert_eq "org.chromium.Chromium.desktop" "$(<"$browser_state")" \
   "existing users migrate to Flatpak Chromium's desktop ID"
+assert_eq 1 "$(grep -c '^qrencode$' "$fake_home/packages")" \
+  "the QR migration requests Fedora's native package"
 
 if rg -q 'tensaku-edit|tui = "cliamp"|launch = "omawrite"' \
   "$ROOT_DIR/bin" "$ROOT_DIR/default" "$ROOT_DIR/config"; then

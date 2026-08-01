@@ -88,5 +88,6 @@ assert_eq "nett00n/hyprland" "$(map_field hyprland copr)" "Hyprland uses the Fed
 assert_eq "nett00n/hyprland" "$(map_field xdg-desktop-portal-hyprland copr)" "Hyprland portal uses the matching COPR"
 assert_eq "jetbrains-mono-fonts-all" "$(map_field ttf-jetbrains-mono-nerd-basic fedora_pkg)" "JetBrains alias resolves to Fedora's complete font package"
 assert_eq "che/nerd-fonts" "$(map_field nerd-fonts copr)" "Nerd Font symbols enable their COPR source"
+assert_eq "qrencode" "$(map_field qrencode fedora_pkg)" "QR sharing uses Fedora's native package"
 
 finish

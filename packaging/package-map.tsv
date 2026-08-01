@@ -101,6 +101,7 @@ python-gobject	python3-gobject	-	-	-	dnf	Fedora prefixes Python packages with py
 python-poetry-core	python3-poetry-core	-	-	-	dnf	see python-gobject naming note
 python-terminaltexteffects	-	-	-	mise pipx wrapper for terminaltexteffects (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user in an isolated Python environment through mise
 qemu-user-static-binfmt	qemu-user-static	-	-	-	dnf	Fedora bundles binfmt registration into the main qemu-user-static package
+qrencode	qrencode	-	-	-	dnf	Available directly from Fedora; used for terminal QR sharing
 quickshell-git	-	errornointernet/quickshell	-	build from source (git.outfoxxed.me/quickshell/quickshell)	copr	load-bearing for the entire Phase 6 shell; not in Fedora repos; this COPR is the current best-known one but not independently confirmed maintained -- verify before relying on it in production
 ripgrep	ripgrep	-	-	-	dnf	1:1 name match
 ruby	ruby	-	-	-	dnf	1:1 name match
