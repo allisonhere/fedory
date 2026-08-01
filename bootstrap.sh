@@ -33,30 +33,59 @@ ansi() {
   fi
 }
 
-banner() {
-  if has_gum; then
-    gum style --margin "1 0 0 0" --foreground 63 --bold \
-      '    ______ __________  ____  ______  __'
-    gum style --foreground 63 --bold \
-      '   / ____// ____/ __ \/ __ \/ __ \ \/ /'
-    gum style --foreground 63 --bold \
-      '  / /_   / __/ / / / / / / /_/ /\  /'
-    gum style --foreground 63 --bold \
-      ' / __/  / /___/ /_/ / /_/ / _, _/ / /'
-    gum style --foreground 63 --bold \
-      '/_/    /_____/_____/\____/_/ |_| /_/'
-    gum style --margin "1 0" --faint \
-      "            FEDORA. REFINED."
-  else
-    echo
-    ansi '1;38;5;63' '    ______ __________  ____  ______  __'
-    ansi '1;38;5;63' '   / ____// ____/ __ \/ __ \/ __ \ \/ /'
-    ansi '1;38;5;63' '  / /_   / __/ / / / / / / /_/ /\  /'
-    ansi '1;38;5;63' ' / __/  / /___/ /_/ / /_/ / _, _/ / /'
-    ansi '1;38;5;63' '/_/    /_____/_____/\____/_/ |_| /_/'
-    ansi '2' '            FEDORA. REFINED.'
-    echo
+bootstrap_gradient() {
+  if [[ ! -t 1 || -n ${NO_COLOR:-} || ${TERM:-} == "dumb" ]]; then
+    cat
+    return
   fi
+
+  awk '
+    function hex_digit(char) { return index("0123456789abcdef", char) - 1 }
+    function hex_byte(color, offset) { return hex_digit(substr(color, offset, 1)) * 16 + hex_digit(substr(color, offset + 1, 1)) }
+    function channel(from, to, amount) { return int(from + (to - from) * amount + 0.5) }
+    { lines[NR] = $0; if (length($0) > width) width = length($0) }
+    END {
+      start = "51a2da"; middle = "8b5cf6"; end = "22d3ee"
+      sr = hex_byte(start, 1); sg = hex_byte(start, 3); sb = hex_byte(start, 5)
+      mr = hex_byte(middle, 1); mg = hex_byte(middle, 3); mb = hex_byte(middle, 5)
+      er = hex_byte(end, 1); eg = hex_byte(end, 3); eb = hex_byte(end, 5)
+      for (row = 1; row <= NR; row++) {
+        for (column = 1; column <= length(lines[row]); column++) {
+          char = substr(lines[row], column, 1)
+          if (char == " ") { printf "%s", char; continue }
+          amount = width > 1 ? (column - 1) / (width - 1) : 0
+          if (NR > 1) amount += (0.5 - (row - 1) / (NR - 1)) * 0.16
+          if (amount < 0) amount = 0
+          if (amount > 1) amount = 1
+          if (amount <= 0.5) {
+            mix = amount * 2
+            r = channel(sr, mr, mix); g = channel(sg, mg, mix); b = channel(sb, mb, mix)
+          } else {
+            mix = (amount - 0.5) * 2
+            r = channel(mr, er, mix); g = channel(mg, eg, mix); b = channel(mb, eb, mix)
+          }
+          printf "\033[1;38;2;%d;%d;%dm%s", r, g, b, char
+        }
+        printf "\033[0m\n"
+      }
+    }
+  '
+}
+
+banner() {
+  echo
+  bootstrap_gradient <<'LOGO'
+   ▄████████  ▄████████ ████████▄   ▄██████▄     ▄████████ ▄██   ▄
+  ███    ███ ███    ███ ███   ▀███ ███    ███   ███    ███ ███   ██▄
+  ███    █▀  ███    █▀  ███    ███ ███    ███   ███    ███ ███▄▄▄███
+ ▄███▄▄▄    ▄███▄▄▄     ███    ███ ███    ███  ▄███▄▄▄▄██▀ ▀▀▀▀▀▀███
+▀▀███▀▀▀   ▀▀███▀▀▀     ███    ███ ███    ███ ▀▀███▀▀▀▀▀   ▄██   ███
+  ███        ███    █▄  ███    ███ ███    ███ ▀███████████ ███   ███
+  ███        ███    ███ ███   ▄███ ███    ███   ███    ███ ███   ███
+  ███        ██████████ ████████▀   ▀██████▀    ███    ███  ▀█████▀
+                                                ███    ███
+LOGO
+  echo
 }
 
 phase() {

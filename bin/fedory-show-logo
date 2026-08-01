@@ -3,7 +3,5 @@
 # fedory:summary=Display the Fedory ASCII logo in the terminal
 
 clear
-printf '\033[1;38;5;63m'
-cat <"$FEDORY_PATH/logo.txt"
-printf '\033[0m\n'
+fedory-branding-gradient "$FEDORY_PATH/logo.txt"
 echo
