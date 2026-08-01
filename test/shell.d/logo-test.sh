@@ -77,6 +77,36 @@ for color in 51a2da 8b5cf6 22d3ee; do
   fi
 done
 
+sddm_logo="$ROOT_DIR/default/sddm/fedory/logo.png"
+plymouth_logo="$ROOT_DIR/default/plymouth/logo.png"
+assert_file_exists "$sddm_logo"
+assert_file_exists "$plymouth_logo"
+
+if cmp -s "$sddm_logo" "$plymouth_logo"; then
+  echo "ok: boot and login screens share the current Fedory logo"
+else
+  echo "FAIL: boot and login screens use different Fedory logos"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if file "$sddm_logo" | rg -F '800 x 188, 8-bit/color RGBA' >/dev/null; then
+  echo "ok: pre-session logo preserves its transparent 800x188 contract"
+else
+  echo "FAIL: pre-session logo has the wrong dimensions or color format"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+login_logo_migration="$ROOT_DIR/migrations/1785601083.sh"
+assert_file_exists "$login_logo_migration"
+if rg -F '845786a24f19b693de561137b6e489b3afd9c0f27f18aee41623c126d9a103ba' \
+  "$login_logo_migration" >/dev/null &&
+  rg -F 'pkexec install -m 0644' "$login_logo_migration" >/dev/null; then
+  echo "ok: migration updates only the untouched legacy login logo"
+else
+  echo "FAIL: login logo migration does not guard the privileged replacement"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 migration_home="$fake_bin/migration-home"
 branding="$migration_home/.config/fedory/branding/screensaver.txt"
 mkdir -p "$(dirname "$branding")"
