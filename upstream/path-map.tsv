@@ -1,0 +1,13 @@
+upstream_prefix	fedory_prefix	policy	note
+.claude/	-	ignore	Upstream agent configuration is not distributed by Fedory
+.github/	.github/	review	Review automation changes independently for this repository
+bin/	bin/	fedora-rewrite	Rename commands and preserve Fedora package and privilege behavior
+install/	install/	fedora-rewrite	Translate Arch packaging and system setup to Fedora
+migrations/	migrations/	fedora-rewrite	Reimplement user-visible upgrade behavior as a Fedory migration
+config/	config/	port	Port user configuration unless it depends on Arch-only software
+default/	default/	review	Review defaults and binary assets for licensing and Fedory shell compatibility
+themes/	themes/	review	Review palette behavior and artwork provenance before porting
+shell/	shell/	port	Port shell behavior while preserving Fedory plugin and IPC contracts
+applications/	applications/	port	Port desktop entries after checking Fedora application IDs
+packaging/	packaging/	fedora-rewrite	Record upstream package changes in the Fedora package map
+*	-	review	Manually classify project metadata and new top-level areas

@@ -1,0 +1,298 @@
+#!/bin/bash
+
+# fedory:summary=Report Omarchy changes since Fedory's reviewed upstream checkpoint
+# fedory:args=[--base <ref>] [--target <ref>] [--output <file>] [--exit-code]
+# fedory:examples=fedory dev upstream audit | fedory dev upstream audit --target quattro --output /tmp/omarchy.md
+
+set -euo pipefail
+
+version_file="${FEDORY_UPSTREAM_VERSION_FILE:-$FEDORY_PATH/UPSTREAM_VERSION}"
+path_map="${FEDORY_UPSTREAM_PATH_MAP:-$FEDORY_PATH/upstream/path-map.tsv}"
+cache_dir="${FEDORY_UPSTREAM_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/fedory/upstream/omarchy.git}"
+base_ref=""
+target_ref=""
+output_file=""
+max_files=100
+use_exit_code=false
+
+usage() {
+  cat <<'USAGE'
+Usage: fedory-dev-upstream-audit [options]
+
+Options:
+  --base <ref>       Override the checkpoint from UPSTREAM_VERSION
+  --target <ref>     Compare with this branch, tag, or commit
+  --output <file>    Write the Markdown report to a file
+  --max-files <n>    Maximum changed files shown per policy (default: 100)
+  --exit-code        Exit 10 when upstream changes are found
+  -h, --help         Show this help
+USAGE
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --base | --target | --output | --max-files)
+      option=$1
+      shift
+      if (( $# == 0 )); then
+        echo "fedory-dev-upstream-audit: $option requires a value" >&2
+        exit 2
+      fi
+      case $option in
+        --base) base_ref=$1 ;;
+        --target) target_ref=$1 ;;
+        --output) output_file=$1 ;;
+        --max-files) max_files=$1 ;;
+      esac
+      ;;
+    --exit-code)
+      use_exit_code=true
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "fedory-dev-upstream-audit: unknown option '$1'" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+if [[ ! -f $version_file ]]; then
+  echo "fedory-dev-upstream-audit: missing checkpoint file: $version_file" >&2
+  exit 1
+fi
+
+if [[ ! -f $path_map ]]; then
+  echo "fedory-dev-upstream-audit: missing path policy: $path_map" >&2
+  exit 1
+fi
+
+if [[ ! $max_files =~ ^[0-9]+$ ]] || (( max_files < 1 )); then
+  echo "fedory-dev-upstream-audit: --max-files must be a positive integer" >&2
+  exit 2
+fi
+
+checkpoint_value() {
+  local key=$1
+  sed -n "s/^${key}=//p" "$version_file" | head -n 1
+}
+
+repository=$(checkpoint_value repository)
+checkpoint_ref=$(checkpoint_value ref)
+checkpoint_commit=$(checkpoint_value commit)
+reviewed_at=$(checkpoint_value reviewed_at)
+
+if [[ -z $repository || -z $checkpoint_commit ]]; then
+  echo "fedory-dev-upstream-audit: repository and commit are required in $version_file" >&2
+  exit 1
+fi
+
+[[ -n $base_ref ]] || base_ref=$checkpoint_commit
+
+remote_head=$(git ls-remote --symref "$repository" HEAD \
+  | awk '$1 == "ref:" { sub("refs/heads/", "", $2); print $2; exit }')
+
+if [[ -z $target_ref ]]; then
+  target_ref=$remote_head
+fi
+
+if [[ -z $target_ref ]]; then
+  echo "fedory-dev-upstream-audit: could not determine Omarchy's default branch" >&2
+  exit 1
+fi
+
+mkdir -p "${cache_dir%/*}"
+if [[ ! -d $cache_dir/objects ]]; then
+  git clone --mirror --quiet "$repository" "$cache_dir"
+else
+  git -C "$cache_dir" remote set-url origin "$repository"
+fi
+
+git -C "$cache_dir" fetch --quiet --prune origin \
+  '+refs/heads/*:refs/remotes/origin/*' \
+  '+refs/tags/*:refs/tags/*'
+
+resolve_ref() {
+  local ref=$1 candidate
+
+  if [[ $ref =~ ^[0-9a-fA-F]{7,40}$ ]]; then
+    git -C "$cache_dir" rev-parse --verify "${ref}^{commit}" 2>/dev/null && return
+  fi
+
+  for candidate in \
+    "refs/remotes/origin/$ref" \
+    "refs/tags/$ref" \
+    "refs/heads/$ref" \
+    "$ref"; do
+    git -C "$cache_dir" rev-parse --verify "${candidate}^{commit}" 2>/dev/null && return
+  done
+
+  return 1
+}
+
+if ! base_commit=$(resolve_ref "$base_ref"); then
+  echo "fedory-dev-upstream-audit: cannot resolve base ref '$base_ref'" >&2
+  exit 1
+fi
+
+if ! target_commit=$(resolve_ref "$target_ref"); then
+  echo "fedory-dev-upstream-audit: cannot resolve target ref '$target_ref'" >&2
+  exit 1
+fi
+
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+
+for policy in fedora-rewrite port review ignore; do
+  : >"$tmp_dir/$policy.rows"
+done
+
+declare -A policy_counts=(
+  [fedora-rewrite]=0
+  [port]=0
+  [review]=0
+  [ignore]=0
+)
+declare -A status_counts=(
+  [A]=0
+  [M]=0
+  [D]=0
+  [R]=0
+  [C]=0
+  [T]=0
+)
+
+classify_path() {
+  local path=$1 prefix fedory_prefix policy note
+
+  while IFS=$'\t' read -r prefix fedory_prefix policy note; do
+    [[ $prefix == "upstream_prefix" ]] && continue
+    if [[ $prefix == "*" || $path == "$prefix"* ]]; then
+      printf '%s\t%s\t%s\t%s\n' "$prefix" "$fedory_prefix" "$policy" "$note"
+      return
+    fi
+  done <"$path_map"
+}
+
+changed_count=0
+while IFS=$'\t' read -r status old_path new_path; do
+  [[ -n $status ]] || continue
+  changed_count=$((changed_count + 1))
+  status_key=${status:0:1}
+  status_counts[$status_key]=$(( ${status_counts[$status_key]:-0} + 1 ))
+
+  upstream_path=$old_path
+  display_path=$old_path
+  if [[ $status_key == "R" || $status_key == "C" ]]; then
+    upstream_path=$new_path
+    display_path="$old_path -> $new_path"
+  fi
+
+  IFS=$'\t' read -r prefix fedory_prefix policy note < <(classify_path "$upstream_path")
+  policy_counts[$policy]=$(( ${policy_counts[$policy]} + 1 ))
+
+  fedory_path="-"
+  if [[ $fedory_prefix != "-" ]]; then
+    fedory_path="$fedory_prefix${upstream_path#"$prefix"}"
+  fi
+
+  printf '| `%s` | `%s` | `%s` | %s |\n' \
+    "$status" "$display_path" "$fedory_path" "$note" \
+    >>"$tmp_dir/$policy.rows"
+done < <(git -C "$cache_dir" diff --name-status --find-renames "$base_commit" "$target_commit")
+
+base_short=${base_commit:0:12}
+target_short=${target_commit:0:12}
+target_subject=$(git -C "$cache_dir" log -1 --format=%s "$target_commit")
+target_date=$(git -C "$cache_dir" log -1 --format=%cs "$target_commit")
+commit_count=$(git -C "$cache_dir" rev-list --count "$base_commit..$target_commit")
+
+report="$tmp_dir/report.md"
+{
+  echo "# Omarchy upstream audit"
+  echo
+  echo "- Repository: \`$repository\`"
+  echo "- Reviewed checkpoint: \`${checkpoint_ref:-unknown}\` at \`$base_short\` (${reviewed_at:-date unknown})"
+  echo "- Compared target: \`$target_ref\` at \`$target_short\` ($target_date)"
+  echo "- Target commit: $target_subject"
+  echo "- Upstream commits in range: $commit_count"
+  echo "- Changed paths: $changed_count"
+  echo
+
+  if ! git -C "$cache_dir" merge-base --is-ancestor "$base_commit" "$target_commit"; then
+    echo "> Warning: the checkpoint is not an ancestor of the target. Review the upstream branch transition before advancing the pin."
+    echo
+  fi
+
+  if (( changed_count == 0 )); then
+    echo "No upstream changes were found after the reviewed checkpoint."
+  else
+    echo "## Summary"
+    echo
+    echo "| Added | Modified | Deleted | Renamed | Copied | Type changed |"
+    echo "| ---: | ---: | ---: | ---: | ---: | ---: |"
+    echo "| ${status_counts[A]} | ${status_counts[M]} | ${status_counts[D]} | ${status_counts[R]} | ${status_counts[C]} | ${status_counts[T]} |"
+    echo
+    echo "| Review policy | Paths |"
+    echo "| --- | ---: |"
+    echo "| Fedora rewrite required | ${policy_counts[fedora-rewrite]} |"
+    echo "| Direct port candidate | ${policy_counts[port]} |"
+    echo "| Manual review | ${policy_counts[review]} |"
+    echo "| Intentionally ignored | ${policy_counts[ignore]} |"
+    echo
+  fi
+} >"$report"
+
+append_policy() {
+  local policy=$1 title=$2 count
+  count=${policy_counts[$policy]}
+  (( count > 0 )) || return 0
+
+  {
+    echo "## $title"
+    echo
+    echo "| Status | Upstream path | Fedory path | Guidance |"
+    echo "| --- | --- | --- | --- |"
+    head -n "$max_files" "$tmp_dir/$policy.rows"
+    if (( count > max_files )); then
+      echo
+      echo "$((count - max_files)) additional paths omitted; rerun with a larger \`--max-files\` value."
+    fi
+    echo
+  } >>"$report"
+}
+
+if (( changed_count > 0 )); then
+  append_policy fedora-rewrite "Fedora rewrites required"
+  append_policy port "Direct port candidates"
+  append_policy review "Manual review"
+  append_policy ignore "Intentionally ignored upstream files"
+
+  cat >>"$report" <<'CHECKLIST'
+## Review checklist
+
+- Read the upstream commits, not only the final file diff.
+- Port user-visible behavior rather than merging Arch package operations.
+- Update `packaging/package-map.tsv` for every package change.
+- Add migrations when existing Fedory users need the change.
+- Run `./test/all` and complete a fresh Fedora VM bootstrap.
+- Advance `UPSTREAM_VERSION` only after every path is resolved or documented.
+CHECKLIST
+fi
+
+if [[ -n $output_file ]]; then
+  output_dir=${output_file%/*}
+  [[ $output_dir != "$output_file" ]] || output_dir="."
+  mkdir -p "$output_dir"
+  cp "$report" "$output_file"
+else
+  cat "$report"
+fi
+
+if [[ $use_exit_code == true ]] && (( changed_count > 0 )); then
+  exit 10
+fi

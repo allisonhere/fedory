@@ -1,0 +1,7 @@
+# Omarchy checkpoint used as the lower bound for upstream change reports.
+# Advancing this file means every change through the new commit was reviewed;
+# it does not claim Fedory implements every upstream feature.
+repository=https://github.com/basecamp/omarchy.git
+ref=quattro
+commit=ad9fdc39f6ab83fbdc65a3e5240e1d8bc5395471
+reviewed_at=2026-07-31

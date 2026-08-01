@@ -1,0 +1,73 @@
+name: Watch Omarchy upstream
+
+on:
+  schedule:
+    - cron: "23 11 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: omarchy-upstream-watch
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Fedory
+        uses: actions/checkout@v4
+
+      - name: Audit Omarchy changes
+        id: audit
+        shell: bash
+        run: |
+          status=0
+          FEDORY_PATH="$GITHUB_WORKSPACE" \
+            bin/fedory-dev-upstream-audit \
+              --output "$RUNNER_TEMP/omarchy-upstream.md" \
+              --exit-code || status=$?
+
+          case $status in
+            0) echo "drift=false" >>"$GITHUB_OUTPUT" ;;
+            10) echo "drift=true" >>"$GITHUB_OUTPUT" ;;
+            *) exit "$status" ;;
+          esac
+
+      - name: Create or update tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REPORT: ${{ runner.temp }}/omarchy-upstream.md
+          DRIFT: ${{ steps.audit.outputs.drift }}
+        shell: bash
+        run: |
+          title="[Upstream] Omarchy changes require review"
+          issue=$(gh issue list \
+            --state open \
+            --search "\"$title\" in:title" \
+            --json number,title \
+            --jq ".[] | select(.title == \"$title\") | .number" \
+            | head -n 1)
+
+          if [[ $DRIFT == "true" ]]; then
+            body=$(mktemp)
+            {
+              echo "<!-- fedory-omarchy-upstream-watch -->"
+              echo "This issue is maintained by the weekly upstream audit."
+              echo
+              cat "$REPORT"
+            } >"$body"
+
+            if [[ -n $issue ]]; then
+              gh issue edit "$issue" --body-file "$body"
+            else
+              gh issue create --title "$title" --body-file "$body"
+            fi
+          elif [[ -n $issue ]]; then
+            gh issue comment "$issue" \
+              --body "The reviewed checkpoint now matches Omarchy's current default branch. Closing automatically."
+            gh issue close "$issue"
+          fi

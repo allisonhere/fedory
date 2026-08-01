@@ -72,6 +72,7 @@ assets for visual selection immediately after a clean installation.
 - [`docs/file-layout.md`](docs/file-layout.md) — where everything lives, and how repository assets map onto your system
 - [`docs/theming.md`](docs/theming.md) — how the theme + template system works
 - [`docs/migrations.md`](docs/migrations.md) — how `fedory update` keeps your config current
+- [`docs/upstream-sync.md`](docs/upstream-sync.md) — how Omarchy changes are detected, reviewed, and deliberately ported
 - [`docs/scope.md`](docs/scope.md) — how Fedory's install model differs from upstream Omarchy's, and why
 
 ## Relationship to Omarchy
