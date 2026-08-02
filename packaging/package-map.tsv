@@ -226,5 +226,8 @@ nautilus-dropbox	nautilus-dropbox	-	-	-	dnf (RPM Fusion)	provides the Nautilus i
 nordvpn-bin	nordvpn	-	-	official install script (downloads.nordcdn.com)	external-repo	NordVPN publish their own official install script that configures a dnf repo
 once-bin	-	-	-	investigate	dropped	first-party Basecamp/DHH AUR-only tool, same unconfirmed-source category as aether/cliamp/omacut/omawrite/tensaku/tobi-try
 iio-sensor-proxy	iio-sensor-proxy	-	-	-	dnf	Fedora-native accelerometer proxy used by the optional tablet profile
-maliit-keyboard	maliit-keyboard	-	-	-	dnf	Fedora-native Wayland on-screen keyboard used by the optional tablet profile
+wayland-devel	wayland-devel	-	-	-	dnf	build dependency for the optional wvkbd tablet keyboard
+libxkbcommon-devel	libxkbcommon-devel	-	-	-	dnf	build dependency for the optional wvkbd tablet keyboard
+cairo-devel	cairo-devel	-	-	-	dnf	build dependency for the optional wvkbd tablet keyboard
+pango-devel	pango-devel	-	-	-	dnf	build dependency for the optional wvkbd tablet keyboard
 symfony-cli	-	-	-	official install script (get.symfony.com/cli/installer) or their own apt/yum repo	external-repo	referenced by fedory-install-dev-env/-remove-dev-env; no confirmed Fedora dnf package

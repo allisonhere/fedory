@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# fedory:summary=Launch Flatpak Chromium with Fedory's configured flags
+# fedory:hidden=true
+
+set -euo pipefail
+
+flags_file="$HOME/.config/chromium-flags.conf"
+flags=()
+
+if [[ -f $flags_file ]]; then
+  while IFS= read -r flag; do
+    [[ -n $flag && $flag != \#* ]] || continue
+    # Host extension paths are not visible inside the Flatpak sandbox. Passing
+    # them makes Chromium show a misleading "failed to load manifest" error.
+    [[ $flag == --load-extension=* ]] && continue
+    flags+=("$flag")
+  done <"$flags_file"
+fi
+
+exec flatpak run org.chromium.Chromium "${flags[@]}" "$@"

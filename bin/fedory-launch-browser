@@ -12,7 +12,7 @@ browser_command=()
 focus_pattern=""
 case $default_browser in
 chromium.desktop | org.chromium.Chromium.desktop)
-  browser_command=(flatpak run org.chromium.Chromium)
+  browser_command=(fedory-launch-chromium)
   focus_pattern="^chromium.*$"
   ;;
 *)

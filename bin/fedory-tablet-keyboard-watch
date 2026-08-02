@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# fedory:summary=Run the on-screen keyboard only while the Z13 keyboard is detached
+# fedory:hidden=true
+
+set -euo pipefail
+
+input_root="${FEDORY_INPUT_ROOT:-/sys/class/input}"
+keyboard_vendor="${FEDORY_TABLET_KEYBOARD_VENDOR:-0b05}"
+keyboard_product="${FEDORY_TABLET_KEYBOARD_PRODUCT:-1a30}"
+poll_interval="${FEDORY_TABLET_KEYBOARD_POLL_INTERVAL:-1}"
+keyboard="${FEDORY_TABLET_KEYBOARD_COMMAND:-$HOME/.local/lib/fedory/wvkbd-mobintl}"
+keyboard_pid=""
+
+keyboard_attached() {
+  local device vendor product
+
+  for device in "$input_root"/event*/device/id; do
+    [[ -r $device/vendor && -r $device/product ]] || continue
+    read -r vendor <"$device/vendor"
+    read -r product <"$device/product"
+    [[ ${vendor,,} == "$keyboard_vendor" && ${product,,} == "$keyboard_product" ]] && return 0
+  done
+  return 1
+}
+
+if [[ ${1:-} == "--keyboard-attached" ]]; then
+  keyboard_attached
+  exit
+fi
+
+stop_keyboard() {
+  [[ -n $keyboard_pid ]] || return 0
+  kill "$keyboard_pid" 2>/dev/null || true
+  wait "$keyboard_pid" 2>/dev/null || true
+  keyboard_pid=""
+}
+
+trap 'stop_keyboard' EXIT INT TERM
+
+while true; do
+  if keyboard_attached; then
+    stop_keyboard
+  elif [[ -z $keyboard_pid ]] || ! kill -0 "$keyboard_pid" 2>/dev/null; then
+    "$keyboard" --auto -H 320 -L 320 --fn "DejaVu Sans 24" &
+    keyboard_pid=$!
+  fi
+  sleep "$poll_interval"
+done

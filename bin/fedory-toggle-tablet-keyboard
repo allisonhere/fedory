@@ -7,5 +7,9 @@ if systemctl --user is-active --quiet fedory-tablet-keyboard.service; then
   fedory-osd -i keyboard -m "On-screen keyboard hidden"
 else
   systemctl --user start fedory-tablet-keyboard.service
-  fedory-osd -i keyboard -m "On-screen keyboard ready"
+  if fedory-tablet-keyboard-watch --keyboard-attached; then
+    fedory-osd -i keyboard -m "On-screen keyboard waiting for keyboard detachment"
+  else
+    fedory-osd -i keyboard -m "On-screen keyboard ready"
+  fi
 fi
