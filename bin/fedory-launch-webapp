@@ -7,11 +7,11 @@ browser=$(env -u BROWSER xdg-settings get default-web-browser)
 
 case $browser in
 chromium.desktop | org.chromium.Chromium.desktop)
-  exec setsid uwsm app -- flatpak run org.chromium.Chromium --app="$1" "${@:2}"
+  exec setsid uwsm app -- fedory-launch-chromium --app="$1" "${@:2}"
   ;;
 google-chrome* | brave* | microsoft-edge* | opera* | vivaldi* | helium*) ;;
 *)
-  exec setsid uwsm app -- flatpak run org.chromium.Chromium --app="$1" "${@:2}"
+  exec setsid uwsm app -- fedory-launch-chromium --app="$1" "${@:2}"
   ;;
 esac
 

@@ -8,9 +8,12 @@ set -euo pipefail
 
 case "${1:-}" in
   normal) transform=0 ;;
-  right-up) transform=1 ;;
+  # monitor-sensor names the physical edge pointing upward. Hyprland's
+  # transforms describe the clockwise rotation of the output, so the two
+  # portrait orientations intentionally map to the opposite direction.
+  right-up) transform=3 ;;
   bottom-up) transform=2 ;;
-  left-up) transform=3 ;;
+  left-up) transform=1 ;;
   *)
     echo "Usage: fedory-tablet-rotate <normal|right-up|bottom-up|left-up>" >&2
     exit 1

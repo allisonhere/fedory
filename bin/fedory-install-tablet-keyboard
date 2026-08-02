@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# fedory:summary=Install Fedory's Wayland on-screen keyboard
+# fedory:hidden=true
+
+set -euo pipefail
+
+install_dir="$HOME/.local/lib/fedory"
+target="$install_dir/wvkbd-mobintl"
+revision=6b41504a0cb58fd1163fa44692398fbd61f8905f
+
+[[ -x $target ]] && exit 0
+
+fedory-pkg-add git gcc make wayland-devel libxkbcommon-devel cairo-devel pango-devel
+
+build_dir=$(mktemp -d)
+trap 'rm -rf "$build_dir"' EXIT
+git clone --quiet https://github.com/jjsullivan5196/wvkbd.git "$build_dir/wvkbd"
+git -C "$build_dir/wvkbd" checkout --quiet "$revision"
+make --quiet -C "$build_dir/wvkbd" wvkbd-mobintl
+mkdir -p "$install_dir"
+install -m 755 "$build_dir/wvkbd/wvkbd-mobintl" "$target"

@@ -53,7 +53,8 @@ enable_profile() {
   fi
 
   echo "Installing tablet support..."
-  fedory-pkg-add iio-sensor-proxy maliit-keyboard
+  fedory-pkg-add iio-sensor-proxy
+  fedory-install-tablet-keyboard
 
   mkdir -p "$state_dir"
   if [[ ! -f $enabled_file ]]; then
@@ -110,6 +111,11 @@ show_status() {
     echo "accelerometer: detected"
   else
     echo "accelerometer: not detected"
+  fi
+  if fedory-tablet-keyboard-watch --keyboard-attached; then
+    echo "physical keyboard: attached (on-screen keyboard suppressed)"
+  else
+    echo "physical keyboard: detached (on-screen keyboard automatic)"
   fi
   echo "on-screen keyboard: $(systemctl --user is-active "$keyboard_unit" 2>/dev/null || true)"
   echo "automatic rotation: $(systemctl --user is-active "$rotation_unit" 2>/dev/null || true)"

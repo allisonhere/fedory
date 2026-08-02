@@ -5,7 +5,7 @@ After=graphical-session.target
 ConditionPathExists=%h/.local/state/fedory/tablet/enabled
 
 [Service]
-ExecStart=/usr/bin/maliit-keyboard
+ExecStart=/usr/bin/bash -lc 'exec "$FEDORY_PATH/bin/fedory-tablet-keyboard-watch"'
 Restart=on-failure
 RestartSec=2
 
