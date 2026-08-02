@@ -52,6 +52,7 @@ fedory_task_label() {
     config/xdg-terminal-exec.sh) echo "Configure the default terminal"; return ;;
     config/theme-system.sh) echo "Apply the system theme"; return ;;
     config/plymouth.sh) echo "Set up the boot splash"; return ;;
+    config/grub.sh) echo "Brand the boot menu"; return ;;
     config/enable-services.sh) echo "Enable desktop services"; return ;;
     config/firewall.sh) echo "Configure the firewall"; return ;;
     login/sddm.sh) echo "Configure the Fedory login screen"; return ;;
@@ -99,6 +100,7 @@ fedory_task_activity_label() {
   case $1 in
     "Install core desktop packages") echo "PACKAGE" ;;
     "Set up the boot splash") echo "STEP" ;;
+    "Brand the boot menu") echo "STEP" ;;
   esac
 }
 

@@ -1,25 +1,117 @@
 #!/bin/bash
 
-# fedory:summary=Regenerate the GRUB2 boot configuration (not yet implemented)
+# fedory:summary=Install the Fedory GRUB theme and regenerate the boot menu
 # fedory:requires-sudo=true
 #
-# Upstream's refresh-limine resets /boot/limine.conf to Omarchy's own
-# shipped default and rebuilds it via limine-update + limine-snapper-sync --
-# that works because Omarchy owns and ships limine.conf as opinionated
-# config. Fedora's default boot chain is GRUB2 + BLS entries generated from
-# /etc/default/grub and /boot/loader/entries/*.conf by grub2-mkconfig and
-# kernel-install, not a single file Fedory ships or owns, so there's no
-# Fedory-owned boot config to "reset to default" the same way.
+# Fedora-native design rather than a port. Upstream's refresh-limine rewrites
+# /boot/limine.conf, a single file Omarchy owns outright. Fedora's boot chain is
+# GRUB2 + BLS: grub.cfg is *generated* from /etc/default/grub and
+# /boot/loader/entries/*.conf, so there is no Fedory-owned boot config to reset
+# the way Limine has. What Fedory can own is the theme directory, plus the few
+# /etc/default/grub keys that make the menu graphical at all.
 #
-# A real implementation would need its own design: either regenerate
-# grub.cfg via `grub2-mkconfig -o <path>` (path differs BIOS vs UEFI) with
-# whatever Fedory-specific /etc/default/grub tweaks are decided on, or lean
-# entirely on BLS auto-regeneration and just document that GRUB2 doesn't
-# need a manual refresh step the way Limine does. Left unimplemented rather
-# than faked -- see fedory-setup-direct-boot for the same kind of gap.
+# The key that actually matters is GRUB_TERMINAL_OUTPUT. Fedora ships
+# "console", which puts GRUB in text mode where themes are never rendered --
+# installing a theme without flipping this leaves it completely invisible.
+# gfxterm is what makes the rest of this meaningful.
+#
+# Re-runnable: every write is idempotent, so this doubles as the "put my boot
+# menu back to Fedory's default" command.
 
-echo "fedory-refresh-grub is not implemented yet." >&2
-echo "Fedora's GRUB2/BLS boot chain has no single Fedory-owned config file" >&2
-echo "to reset; see this script's header comment for what a real" >&2
-echo "implementation needs." >&2
-exit 1
+set -euo pipefail
+
+theme_source="${FEDORY_PATH:?FEDORY_PATH is not set}/default/grub/fedory"
+theme_dir="${FEDORY_GRUB_THEME_DIR:-/boot/grub2/themes/fedory}"
+grub_defaults="${FEDORY_GRUB_DEFAULTS:-/etc/default/grub}"
+grub_cfg="${FEDORY_GRUB_CFG:-/boot/grub2/grub.cfg}"
+mkconfig="${FEDORY_GRUB_MKCONFIG:-grub2-mkconfig}"
+mkfont="${FEDORY_GRUB_MKFONT:-grub2-mkfont}"
+
+run=()
+(( EUID == 0 )) || run=(sudo)
+
+if [[ ! -d $theme_source ]]; then
+  echo "GRUB theme source '$theme_source' is missing." >&2
+  exit 1
+fi
+
+# set_grub_key KEY VALUE
+#   Replace an existing assignment or append a new one. Rewriting the whole file
+#   would discard the distribution's own settings -- GRUB_CMDLINE_LINUX carries
+#   the kernel arguments this machine boots with -- so only the named keys move.
+set_grub_key() {
+  local key="$1" value="$2" line
+  printf -v line '%s="%s"' "$key" "$value"
+
+  if [[ -f $grub_defaults ]] && grep -qE "^[[:space:]]*${key}=" "$grub_defaults"; then
+    "${run[@]}" sed -i "s|^[[:space:]]*${key}=.*|${line}|" "$grub_defaults"
+  else
+    "${run[@]}" mkdir -p "$(dirname "$grub_defaults")"
+    printf '%s\n' "$line" | "${run[@]}" tee -a "$grub_defaults" >/dev/null
+  fi
+}
+
+# GRUB cannot read system fonts; it needs its own .pf2 format. Generate one so
+# the name theme.txt asks for resolves. Cantarell first, to match the Plymouth
+# splash, then anything else installed -- failing the whole boot menu over a
+# font preference would be absurd.
+generate_font() {
+  local out="$1" candidate
+  local candidates=(
+    /usr/share/fonts/abattis-cantarell-fonts/Cantarell-Regular.otf
+    /usr/share/fonts/cantarell/Cantarell-Regular.otf
+    /usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf
+    /usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf
+  )
+
+  for candidate in "${candidates[@]}"; do
+    [[ -f $candidate ]] || continue
+    if "${run[@]}" "$mkfont" -o "$out" -s 16 -n "Fedory" "$candidate" 2>/dev/null; then
+      return 0
+    fi
+  done
+
+  while IFS= read -r candidate; do
+    if "${run[@]}" "$mkfont" -o "$out" -s 16 -n "Fedory" "$candidate" 2>/dev/null; then
+      return 0
+    fi
+  done < <(find /usr/share/fonts -type f \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | head -5)
+
+  return 1
+}
+
+echo "[1/4] Installing the Fedory GRUB theme"
+"${run[@]}" rm -rf "$theme_dir"
+"${run[@]}" mkdir -p "$theme_dir"
+"${run[@]}" cp -r "$theme_source/." "$theme_dir/"
+
+echo "[2/4] Building the boot menu font"
+# The font goes inside the theme directory on purpose: /etc/grub.d/00_header
+# scans it and emits a `loadfont` for every .pf2 it finds there.
+if ! generate_font "$theme_dir/fedory.pf2"; then
+  echo "Could not build a GRUB font with $mkfont from any installed font." >&2
+  echo "theme.txt asks for \"Fedory Regular 16\", so the menu could not load it." >&2
+  "${run[@]}" rm -rf "$theme_dir"
+  exit 1
+fi
+
+echo "[3/4] Switching the boot menu to graphics mode"
+# Without gfxterm the theme is never drawn. This is the load-bearing key.
+set_grub_key GRUB_TERMINAL_OUTPUT "gfxterm"
+set_grub_key GRUB_THEME "$theme_dir/theme.txt"
+set_grub_key GRUB_GFXMODE "auto"
+# Hand the mode through to the kernel so the splash does not flip resolution
+# part way through boot.
+set_grub_key GRUB_GFXPAYLOAD_LINUX "keep"
+
+echo "[4/4] Regenerating the boot menu"
+"${run[@]}" "$mkconfig" -o "$grub_cfg"
+
+# Fedora 34+ generates a single grub.cfg at /boot/grub2/grub.cfg for both BIOS
+# and UEFI, and the copy under /boot/efi is a stub that chains to it. Older
+# layouts kept a full config there, so refresh that one too -- but only when it
+# is not a stub, or this would clobber the chain loader.
+legacy_efi_cfg="${FEDORY_GRUB_EFI_CFG:-/boot/efi/EFI/fedora/grub.cfg}"
+if [[ -f $legacy_efi_cfg ]] && (( $(wc -l <"$legacy_efi_cfg") > 20 )); then
+  "${run[@]}" "$mkconfig" -o "$legacy_efi_cfg"
+fi
