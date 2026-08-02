@@ -1,6 +1,7 @@
 run_logged "$FEDORY_INSTALL/config/base-packages.sh"
 run_logged "$FEDORY_INSTALL/config/xdg-terminal-exec.sh"
 run_logged "$FEDORY_INSTALL/config/theme-system.sh"
+run_logged "$FEDORY_INSTALL/config/plymouth.sh"
 run_logged "$FEDORY_INSTALL/config/faillock.sh"
 run_logged "$FEDORY_INSTALL/config/lockscreen-pam.sh"
 run_logged "$FEDORY_INSTALL/config/fix-powerprofilesctl-shebang.sh"

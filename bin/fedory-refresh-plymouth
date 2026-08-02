@@ -9,8 +9,14 @@
 # theme separately here since Fedora's default LUKS unlock prompt is
 # handled by Plymouth itself, same theme.
 
+#
+# The deployment itself is shared with install/config/plymouth.sh so the
+# bootstrap path and this manual refresh can't drift apart -- previously only
+# this script knew how to install the theme, and nothing in the installer ever
+# called it.
+
 set -e
 
-sudo cp -r "$FEDORY_PATH/default/plymouth/." /usr/share/plymouth/themes/fedory/
-sudo plymouth-set-default-theme fedory
-sudo dracut --regenerate-all -f
+source "${FEDORY_PATH:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/install/helpers/plymouth.sh"
+
+fedory_apply_plymouth_theme

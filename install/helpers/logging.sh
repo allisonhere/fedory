@@ -51,6 +51,7 @@ fedory_task_label() {
     config/base-packages.sh) echo "Install core desktop packages"; return ;;
     config/xdg-terminal-exec.sh) echo "Configure the default terminal"; return ;;
     config/theme-system.sh) echo "Apply the system theme"; return ;;
+    config/plymouth.sh) echo "Set up the boot splash"; return ;;
     config/enable-services.sh) echo "Enable desktop services"; return ;;
     config/firewall.sh) echo "Configure the firewall"; return ;;
     login/sddm.sh) echo "Configure the Fedory login screen"; return ;;
@@ -84,6 +85,23 @@ fedory_task_label() {
   esac
 }
 
+# Which tasks get the extra third progress row, and what to title it.
+# Long-running leaves that emit meaningful activity text deserve it; short
+# ones would just add a line that flickers past. Returning empty means "no
+# activity row for this task".
+#
+# fedory_render_progress and fedory_watch_progress must agree on this, because
+# the row changes how many terminal lines each redraw has to move back over --
+# disagreement leaves the cursor in the wrong place and the bars overwrite
+# surrounding output. Hence one predicate rather than a condition repeated in
+# both.
+fedory_task_activity_label() {
+  case $1 in
+    "Install core desktop packages") echo "PACKAGE" ;;
+    "Set up the boot splash") echo "STEP" ;;
+  esac
+}
+
 fedory_task_notice() {
   local script=$1 relative
   relative=${script#"${FEDORY_INSTALL:-}"/}
@@ -91,6 +109,9 @@ fedory_task_notice() {
   case $relative in
     config/base-packages.sh)
       echo "This is the longest install step and may take several minutes on a fresh system. Keep this terminal open."
+      ;;
+    config/plymouth.sh)
+      echo "Rebuilding the initramfs for the boot splash. dracut is quiet while it works, so expect this step to sit at its last message for a minute."
       ;;
   esac
 }
@@ -198,10 +219,12 @@ fedory_render_progress() {
   local columns label_width now elapsed task_current task_total snapshot
   local task_activity show_activity=0 activity_width fitted_activity activity_text
   local current_bar current_text overall_current overall_bar overall_text fitted_label
+  local activity_prefix
 
   snapshot=$(fedory_task_progress "$task_log")
   IFS='|' read -r task_current task_total task_activity <<<"$snapshot"
-  [[ $display_label == "Install core desktop packages" ]] && show_activity=1
+  activity_prefix=$(fedory_task_activity_label "$display_label")
+  [[ -n $activity_prefix ]] && show_activity=1
   now=$(date +%s)
   elapsed=$((now - started_at))
 
@@ -244,7 +267,12 @@ fedory_render_progress() {
   fi
 
   if (( show_activity )); then
-    [[ -n $task_activity ]] || task_activity="Resolving package transaction..."
+    if [[ -z $task_activity ]]; then
+      case $activity_prefix in
+        PACKAGE) task_activity="Resolving package transaction..." ;;
+        *) task_activity="Working..." ;;
+      esac
+    fi
     activity_width=$((columns - 23))
     (( activity_width < 8 )) && activity_width=8
     if (( ${#task_activity} > activity_width )); then
@@ -252,8 +280,11 @@ fedory_render_progress() {
     else
       fitted_activity=$task_activity
     fi
-    activity_text=$(printf 'PACKAGE  %-*s  %02d:%02d' \
-      "$activity_width" "$fitted_activity" "$((elapsed / 60))" "$((elapsed % 60))")
+    # %-7s keeps the row aligned with the bars above it regardless of which
+    # prefix a task uses; "PACKAGE" is the widest and sets the column.
+    activity_text=$(printf '%-7s  %-*s  %02d:%02d' \
+      "$activity_prefix" "$activity_width" "$fitted_activity" \
+      "$((elapsed / 60))" "$((elapsed % 60))")
   fi
 
   if (( tick > 0 )); then
@@ -284,7 +315,9 @@ fedory_watch_progress() {
     fedory_render_progress "$progress_current" "$progress_total" \
       "$display_label" "$task_log" "$started_at" "$tick"
   done
-  if [[ $display_label == "Install core desktop packages" ]]; then
+  # Must match fedory_render_progress's activity-row decision exactly, or the
+  # cursor ends up a line off and the bars smear into later output.
+  if [[ -n $(fedory_task_activity_label "$display_label") ]]; then
     printf '\r\033[2K\033[1A\r\033[2K\033[1A\r\033[2K'
   else
     printf '\r\033[2K\033[1A\r\033[2K'
