@@ -72,6 +72,27 @@ case "$output" in
     ASSERT_FAILURES=$((ASSERT_FAILURES + 1)) ;;
 esac
 
+# Regression: the first version printed one line and then waited silently for
+# up to 15 minutes, which read as a hung installer. Each poll must emit a
+# [waited/timeout] marker so run_logged's renderer shows the wait counting
+# down rather than a frozen screen.
+case "$output" in
+  *'[0/30]'*) echo "ok: the wait emits progress markers" ;;
+  *) echo "FAIL: no [waited/timeout] marker in the wait output (got: $output)"
+     ASSERT_FAILURES=$((ASSERT_FAILURES + 1)) ;;
+esac
+
+# The default ceiling must stay short enough that a stuck lock does not look
+# like a hang. Called with no explicit timeout, a never-clearing lock has to
+# give up promptly rather than sit for a quarter of an hour.
+printf '999\n' > "$work_dir/hold"
+default_output=$(wait_for_package_transaction "test")
+case "$default_output" in
+  *'/120]'*) echo "ok: the default wait ceiling is 120s" ;;
+  *) echo "FAIL: unexpected default timeout (got: $(printf '%s' "$default_output" | head -1))"
+     ASSERT_FAILURES=$((ASSERT_FAILURES + 1)) ;;
+esac
+
 # A lock that never clears must give up and return 1 -- not exit, which would
 # kill whichever script sourced the helper.
 printf '999\n' > "$work_dir/hold"

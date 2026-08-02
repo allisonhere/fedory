@@ -23,7 +23,11 @@
 #   the installer warns and presses on.
 wait_for_package_transaction() {
   local label="${1:-Fedory setup}"
-  local timeout="${2:-900}"
+  # Two minutes, not the fifteen this originally used. The point is to ride out
+  # PackageKit's boot-time refresh, which is short; blocking a whole install
+  # far beyond that trades one failure mode for a worse-looking one. On timeout
+  # callers proceed and let dnf report the real error.
+  local timeout="${2:-120}"
   # FEDORY_RPM_LOCK exists so the test suite can exercise the fuser branch on a
   # host that has no /var/lib/rpm. Production never sets it.
   local rpm_lock="${FEDORY_RPM_LOCK:-/var/lib/rpm/.rpm.lock}"
@@ -39,12 +43,19 @@ wait_for_package_transaction() {
   }
 
   transaction_active || return 0
-  echo "Waiting for a dnf/rpm transaction to finish before continuing $label..."
 
-  local _
-  for _ in $(seq 1 "$timeout"); do
+  # Emit a [waited/timeout] marker each poll. run_logged's renderer parses
+  # those into a filling bar (see fedory_task_progress), so the wait visibly
+  # counts down instead of sitting on one unchanging line. The first version of
+  # this printed once and then waited silently for up to fifteen minutes, which
+  # was reported -- reasonably -- as the installer being stuck.
+  local step=5 waited=0
+  while (( waited < timeout )); do
+    printf '[%d/%d] Waiting for a dnf/rpm transaction to finish before continuing %s\n' \
+      "$waited" "$timeout" "$label"
+    sleep "$step"
+    waited=$((waited + step))
     transaction_active || return 0
-    sleep 1
   done
 
   return 1
