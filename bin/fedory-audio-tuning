@@ -241,9 +241,14 @@ case "$action" in
     ;;
 
   on)
+    # No tunings shipped is the same outcome as no tuning matching this
+    # machine, which exits 0 just below: there is nothing to apply. Treating it
+    # as an error made install/user/first-run/audio-tuning.sh fail on every
+    # system (default/audio/tunings is not ported yet), which kept
+    # fedory-first-run from ever completing.
     [[ -d $tunings_dir ]] || {
-      echo "No tunings shipped at $tunings_dir" >&2
-      exit 1
+      echo "No speaker tunings are shipped, so there is nothing to apply."
+      exit 0
     }
 
     selected="$(tuning_match)" || {

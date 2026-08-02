@@ -9,12 +9,40 @@
 # instead of waiting for the next login. ConditionPath* in the unit files
 # keep the enabled units inert on hardware they don't apply to.
 
-set -euo pipefail
+#
+# Most of these units are not ported yet -- only the tablet units exist under
+# config/systemd/user. Enabling the whole list as one command therefore failed
+# on every machine, and since fedory-first-run only marks itself complete when
+# every step succeeds, that made first-run replay on each login and re-send its
+# first-run toasts forever. Enable what is actually installed, say what is not,
+# and fail only when a unit that does exist refuses to start.
+
+set -uo pipefail
 
 systemctl --user daemon-reload
-systemctl --user enable --now \
-  bt-agent.service \
-  fedory-recover-internal-monitor.service \
-  fedory-sleep-lock.service \
-  fedory-migrate-notify.service \
+
+units=(
+  bt-agent.service
+  fedory-recover-internal-monitor.service
+  fedory-sleep-lock.service
+  fedory-migrate-notify.service
   fedory-fcitx5.service
+)
+
+available=()
+missing=()
+for unit in "${units[@]}"; do
+  if systemctl --user cat "$unit" >/dev/null 2>&1; then
+    available+=("$unit")
+  else
+    missing+=("$unit")
+  fi
+done
+
+if (( ${#missing[@]} > 0 )); then
+  echo "Not installed on this system, skipping: ${missing[*]}" >&2
+fi
+
+(( ${#available[@]} > 0 )) || exit 0
+
+systemctl --user enable --now "${available[@]}"
