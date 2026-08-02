@@ -15,6 +15,26 @@ else
   ui_error() { if has_gum; then gum style --foreground 196 --bold -- "Error: $*" >&2; else echo "Error: $*" >&2; fi; }
 fi
 
+# The RPM lock guard ships beside this script, so prefer the copy in our own
+# tree and fall back to FEDORY_PATH. Script-relative comes first because
+# FEDORY_PATH can legitimately point somewhere without a helpers/ dir (the
+# migration tests do exactly that), while bin/../install/helpers travels with
+# the command itself.
+source_package_lock() {
+  local candidate
+  for candidate in \
+    "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)/install/helpers/package-lock.sh" \
+    "${FEDORY_PATH:-}/install/helpers/package-lock.sh"; do
+    if [[ -f $candidate ]]; then
+      source "$candidate"
+      return 0
+    fi
+  done
+  # Never block an install just because the helper is missing.
+  wait_for_package_transaction() { return 0; }
+}
+source_package_lock
+
 if (( $# == 0 )); then
   ui_error "Usage: fedory-pkg-add <packages...>"
   exit 1
@@ -162,10 +182,24 @@ if (( ${#dnf_pkgs[@]} > 0 )); then
     # on this particular machine) from blocking every other package in the
     # same transaction -- dnf resolves the whole batch as one unit, so
     # without these flags a single problem anywhere aborts the lot.
-    if (( EUID == 0 )); then
-      dnf install -y --skip-unavailable --skip-broken --setopt=install_weak_deps=False "${dnf_pkgs[@]}" || true
-    else
-      sudo dnf install -y --skip-unavailable --skip-broken --setopt=install_weak_deps=False "${dnf_pkgs[@]}" || true
+    # Wait out any transaction already holding RPM's database lock -- on a
+    # fresh bootstrap that is usually PackageKit's boot-time refresh. Losing
+    # this race aborts the entire batch, not just one package, so it is worth
+    # blocking on rather than discovering 100+ packages later.
+    wait_for_package_transaction "package installation" \
+      || ui_warn "a dnf/rpm transaction is still running -- attempting the install anyway"
+
+    dnf_cmd=(dnf install -y --skip-unavailable --skip-broken --setopt=install_weak_deps=False)
+    (( EUID == 0 )) || dnf_cmd=(sudo "${dnf_cmd[@]}")
+
+    # This used to end in `|| true`, which made a wholesale transaction
+    # failure (lock contention, a GPG import error) look exactly like success.
+    # The run then continued for minutes and first surfaced as an
+    # unrelated-looking error in a later leaf. The verification pass below
+    # still decides the exit status; this only names the cause while it is
+    # still on screen.
+    if ! "${dnf_cmd[@]}" "${dnf_pkgs[@]}"; then
+      ui_warn "the dnf transaction did not complete cleanly -- checking which packages actually landed"
     fi
   fi
 

@@ -65,39 +65,28 @@ if [[ $mode == "pending" ]]; then
   fi
 fi
 
-# Fedora-native rewrite of upstream's wait_for_pacman_transaction: dnf/rpm
-# don't have a single well-known lock *file* the way pacman's db.lck is --
-# rpm's own db lock is held via flock on /var/lib/rpm/.rpm.lock for the
-# duration of a transaction, not left behind as a stale marker, so `fuser`
-# (which reports a lock as held only while a process actually has the fd
-# open) is the accurate check here, with a pgrep fallback in case fuser
-# isn't installed.
-wait_for_package_transaction() {
-  local rpm_lock=/var/lib/rpm/.rpm.lock
-
-  transaction_active() {
-    if command -v fuser >/dev/null 2>&1 && [[ -e $rpm_lock ]]; then
-      fuser "$rpm_lock" >/dev/null 2>&1 && return 0
+# Shared with the install path -- see install/helpers/package-lock.sh for why
+# the RPM lock is detected via fuser rather than a lock file. Resolved
+# script-relative first: FEDORY_PATH points at the migration content, which is
+# not necessarily a full checkout.
+source_package_lock() {
+  local candidate
+  for candidate in \
+    "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)/install/helpers/package-lock.sh" \
+    "${FEDORY_PATH:-}/install/helpers/package-lock.sh"; do
+    if [[ -f $candidate ]]; then
+      source "$candidate"
+      return 0
     fi
-    # packagekitd remains alive while idle, so its process alone does not
-    # indicate a package transaction. An active PackageKit transaction still
-    # holds RPM's database lock and is detected by fuser above.
-    pgrep -x 'dnf|dnf-3|dnf5|rpm' >/dev/null 2>&1
-  }
-
-  transaction_active || return 0
-  echo "Waiting for a dnf/rpm transaction to finish before running Fedory migrations..."
-
-  for _ in {1..900}; do
-    transaction_active || return 0
-    sleep 1
   done
+  wait_for_package_transaction() { return 0; }
+}
+source_package_lock
 
+wait_for_package_transaction "Fedory migrations" || {
   echo "A dnf/rpm transaction is still running; Fedory migrations will retry on next login."
   exit 0
 }
-
-wait_for_package_transaction
 
 mkdir -p "$STATE_DIR"
 [[ -d $MIGRATIONS_DIR ]] || exit 0
