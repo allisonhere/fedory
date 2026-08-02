@@ -189,6 +189,77 @@ confirm() {
   fi
 }
 
+# Optional components, offered opt-out: everything is pre-selected and only an
+# explicit decline removes anything. Declining skips the install and, for
+# printing and docker, skips enabling their services -- it never uninstalls
+# software that is already present. See install/helpers/groups.sh.
+FEDORY_OPTIONAL_GROUPS=(
+  "office-media|Office and media -- LibreOffice, kdenlive, OBS (506 MiB)"
+  "docker|Docker CE -- docker, containerd, buildx, compose (363 MiB)"
+  "printing|Printing and network discovery -- CUPS, Avahi"
+)
+
+choose_optional_groups() {
+  local names=() labels=() chosen=() disabled=() entry label i keep
+  local selected_csv choose_status=0
+
+  for entry in "${FEDORY_OPTIONAL_GROUPS[@]}"; do
+    names+=("${entry%%|*}")
+    labels+=("${entry#*|}")
+  done
+
+  # No terminal to ask on (piped input with no readable /dev/tty, an unattended
+  # run) means install everything. Silence must reproduce the pre-groups
+  # install exactly, never a quietly smaller one.
+  if [[ ! -t 0 ]]; then
+    export FEDORY_DISABLED_GROUPS=""
+    return 0
+  fi
+
+  if has_gum; then
+    printf -v selected_csv '%s,' "${labels[@]}"
+    mapfile -t chosen < <(gum choose --no-limit \
+      --header "Optional components -- space toggles, enter confirms" \
+      --selected "${selected_csv%,}" \
+      -- "${labels[@]}") || choose_status=$?
+    # Cancelling (Esc/Ctrl-C) exits nonzero with no selection, which must not
+    # be read as "the user declined everything".
+    if (( choose_status != 0 )); then
+      export FEDORY_DISABLED_GROUPS=""
+      return 0
+    fi
+  else
+    echo "Optional components -- answer n to leave one out:"
+    for i in "${!names[@]}"; do
+      read -r -p "  Install ${labels[i]}? [Y/n] " reply
+      [[ $reply =~ ^[Nn]$ ]] || chosen+=("${labels[i]}")
+    done
+  fi
+
+  for i in "${!names[@]}"; do
+    keep=0
+    for label in "${chosen[@]}"; do
+      [[ $label == "${labels[i]}" ]] && keep=1
+    done
+    (( keep )) || disabled+=("${names[i]}")
+  done
+
+  if (( ${#disabled[@]} > 0 )); then
+    printf -v FEDORY_DISABLED_GROUPS '%s,' "${disabled[@]}"
+    FEDORY_DISABLED_GROUPS=${FEDORY_DISABLED_GROUPS%,}
+  else
+    FEDORY_DISABLED_GROUPS=""
+  fi
+  export FEDORY_DISABLED_GROUPS
+
+  # Persist so a later rerun honours the choice instead of quietly reinstalling
+  # what was declined. Presentation-adjacent: failing to record it must not
+  # stop the install.
+  printf '%s\n' "$FEDORY_DISABLED_GROUPS" \
+    | sudo install -Dm644 /dev/stdin /etc/fedory/disabled-groups 2>/dev/null \
+    || true
+}
+
 # Everything interactive lives inside main(), called as the very last line of
 # this file. When run as `curl | bash`, bash reads this whole file from a
 # pipe -- fd 0. A bare top-level `exec </dev/tty` would only be safe once
@@ -309,6 +380,8 @@ main() {
   fi
   export FEDORY_USER_NAME FEDORY_USER_EMAIL
 
+  choose_optional_groups
+
   # --- step 4: root-owned system setup ---------------------------------------
   # A problem installing or configuring one piece (a package unavailable on
   # this specific Fedora version, a COPR with a broken dependency, etc.)
@@ -329,6 +402,7 @@ main() {
   sudo env FEDORY_PATH="$FEDORY_PATH" PATH="$FEDORY_PATH/bin:$PATH" \
     FEDORY_PROGRESS_TOTAL="$FEDORY_PROGRESS_TOTAL" \
     FEDORY_PROGRESS_FILE="$FEDORY_PROGRESS_FILE" \
+    FEDORY_DISABLED_GROUPS="${FEDORY_DISABLED_GROUPS-}" \
     fedory-setup-system --install-user "$USER" "${setup_mode[@]}" \
     || had_issues=1
 

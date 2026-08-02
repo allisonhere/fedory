@@ -1,0 +1,16 @@
+# Optional group: printing and network service discovery.
+#
+# Moved out of install/fedory-base.packages so bootstrap.sh can offer them as
+# an opt-out choice. Small on disk, but install/config/enable-services.sh
+# starts cups, cups-browsed, and avahi-daemon at boot, and those listen on the
+# network -- so this group is as much about not running daemons a user has no
+# printer for as it is about size. install/config/enable-services.sh checks the
+# same group before enabling any of those units.
+#
+# Names resolve through packaging/package-map.tsv like every other list.
+avahi
+cups
+cups-browsed
+cups-filters
+cups-pdf
+system-config-printer

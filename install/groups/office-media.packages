@@ -1,0 +1,11 @@
+# Optional group: office suite and video production.
+#
+# Moved out of install/fedory-base.packages so bootstrap.sh can offer them as
+# an opt-out choice -- together these are ~506 MiB, and they are the clearest
+# case of software a desktop user may simply not want. See
+# install/helpers/groups.sh.
+#
+# Names resolve through packaging/package-map.tsv like every other list.
+kdenlive
+libreoffice-fresh
+obs-studio

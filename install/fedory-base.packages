@@ -8,6 +8,12 @@
 # docs/scope.md), so this file only exists to be read by
 # install/config/base-packages.sh at bootstrap/setup time.
 #
+# This list is everything a Fedory desktop always gets. Software a user can
+# decline at install time lives in install/groups/*.packages instead -- an
+# office suite and video tools (office-media), and printing/mDNS (printing).
+# bootstrap.sh offers those as opt-out choices; see install/helpers/groups.sh.
+# Declining a group is skip-on-install only and never uninstalls anything.
+#
 # Package names NOT listed here, from upstream's own omarchy-base.packages,
 # and why:
 #   - docker, docker-buildx, docker-compose: external-repo status (Docker's
@@ -29,7 +35,6 @@
 #     one specifically).
 
 alsa-utils
-avahi
 bash-completion
 bat
 bluez
@@ -39,10 +44,6 @@ brightnessctl
 btop
 chromium
 clang
-cups
-cups-browsed
-cups-filters
-cups-pdf
 dosfstools
 dotnet-runtime
 evince
@@ -80,9 +81,7 @@ inetutils
 inotify-tools
 inxi
 jq
-kdenlive
 less
-libreoffice-fresh
 libsecret
 libyaml
 llvm
@@ -102,7 +101,6 @@ noto-fonts-emoji
 nss-mdns
 nvim
 obsidian
-obs-studio
 pamixer
 pinta
 plocate
@@ -121,7 +119,6 @@ sddm
 slurp
 socat
 sushi
-system-config-printer
 tesseract
 tesseract-data-eng
 tldr

@@ -1,4 +1,5 @@
 source "$FEDORY_INSTALL/helpers/ui.sh"
+source "$FEDORY_INSTALL/helpers/groups.sh"
 
 # Fedora Workstation ships and enables GDM by default. Hyprland runs under
 # SDDM (upstream's assumption throughout), so swap the default display
@@ -19,10 +20,16 @@ systemctl enable sddm.service || ui_warn "could not enable sddm.service"
 # unit not existing (Docker CE failing to install, an optional service not
 # present on this install, etc.) shouldn't stop the rest of these from
 # being enabled.
-systemctl enable cups.service || ui_warn "could not enable cups.service"
-systemctl enable cups-browsed.service || ui_warn "could not enable cups-browsed.service"
-systemctl enable avahi-daemon.service || ui_warn "could not enable avahi-daemon.service"
-systemctl enable docker.socket || ui_warn "could not enable docker.socket (see the Docker CE messages in config/base-packages.sh above)"
+# cups-browsed and avahi-daemon listen on the network, so a user who declined
+# the printing group at install must not end up running them anyway.
+if fedory_group_enabled printing; then
+  systemctl enable cups.service || ui_warn "could not enable cups.service"
+  systemctl enable cups-browsed.service || ui_warn "could not enable cups-browsed.service"
+  systemctl enable avahi-daemon.service || ui_warn "could not enable avahi-daemon.service"
+fi
+if fedory_group_enabled docker; then
+  systemctl enable docker.socket || ui_warn "could not enable docker.socket (see the Docker CE messages in config/base-packages.sh above)"
+fi
 systemctl enable NetworkManager.service || ui_warn "could not enable NetworkManager.service"
 # Don't let network-online.target (pulled in by cups-browsed) hold up
 # graphical.target waiting for DHCP/Wi-Fi association. Nothing in the session
