@@ -72,6 +72,11 @@ printf '0\n' >"$FEDORY_PROGRESS_FILE"
 source "$ROOT_DIR/install/helpers/logging.sh"
 start_install_log
 export FEDORY_PROGRESS_UI=always
+# These assertions are about layout -- row order, labels, parsed counts -- not
+# about which glyphs fill the bars. Pin them to the ASCII fallback so they stay
+# readable and locale-independent; progress-bar-test.sh covers the block-drawing
+# rendering itself.
+export FEDORY_PROGRESS_ASCII=1
 export FEDORY_PROGRESS_INTERVAL=0.02
 export FEDORY_PROGRESS_BAR_WIDTH=10
 run_logged "$FEDORY_INSTALL/config/theme-system.sh" >"$tmp_dir/progress-output"

@@ -133,6 +133,21 @@ fedory_progress_advance() {
   printf '%s\n' "$current"
 }
 
+# Block-drawing bars need a UTF-8 locale to render as anything but mojibake.
+# bootstrap.sh can run from a plain VT during recovery, so fall back to the
+# original ASCII bars rather than assuming. FEDORY_PROGRESS_ASCII=1 forces the
+# fallback for anyone who prefers it (or for a terminal that lies about UTF-8).
+fedory_progress_unicode() {
+  [[ ${FEDORY_PROGRESS_ASCII:-0} != 1 ]] || return 1
+  local encoding=${LC_ALL:-${LC_CTYPE:-${LANG:-}}}
+  [[ ${encoding,,} == *utf-8* || ${encoding,,} == *utf8* ]]
+}
+
+# Cool-to-warm ramp walked left to right across a filled bar: indigo at the
+# start, magenta by the end, so a bar's colour alone reads as "how far along".
+FEDORY_PROGRESS_RAMP=(61 62 63 99 135 171 207)
+FEDORY_PROGRESS_TRACK=236
+
 fedory_progress_bar() {
   local current=${1:-0} total=${2:-0} width=${3:-24}
   local filled empty bar
@@ -142,12 +157,40 @@ fedory_progress_bar() {
   (( current > total )) && current=$total
   (( width > 0 )) || width=1
 
-  filled=$((current * width / total))
-  empty=$((width - filled))
-  printf -v bar '%*s' "$filled" ''
-  printf '%s' "${bar// /#}"
-  printf -v bar '%*s' "$empty" ''
-  printf '%s' "${bar// /-}"
+  if ! fedory_progress_unicode; then
+    filled=$((current * width / total))
+    empty=$((width - filled))
+    printf -v bar '%*s' "$filled" ''
+    printf '%s' "${bar// /#}"
+    printf -v bar '%*s' "$empty" ''
+    printf '%s' "${bar// /-}"
+    return
+  fi
+
+  # Track progress in eighths of a cell so the bar advances smoothly instead
+  # of jumping a whole character at a time -- on a 24-cell bar that is 8x the
+  # resolution, which is the difference between "moving" and "stuck".
+  local partials=('▏' '▎' '▍' '▌' '▋' '▊' '▉')
+  local esc=$'\033' out="" i idx
+  local eighths=$((current * width * 8 / total))
+  local full=$((eighths / 8)) part=$((eighths % 8))
+  local ramp_len=${#FEDORY_PROGRESS_RAMP[@]}
+
+  (( full > width )) && full=$width
+  for (( i = 0; i < full; i++ )); do
+    idx=$((i * ramp_len / width))
+    out+="${esc}[38;5;${FEDORY_PROGRESS_RAMP[idx]}m█"
+  done
+  if (( full < width && part > 0 )); then
+    idx=$((full * ramp_len / width))
+    out+="${esc}[38;5;${FEDORY_PROGRESS_RAMP[idx]}m${partials[part - 1]}"
+    full=$((full + 1))
+  fi
+  for (( i = full; i < width; i++ )); do
+    out+="${esc}[38;5;${FEDORY_PROGRESS_TRACK}m░"
+  done
+
+  printf '%s%s[0m' "$out" "$esc"
 }
 
 fedory_activity_bar() {
@@ -166,12 +209,42 @@ fedory_activity_bar() {
     fi
   fi
 
-  printf -v bar '%*s' "$position" ''
-  printf '%s' "${bar// /-}"
-  printf -v bar '%*s' "$segment" ''
-  printf '%s' "${bar// /#}"
-  printf -v bar '%*s' "$((width - position - segment))" ''
-  printf '%s' "${bar// /-}"
+  if ! fedory_progress_unicode; then
+    printf -v bar '%*s' "$position" ''
+    printf '%s' "${bar// /-}"
+    printf -v bar '%*s' "$segment" ''
+    printf '%s' "${bar// /#}"
+    printf -v bar '%*s' "$((width - position - segment))" ''
+    printf '%s' "${bar// /-}"
+    return
+  fi
+
+  # A comet rather than a sliding block: a bright head with a trail that fades
+  # out behind it, flipping ends when the sweep reverses. The head is what the
+  # eye tracks, so it has to lead in the direction of travel -- a symmetric
+  # blob gives no sense of motion at all on a slow step like dracut.
+  local esc=$'\033' out="" i offset distance moving_right=1
+  local glyphs=('█' '▓' '▒' '░')
+  local trail=(207 171 135 99)
+
+  (( direction > width - segment )) && moving_right=0
+
+  for (( i = 0; i < width; i++ )); do
+    if (( i < position || i >= position + segment )); then
+      out+="${esc}[38;5;${FEDORY_PROGRESS_TRACK}m░"
+      continue
+    fi
+    offset=$((i - position))
+    if (( moving_right )); then
+      distance=$((segment - 1 - offset))
+    else
+      distance=$offset
+    fi
+    (( distance > 3 )) && distance=3
+    out+="${esc}[38;5;${trail[distance]}m${glyphs[distance]}"
+  done
+
+  printf '%s%s[0m' "$out" "$esc"
 }
 
 fedory_task_progress() {
@@ -248,21 +321,23 @@ fedory_render_progress() {
 
   overall_current=$((progress_current > 0 ? progress_current - 1 : 0))
   overall_bar=$(fedory_progress_bar "$overall_current" "$progress_total" "$width")
-  overall_text=$(printf 'TOTAL    [%s] %02d/%02d' \
+  # The bars emit their own per-cell colour and end with a reset, so each line
+  # re-asserts its own colour after the bar or the trailing counts render bare.
+  overall_text=$(printf 'TOTAL    [%s\033[38;5;63m] %02d/%02d' \
     "$overall_bar" "$overall_current" "$progress_total")
 
   if [[ $task_current =~ ^[0-9]+$ && $task_total =~ ^[0-9]+$ ]] \
     && (( task_total > 0 && task_current >= task_total )); then
     current_bar=$(fedory_activity_bar "$tick" "$width")
-    current_text=$(printf 'CURRENT  [%s] finishing %02d:%02d  %s' \
+    current_text=$(printf 'CURRENT  [%s\033[38;5;252m] finishing %02d:%02d  %s' \
       "$current_bar" "$((elapsed / 60))" "$((elapsed % 60))" "$fitted_label")
   elif [[ $task_current =~ ^[0-9]+$ && $task_total =~ ^[0-9]+$ ]] && (( task_total > 0 )); then
     current_bar=$(fedory_progress_bar "$task_current" "$task_total" "$width")
-    current_text=$(printf 'CURRENT  [%s] %s/%s  %s' \
+    current_text=$(printf 'CURRENT  [%s\033[38;5;252m] %s/%s  %s' \
       "$current_bar" "$task_current" "$task_total" "$fitted_label")
   else
     current_bar=$(fedory_activity_bar "$tick" "$width")
-    current_text=$(printf 'CURRENT  [%s] %02d:%02d  %s' \
+    current_text=$(printf 'CURRENT  [%s\033[38;5;252m] %02d:%02d  %s' \
       "$current_bar" "$((elapsed / 60))" "$((elapsed % 60))" "$fitted_label")
   fi
 
