@@ -37,6 +37,20 @@ fedory_apply_plymouth_theme() {
   "${run[@]}" mkdir -p "$theme_dir" || return 1
   "${run[@]}" cp -r "$source_dir/." "$theme_dir/" || return 1
 
+  # default/plymouth/fedory.plymouth declares ModuleName=script, which needs
+  # the script renderer from plymouth-plugin-script -- the plymouth package
+  # alone does not ship script.so. Without it plymouth-set-default-theme fails
+  # with a bare "/usr/lib64/plymouth/script.so does not exist", which says
+  # nothing about which package is missing.
+  # FEDORY_PLYMOUTH_PLUGIN_GLOB lets the test suite exercise both branches
+  # without depending on whether the test host happens to have the plugin.
+  # Production never sets it.
+  if ! compgen -G "${FEDORY_PLYMOUTH_PLUGIN_GLOB:-/usr/lib*/plymouth/script.so}" >/dev/null; then
+    echo "The Fedory theme needs plymouth-plugin-script, which is not installed." >&2
+    echo "It is listed in install/fedory-base.packages; check that step's output." >&2
+    return 1
+  fi
+
   echo "[2/3] Selecting Fedory as the default boot splash"
   "${run[@]}" plymouth-set-default-theme fedory || return 1
 

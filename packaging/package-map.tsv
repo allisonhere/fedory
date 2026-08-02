@@ -95,6 +95,7 @@ pamixer	pamixer	-	-	-	dnf	1:1 name match
 pinta	pinta	-	-	-	dnf	1:1 name match
 plocate	plocate	-	-	-	dnf	1:1 name match
 plymouth	plymouth	-	-	-	dnf	1:1 name match
+plymouth-plugin-script	plymouth-plugin-script	-	-	-	dnf	required by default/plymouth (ModuleName=script); plymouth alone ships no script.so
 postgresql-libs	libpq	-	-	-	dnf	Fedora's client library package is named differently
 power-profiles-daemon	power-profiles-daemon	-	-	-	dnf	1:1 name match
 python-gobject	python3-gobject	-	-	-	dnf	Fedora prefixes Python packages with python3-

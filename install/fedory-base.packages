@@ -105,6 +105,7 @@ pamixer
 pinta
 plocate
 plymouth
+plymouth-plugin-script
 postgresql-libs
 power-profiles-daemon
 python-gobject

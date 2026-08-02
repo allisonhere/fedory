@@ -42,9 +42,47 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
+# The theme declares ModuleName=script, so it needs script.so from
+# plymouth-plugin-script. A real install failed here with a bare
+# "/usr/lib64/plymouth/script.so does not exist" because only the plymouth
+# package was listed -- the dependency must stay declared.
+if grep -qx 'plymouth-plugin-script' "$ROOT_DIR/install/fedory-base.packages"; then
+  echo "ok: the script plugin the theme needs is in the package list"
+else
+  echo "FAIL: default/plymouth needs ModuleName=script but plymouth-plugin-script is not installed"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+module=$(sed -n 's/^ModuleName=//p' "$ROOT_DIR/default/plymouth/fedory.plymouth")
+assert_eq "script" "$module" "the shipped theme is still a script theme"
+
 export FEDORY_PATH="$ROOT_DIR"
 export FEDORY_PLYMOUTH_THEME_DIR="$theme_dir"
+# Pin the plugin check to a file this test controls, so the result does not
+# depend on whether the machine running the suite happens to have plymouth's
+# script renderer installed.
+touch "$work_dir/script.so"
+export FEDORY_PLYMOUTH_PLUGIN_GLOB="$work_dir/script.so"
 source "$ROOT_DIR/install/helpers/plymouth.sh"
+
+# Missing plugin must fail early with a message naming the package, rather
+# than letting plymouth-set-default-theme emit a bare
+# "/usr/lib64/plymouth/script.so does not exist".
+missing_output=$(FEDORY_PLYMOUTH_PLUGIN_GLOB="$work_dir/absent-*.so" \
+  fedory_apply_plymouth_theme 2>&1)
+missing_status=$?
+assert_eq 1 "$missing_status" "a missing script plugin fails the step"
+case "$missing_output" in
+  *plymouth-plugin-script*) echo "ok: the failure names the missing package" ;;
+  *) echo "FAIL: failure message did not name plymouth-plugin-script (got: $missing_output)"
+     ASSERT_FAILURES=$((ASSERT_FAILURES + 1)) ;;
+esac
+case "$missing_output" in
+  *dracut*) echo "FAIL: ran dracut despite the missing plugin"
+     ASSERT_FAILURES=$((ASSERT_FAILURES + 1)) ;;
+  *) echo "ok: stops before the expensive initramfs rebuild" ;;
+esac
+: > "$work_dir/calls"
 
 output=$(fedory_apply_plymouth_theme 2>&1)
 status=$?
