@@ -5,7 +5,7 @@
 <h1 align="center">Fedory</h1>
 
 <p align="center">
-  A polished, opinionated Hyprland desktop for Fedora.
+  A developer-ready, gaming-capable Hyprland desktop for Fedora.
 </p>
 
 <p align="center">
@@ -13,13 +13,13 @@
 </p>
 
 <p align="center">
-  <a href="#installing">Install</a>
+  <a href="#install">Install</a>
   ·
-  <a href="#what-you-get">Features</a>
+  <a href="#development-ready">Development</a>
   ·
-  <a href="#themes">Themes</a>
+  <a href="#gaming-on-fedora">Gaming</a>
   ·
-  <a href="#tablet-support">Tablet support</a>
+  <a href="#complete-desktop">Features</a>
   ·
   <a href="#documentation">Documentation</a>
 </p>
@@ -28,11 +28,30 @@
 
 Fedory transforms a fresh Fedora Workstation installation into a complete, keyboard-driven Hyprland desktop.
 
-It configures the window manager, desktop shell, applications, development tools, themes, login screen, boot visuals, notifications, screenshots, updates and system integrations for you.
+It configures the window manager, desktop shell, development tools, gaming support, applications, login screen, boot visuals, notifications, screenshots, updates and system integrations for you.
 
 You do not need to know Arch Linux, maintain a personal dotfiles repository or spend days assembling a working Hyprland environment.
 
 Fedory is inspired by and ported from [Omarchy](https://github.com/basecamp/omarchy), but is adapted specifically for Fedora using DNF, COPR, Flatpak and Fedora-native system components.
+
+## Install
+
+Clone the repository so you can inspect the installer before running it:
+
+```bash
+git clone https://github.com/allisonhere/fedory.git
+cd fedory
+less bootstrap.sh
+./bootstrap.sh
+```
+
+Or install directly from GitHub:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/allisonhere/fedory/master/bootstrap.sh | bash
+```
+
+Run the installer as a normal user, not as root. Fedory requests sudo access when system changes are required. It targets fresh or lightly customized Fedora Workstation installations; back up important files before installing it on a primary machine.
 
 ## Screenshots
 
@@ -48,9 +67,31 @@ Fedory is inspired by and ported from [Omarchy](https://github.com/basecamp/omar
 
 <p align="center"><em>The Fedory command menu keeps applications, setup, styling and system actions close at hand.</em></p>
 
-## What you get
+## Development ready
 
-### A complete Hyprland desktop
+Fedory sets up a productive terminal and editor foundation with Git, Neovim, mise, modern command-line tools and optional Docker support. Language and framework environments can be installed on demand without manually assembling each toolchain.
+
+```bash
+fedory install dev-env node
+fedory install dev-env python
+fedory install dev-env rust
+```
+
+Installers are also available for Ruby on Rails, Go, PHP frameworks, Elixir and Phoenix, Java, Zig, .NET and other supported environments. Run `fedory install --help` to see the current list.
+
+## Gaming on Fedora
+
+Fedory provides focused installers for native, Windows and cloud gaming. Steam, Heroic and Battle.net setup includes the required 32-bit graphics libraries for the detected GPU, while Lutris adds Wine and Winetricks for other Windows games.
+
+```bash
+fedory install gaming steam
+fedory install gaming heroic
+fedory install gaming lutris
+```
+
+Battle.net, RetroArch, GeForce NOW and Xbox Cloud Gaming are also available through the Fedory menu and CLI.
+
+## Complete desktop
 
 Fedory installs and configures:
 
@@ -70,7 +111,7 @@ The goal is not to give you a blank window manager.
 
 The goal is to give you a finished desktop.
 
-### One command for everything
+## One command for everything
 
 Fedory includes a central command-line interface:
 
@@ -90,7 +131,7 @@ fedory doctor
 
 Run `fedory` without arguments to browse the available commands.
 
-### Safe, repeatable updates
+## Safe, repeatable updates
 
 Fedory includes an update and migration system designed to keep existing installations working as the project changes.
 
@@ -108,7 +149,7 @@ Updates can:
 
 Installer steps are designed to be repeatable. If setup is interrupted, running the installer again should reuse completed work.
 
-## Installing
+## Installation details
 
 ### Requirements
 
@@ -119,30 +160,7 @@ Fedory currently targets:
 * an internet connection
 * a system capable of running Hyprland and Wayland
 
-Fedory is intended for a fresh or lightly customized Fedora installation.
-
 It makes substantial changes to your desktop, login manager, packages and configuration. Back up important files before installing it on a primary machine.
-
-### Recommended installation
-
-Clone the repository so you can inspect the installer before running it:
-
-```bash
-git clone https://github.com/allisonhere/fedory.git
-cd fedory
-less bootstrap.sh
-./bootstrap.sh
-```
-
-### One-command installation
-
-You can also install directly from GitHub:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/allisonhere/fedory/master/bootstrap.sh | bash
-```
-
-Do not run the installer as root. Fedory will request sudo access when system changes are required.
 
 The installation normally takes around 15–30 minutes depending on your connection and hardware.
 
@@ -176,48 +194,12 @@ This opens the main Fedory command menu.
 
 ## Themes
 
-Fedory ships with 22 complete themes.
-
-Each theme includes a coordinated color palette and matching desktop background. Themes can be changed live without reinstalling the desktop.
+Fedory includes coordinated color palettes and desktop backgrounds that can be changed live without reinstalling the desktop.
 
 ```bash
 fedory theme list
 fedory theme set "Tokyo Night"
 ```
-
-Included themes:
-
-* Catppuccin
-* Catppuccin Latte
-* Ethereal
-* Everforest
-* Fedory Vesper
-* Flexoki Light
-* Gruvbox
-* Hackerman
-* Kanagawa
-* Last Horizon
-* Lumon
-* Lupine
-* Matte Black
-* Miasma
-* Nord
-* Osaka Jade
-* Retro '82
-* Ristretto
-* Rosé Pine
-* Solitude
-* Tokyo Night
-* Vantablack
-* White
-
-### Fedory Vesper
-
-Fedory Vesper is the default Fedory theme.
-
-It combines a dark aubergine color palette with original cosmic and botanical artwork created for the project.
-
-Theme and background selectors use visual previews, so you can browse the available styles directly from the desktop menu.
 
 ## Tablet support
 
