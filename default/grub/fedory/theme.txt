@@ -3,10 +3,9 @@
 # Colours are the Fedory Vesper palette (themes/fedory-vesper/colors.toml), so
 # the boot menu, the Plymouth splash, and the SDDM greeter read as one system.
 #
-# Deliberately pixmap-free: every element is drawn with plain colours rather
-# than sliced *_c.png/_w.png sets. Pixmap styles are what make most GRUB themes
-# brittle -- a missing slice silently drops the widget -- and nothing here needs
-# them. The only image is the logo.
+# Deliberately free of widget pixmap slices: menu elements are drawn with plain
+# colours rather than brittle *_c.png/_w.png sets. The background is the Vesper
+# Glasshouse artwork, installed as background.png by bin/fedory-refresh-grub.
 #
 # fedory.pf2 is generated at install time by bin/fedory-refresh-grub and lives
 # in this directory on the installed system. /etc/grub.d/00_header scans the
@@ -14,8 +13,12 @@
 # the font has to sit here rather than in /boot/grub2/fonts.
 
 title-text: ""
+desktop-image: "background.png"
+desktop-image-scale-method: "crop"
+desktop-image-h-align: "center"
+desktop-image-v-align: "center"
 desktop-color: "#120C1C"
-terminal-font: "Fedory Regular 16"
+terminal-font: "Fedory Regular 32"
 terminal-left: "8%"
 terminal-top: "8%"
 terminal-width: "84%"
@@ -37,12 +40,12 @@ terminal-border: "0"
     width = 50%
     height = 38%
 
-    item_font = "Fedory Regular 16"
+    item_font = "Fedory Regular 32"
     item_color = "#8E819B"
     selected_item_color = "#EDE6F4"
-    item_height = 30
-    item_padding = 6
-    item_spacing = 6
+    item_height = 48
+    item_padding = 8
+    item_spacing = 8
 
     menu_pixmap_style = ""
     selected_item_pixmap_style = ""
@@ -57,9 +60,9 @@ terminal-border: "0"
     left = 25%
     top = 84%
     width = 50%
-    height = 12
+    height = 44
 
-    font = "Fedory Regular 16"
+    font = "Fedory Regular 32"
     text_color = "#746584"
     text = "@TIMEOUT_NOTIFICATION_SHORT@"
 

@@ -18,10 +18,24 @@ trap cleanup EXIT
 cat > "$fake_bin/grub2-mkconfig" <<EOF
 #!/bin/bash
 printf '%s\n' "\$*" >> "$work/mkconfig-calls"
+out=""
+while ((\$#)); do
+  [[ \$1 == -o ]] && { out=\$2; shift 2; continue; }
+  shift
+done
+[[ -n \$out ]] || exit 1
+cat > "\$out" <<'CONFIG'
+terminal_output gfxterm
+loadfont (hd0,gpt2)/grub2/themes/fedory/fedory.pf2
+insmod png
+set theme=(hd0,gpt2)/grub2/themes/fedory/theme.txt
+export theme
+CONFIG
 EOF
 cat > "$fake_bin/grub2-mkfont" <<'EOF'
 #!/bin/bash
 # Mimic grub2-mkfont: -o <out> ... <input>
+printf '%s\n' "$*" >> "${FEDORY_GRUB_MKFONT_CALLS:?}"
 out=""
 while (($#)); do
   [[ $1 == -o ]] && { out=$2; shift 2; continue; }
@@ -30,14 +44,18 @@ done
 [[ -n $out ]] || exit 1
 printf 'PFF2' > "$out"
 EOF
-# The script shells out through sudo whenever it is not already root, which is
-# the path a manual `fedory refresh grub` takes. Pass straight through so the
-# test neither needs privileges nor skips that branch.
-cat > "$fake_bin/sudo" <<'EOF'
+# Manual refreshes elevate once through polkit. Pass the requested command
+# straight through so the test covers that path without gaining privileges.
+cat > "$fake_bin/pkexec" <<'EOF'
 #!/bin/bash
 exec "$@"
 EOF
-chmod +x "$fake_bin/grub2-mkconfig" "$fake_bin/grub2-mkfont" "$fake_bin/sudo"
+cat > "$fake_bin/grub2-script-check" <<'EOF'
+#!/bin/bash
+grep -q '^set theme=' "$1"
+EOF
+chmod +x "$fake_bin/grub2-mkconfig" "$fake_bin/grub2-mkfont" \
+  "$fake_bin/grub2-script-check" "$fake_bin/pkexec"
 export PATH="$fake_bin:$PATH"
 
 export FEDORY_PATH="$ROOT_DIR"
@@ -45,6 +63,7 @@ export FEDORY_GRUB_THEME_DIR="$work/themes/fedory"
 export FEDORY_GRUB_DEFAULTS="$work/default-grub"
 export FEDORY_GRUB_CFG="$work/grub.cfg"
 export FEDORY_GRUB_EFI_CFG="$work/no-such-efi-cfg"
+export FEDORY_GRUB_MKFONT_CALLS="$work/mkfont-calls"
 
 # Fedora's stock file, including the console setting that hides any theme.
 cat > "$FEDORY_GRUB_DEFAULTS" <<'EOF'
@@ -64,9 +83,23 @@ assert_eq 0 "$status" "refreshing the boot menu succeeds"
 
 assert_file_exists "$FEDORY_GRUB_THEME_DIR/theme.txt"
 assert_file_exists "$FEDORY_GRUB_THEME_DIR/logo.png"
+assert_file_exists "$FEDORY_GRUB_THEME_DIR/background.png"
+if cmp -s "$ROOT_DIR/default/wallpapers/fedory-vesper-glasshouse.png" \
+  "$FEDORY_GRUB_THEME_DIR/background.png"; then
+  echo "ok: the Vesper Glasshouse background is installed"
+else
+  echo "FAIL: the installed GRUB background is not the Vesper Glasshouse artwork"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
 # 00_header only emits `loadfont` for .pf2 files inside the theme directory,
 # so the generated font has to be there rather than in /boot/grub2/fonts.
 assert_file_exists "$FEDORY_GRUB_THEME_DIR/fedory.pf2"
+if grep -q -- '-s 32 -n Fedory' "$FEDORY_GRUB_MKFONT_CALLS"; then
+  echo "ok: the generated boot menu font uses the readable 32px size"
+else
+  echo "FAIL: the generated boot menu font is not 32px"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
 
 # --- the keys that make it visible -----------------------------------------
 
@@ -99,6 +132,12 @@ assert_eq 1 "$(grep -c '^GRUB_TERMINAL_OUTPUT=' "$FEDORY_GRUB_DEFAULTS")" \
 
 assert_eq "-o $FEDORY_GRUB_CFG" "$(cat "$work/mkconfig-calls")" \
   "the boot menu is regenerated at the Fedora grub.cfg path"
+if grep -q 'Verified the Fedory GRUB background and 32px font' <<<"$output"; then
+  echo "ok: refresh verifies the deployed theme and generated configuration"
+else
+  echo "FAIL: refresh reports success without verifying the deployment"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
 
 # --- idempotency ------------------------------------------------------------
 #
@@ -114,10 +153,10 @@ assert_eq 2 "$(wc -l < "$work/mkconfig-calls")" \
 
 theme="$ROOT_DIR/default/grub/fedory/theme.txt"
 font_name=$(sed -n 's/^terminal-font: *"\(.*\)"/\1/p' "$theme")
-assert_eq "Fedory Regular 16" "$font_name" \
+assert_eq "Fedory Regular 32" "$font_name" \
   "the theme names the font the installer generates"
 
-# The theme is pixmap-free by design; a stray *_pixmap_style pointing at
+# The theme avoids widget pixmap slices; a stray *_pixmap_style pointing at
 # slices that are not shipped silently drops the widget it belongs to.
 if grep -qE '_pixmap_style *= *"[^"]+"' "$theme"; then
   echo "FAIL: theme references pixmap slices that are not shipped"
@@ -135,6 +174,10 @@ while IFS= read -r asset; do
     ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
   fi
 done < <(sed -n 's/.*file *= *"\([^"]*\)".*/\1/p' "$theme")
+
+background=$(sed -n 's/^desktop-image: *"\([^"]*\)"/\1/p' "$theme")
+assert_eq "background.png" "$background" \
+  "the theme selects the installed Vesper background"
 
 # --- wiring -----------------------------------------------------------------
 

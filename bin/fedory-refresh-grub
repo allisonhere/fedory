@@ -21,17 +21,38 @@
 set -euo pipefail
 
 theme_source="${FEDORY_PATH:?FEDORY_PATH is not set}/default/grub/fedory"
+background_source="$FEDORY_PATH/default/wallpapers/fedory-vesper-glasshouse.png"
 theme_dir="${FEDORY_GRUB_THEME_DIR:-/boot/grub2/themes/fedory}"
 grub_defaults="${FEDORY_GRUB_DEFAULTS:-/etc/default/grub}"
 grub_cfg="${FEDORY_GRUB_CFG:-/boot/grub2/grub.cfg}"
 mkconfig="${FEDORY_GRUB_MKCONFIG:-grub2-mkconfig}"
 mkfont="${FEDORY_GRUB_MKFONT:-grub2-mkfont}"
+script_check="${FEDORY_GRUB_SCRIPT_CHECK:-grub2-script-check}"
+
+if (( EUID != 0 )) && [[ ${FEDORY_GRUB_PRIVILEGED:-} != "true" ]]; then
+  script_path=$(readlink -f "${BASH_SOURCE[0]}")
+  exec pkexec /usr/bin/env \
+    FEDORY_PATH="$FEDORY_PATH" \
+    FEDORY_GRUB_PRIVILEGED=true \
+    FEDORY_GRUB_THEME_DIR="$theme_dir" \
+    FEDORY_GRUB_DEFAULTS="$grub_defaults" \
+    FEDORY_GRUB_CFG="$grub_cfg" \
+    FEDORY_GRUB_MKCONFIG="$mkconfig" \
+    FEDORY_GRUB_MKFONT="$mkfont" \
+    FEDORY_GRUB_SCRIPT_CHECK="$script_check" \
+    FEDORY_GRUB_EFI_CFG="${FEDORY_GRUB_EFI_CFG:-/boot/efi/EFI/fedora/grub.cfg}" \
+    "$script_path"
+fi
 
 run=()
-(( EUID == 0 )) || run=(sudo)
 
 if [[ ! -d $theme_source ]]; then
   echo "GRUB theme source '$theme_source' is missing." >&2
+  exit 1
+fi
+
+if [[ ! -f $background_source ]]; then
+  echo "GRUB background '$background_source' is missing." >&2
   exit 1
 fi
 
@@ -57,6 +78,7 @@ set_grub_key() {
 # font preference would be absurd.
 generate_font() {
   local out="$1" candidate
+  local font_size=32
   local candidates=(
     /usr/share/fonts/abattis-cantarell-fonts/Cantarell-Regular.otf
     /usr/share/fonts/cantarell/Cantarell-Regular.otf
@@ -66,13 +88,13 @@ generate_font() {
 
   for candidate in "${candidates[@]}"; do
     [[ -f $candidate ]] || continue
-    if "${run[@]}" "$mkfont" -o "$out" -s 16 -n "Fedory" "$candidate" 2>/dev/null; then
+    if "${run[@]}" "$mkfont" -o "$out" -s "$font_size" -n "Fedory" "$candidate" 2>/dev/null; then
       return 0
     fi
   done
 
   while IFS= read -r candidate; do
-    if "${run[@]}" "$mkfont" -o "$out" -s 16 -n "Fedory" "$candidate" 2>/dev/null; then
+    if "${run[@]}" "$mkfont" -o "$out" -s "$font_size" -n "Fedory" "$candidate" 2>/dev/null; then
       return 0
     fi
   done < <(find /usr/share/fonts -type f \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | head -5)
@@ -80,22 +102,23 @@ generate_font() {
   return 1
 }
 
-echo "[1/4] Installing the Fedory GRUB theme"
+echo "[1/5] Installing the Fedory GRUB theme"
 "${run[@]}" rm -rf "$theme_dir"
 "${run[@]}" mkdir -p "$theme_dir"
 "${run[@]}" cp -r "$theme_source/." "$theme_dir/"
+"${run[@]}" cp "$background_source" "$theme_dir/background.png"
 
-echo "[2/4] Building the boot menu font"
+echo "[2/5] Building the boot menu font"
 # The font goes inside the theme directory on purpose: /etc/grub.d/00_header
 # scans it and emits a `loadfont` for every .pf2 it finds there.
 if ! generate_font "$theme_dir/fedory.pf2"; then
   echo "Could not build a GRUB font with $mkfont from any installed font." >&2
-  echo "theme.txt asks for \"Fedory Regular 16\", so the menu could not load it." >&2
+  echo "theme.txt asks for \"Fedory Regular 32\", so the menu could not load it." >&2
   "${run[@]}" rm -rf "$theme_dir"
   exit 1
 fi
 
-echo "[3/4] Switching the boot menu to graphics mode"
+echo "[3/5] Switching the boot menu to graphics mode"
 # Without gfxterm the theme is never drawn. This is the load-bearing key.
 set_grub_key GRUB_TERMINAL_OUTPUT "gfxterm"
 set_grub_key GRUB_THEME "$theme_dir/theme.txt"
@@ -104,7 +127,7 @@ set_grub_key GRUB_GFXMODE "auto"
 # part way through boot.
 set_grub_key GRUB_GFXPAYLOAD_LINUX "keep"
 
-echo "[4/4] Regenerating the boot menu"
+echo "[4/5] Regenerating the boot menu"
 "${run[@]}" "$mkconfig" -o "$grub_cfg"
 
 # Fedora 34+ generates a single grub.cfg at /boot/grub2/grub.cfg for both BIOS
@@ -115,3 +138,27 @@ legacy_efi_cfg="${FEDORY_GRUB_EFI_CFG:-/boot/efi/EFI/fedora/grub.cfg}"
 if [[ -f $legacy_efi_cfg ]] && (( $(wc -l <"$legacy_efi_cfg") > 20 )); then
   "${run[@]}" "$mkconfig" -o "$legacy_efi_cfg"
 fi
+
+echo "[5/5] Verifying the installed boot menu"
+if ! cmp -s "$background_source" "$theme_dir/background.png"; then
+  echo "Installed GRUB background does not match '$background_source'." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'desktop-image: "background.png"' "$theme_dir/theme.txt" ||
+  ! grep -Fq 'Fedory Regular 32' "$theme_dir/theme.txt"; then
+  echo "Installed GRUB theme does not select the expected background and 32px font." >&2
+  exit 1
+fi
+
+"$script_check" "$grub_cfg"
+if ! grep -qE '^[[:space:]]*terminal_output[[:space:]]+gfxterm' "$grub_cfg" ||
+  ! grep -qE '^[[:space:]]*loadfont .*fedory\.pf2' "$grub_cfg" ||
+  ! grep -qE '^[[:space:]]*insmod[[:space:]]+png' "$grub_cfg" ||
+  ! grep -qE '^[[:space:]]*set theme=.*themes/fedory/theme\.txt' "$grub_cfg" ||
+  ! grep -qE '^[[:space:]]*export[[:space:]]+theme' "$grub_cfg"; then
+  echo "Generated GRUB configuration does not activate the installed Fedory theme." >&2
+  exit 1
+fi
+
+echo "Verified the Fedory GRUB background and 32px font in $grub_cfg"
