@@ -31,6 +31,17 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
+if rg -F 'export PATH="$HOME/.local/bin:$PATH"' "$ROOT_DIR/bin/fedory-launch-screensaver" >/dev/null &&
+  rg -F 'export PATH="$HOME/.local/bin:$PATH"' "$ROOT_DIR/bin/fedory-screensaver" >/dev/null &&
+  rg -F '[[ ! -x $HOME/.local/bin/tte ]]' "$ROOT_DIR/bin/fedory-launch-screensaver" >/dev/null &&
+  rg -F 'tte_command="$HOME/.local/bin/tte"' "$ROOT_DIR/bin/fedory-screensaver" >/dev/null &&
+  rg -F '"$tte_command" -i' "$ROOT_DIR/bin/fedory-screensaver" >/dev/null; then
+  echo "ok: the screensaver resolves tte across stale desktop PATH state"
+else
+  echo "FAIL: the screensaver requires tte to already be on the desktop PATH"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 mkdir -p "$tmp_dir/home"
 if HOME="$tmp_dir/home" FEDORY_PATH="$tmp_dir/missing-fedory" \
   "$ROOT_DIR/bin/fedory-screensaver" >"$tmp_dir/output" 2>&1; then

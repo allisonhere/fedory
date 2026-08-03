@@ -2,7 +2,11 @@
 
 # fedory:summary=Launch the Fedory screensaver in the default terminal on the system with the correct font configuration.
 
-if fedory-cmd-missing tte; then
+# An install or update can create mise-backed tools before the current desktop
+# session has picked up its next-login PATH.
+export PATH="$HOME/.local/bin:$PATH"
+
+if fedory-cmd-missing tte && [[ ! -x $HOME/.local/bin/tte ]]; then
   exit 1
 fi
 

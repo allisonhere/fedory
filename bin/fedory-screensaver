@@ -2,6 +2,10 @@
 
 # fedory:summary=Run the Fedory screensaver using random effects from TTE.
 
+# Keep the mise-backed tte wrapper and mise itself available when a terminal
+# inherits an older desktop-session environment during an install or update.
+export PATH="$HOME/.local/bin:$PATH"
+
 branding="$HOME/.config/fedory/branding/screensaver.txt"
 if [[ ! -s $branding ]]; then
   mkdir -p "$(dirname "$branding")"
@@ -10,6 +14,16 @@ fi
 
 if [[ ! -s $branding ]]; then
   echo "Screensaver branding is missing: $branding" >&2
+  exit 1
+fi
+
+tte_command=$(command -v tte 2>/dev/null || true)
+if [[ -z $tte_command && -x $HOME/.local/bin/tte ]]; then
+  tte_command="$HOME/.local/bin/tte"
+fi
+
+if [[ -z $tte_command ]]; then
+  echo "Screensaver effect command is missing: tte" >&2
   exit 1
 fi
 
@@ -38,7 +52,7 @@ hyprctl eval 'hl.config({ cursor = { invisible = true } })' &>/dev/null || hyprc
 tty=$(tty 2>/dev/null)
 
 while true; do
-  tte -i "$colored_branding" --existing-color-handling always \
+  "$tte_command" -i "$colored_branding" --existing-color-handling always \
     --frame-rate 120 --canvas-width 0 --canvas-height 0 --reuse-canvas --anchor-canvas c --anchor-text c\
     --random-effect --no-eol --no-restore-cursor &
 
