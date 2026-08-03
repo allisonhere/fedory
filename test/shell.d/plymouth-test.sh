@@ -56,13 +56,54 @@ fi
 module=$(sed -n 's/^ModuleName=//p' "$ROOT_DIR/default/plymouth/fedory.plymouth")
 assert_eq "script" "$module" "the shipped theme is still a script theme"
 
+# Plymouth's script plugin supplies a native progress fraction throughout
+# boot. The theme must expose that bar when it loads, not wait for a disk
+# encryption prompt that unencrypted systems never show.
+theme_script="$ROOT_DIR/default/plymouth/fedory.script"
+progress_registration_line=$(grep -n '^Plymouth.SetBootProgressFunction' "$theme_script" | cut -d: -f1)
+initial_progress_line=$(grep -n '^if (Plymouth.GetMode() == "boot")' "$theme_script" | tail -1 | cut -d: -f1)
+if [[ -n $progress_registration_line && -n $initial_progress_line ]] &&
+  (( initial_progress_line > progress_registration_line )); then
+  echo "ok: the boot progress bar is shown when the theme loads"
+else
+  echo "FAIL: the boot progress bar still depends on a later prompt callback"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if grep -Fq 'update_progress_bar(progress);' "$theme_script"; then
+  echo "ok: the bar uses Plymouth's native boot progress"
+else
+  echo "FAIL: the theme does not render Plymouth's boot progress value"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
+if grep -Fq 'password_shown' "$theme_script" || grep -Fq 'fake_progress' "$theme_script"; then
+  echo "FAIL: the boot bar is still gated by password or fake progress state"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+else
+  echo "ok: the boot bar has no password gate or competing fake timer"
+fi
+
+if grep -Fq 'progress_box.sprite.SetOpacity(0.25);' "$theme_script" &&
+  grep -Fq 'progress_bar.sprite.SetOpacity(1);' "$theme_script"; then
+  echo "ok: the progress fill is visibly distinct from its track"
+else
+  echo "FAIL: the identical progress images do not have distinct opacity"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 export FEDORY_PATH="$ROOT_DIR"
 export FEDORY_PLYMOUTH_THEME_DIR="$theme_dir"
+export FEDORY_DRM_CLASS_DIR="$work_dir/drm"
+export FEDORY_PLYMOUTH_DRACUT_CONFIG="$work_dir/etc/dracut.conf.d/fedory-early-kms.conf"
+export FEDORY_PLYMOUTH_QUIT_OVERRIDE_DIR="$work_dir/etc/systemd/system/plymouth-quit.service.d"
 # Pin the plugin check to a file this test controls, so the result does not
 # depend on whether the machine running the suite happens to have plymouth's
 # script renderer installed.
 touch "$work_dir/script.so"
 export FEDORY_PLYMOUTH_PLUGIN_GLOB="$work_dir/script.so"
+mkdir -p "$FEDORY_DRM_CLASS_DIR/card0/device/driver" "$work_dir/sys/module/amdgpu"
+ln -s "$work_dir/sys/module/amdgpu" "$FEDORY_DRM_CLASS_DIR/card0/device/driver/module"
 source "$ROOT_DIR/install/helpers/plymouth.sh"
 
 # Missing plugin must fail early with a message naming the package, rather
@@ -92,6 +133,20 @@ assert_eq 0 "$status" "applying the boot splash succeeds"
 assert_file_exists "$theme_dir/fedory.plymouth"
 assert_file_exists "$theme_dir/logo.png"
 
+assert_eq 'force_drivers+=" amdgpu "' \
+  "$(<"$FEDORY_PLYMOUTH_DRACUT_CONFIG")" \
+  "the active AMD driver is loaded before Plymouth"
+
+quit_override="$FEDORY_PLYMOUTH_QUIT_OVERRIDE_DIR/fedory.conf"
+assert_file_exists "$quit_override"
+if grep -qxF 'ExecStart=' "$quit_override" &&
+  grep -qxF 'ExecStart=-/usr/bin/plymouth quit --retain-splash' "$quit_override"; then
+  echo "ok: Plymouth retains its final frame until SDDM takes over"
+else
+  echo "FAIL: the Plymouth quit override does not retain the splash"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 # Both boot-config commands must have run, in order.
 calls=$(<"$work_dir/calls")
 case "$calls" in
@@ -105,10 +160,10 @@ case "$calls" in
      ASSERT_FAILURES=$((ASSERT_FAILURES + 1)) ;;
 esac
 
-# The [n/3] markers are what drive run_logged's progress bar. Without the
+# The [n/5] markers are what drive run_logged's progress bar. Without the
 # final one landing before dracut, a silent 30-60s rebuild renders as a frozen
 # terminal.
-for marker in '[1/3]' '[2/3]' '[3/3]'; do
+for marker in '[1/5]' '[2/5]' '[3/5]' '[4/5]' '[5/5]'; do
   case "$output" in
     *"$marker"*) echo "ok: emits progress marker $marker" ;;
     *) echo "FAIL: missing progress marker $marker"
@@ -117,8 +172,31 @@ for marker in '[1/3]' '[2/3]' '[3/3]'; do
 done
 
 dracut_line=$(printf '%s\n' "$output" | grep -n 'dracut' | cut -d: -f1)
-marker_line=$(printf '%s\n' "$output" | grep -n '\[3/3\]' | cut -d: -f1)
+marker_line=$(printf '%s\n' "$output" | grep -n '\[5/5\]' | cut -d: -f1)
 assert_eq "$marker_line" "$dracut_line" "the final marker announces dracut before it runs"
+
+# Intel's current and next-generation DRM drivers get the same early-loading
+# behavior, while unsupported drivers cannot be forced into the initramfs.
+for driver in i915 xe; do
+  rm "$FEDORY_DRM_CLASS_DIR/card0/device/driver/module"
+  mkdir -p "$work_dir/sys/module/$driver"
+  ln -s "$work_dir/sys/module/$driver" "$FEDORY_DRM_CLASS_DIR/card0/device/driver/module"
+  fedory_apply_plymouth_theme >/dev/null 2>&1
+  assert_eq "force_drivers+=\" $driver \"" \
+    "$(<"$FEDORY_PLYMOUTH_DRACUT_CONFIG")" \
+    "the active $driver driver is loaded before Plymouth"
+done
+
+rm "$FEDORY_DRM_CLASS_DIR/card0/device/driver/module"
+mkdir -p "$work_dir/sys/module/nouveau"
+ln -s "$work_dir/sys/module/nouveau" "$FEDORY_DRM_CLASS_DIR/card0/device/driver/module"
+fedory_apply_plymouth_theme >/dev/null 2>&1
+if [[ ! -e $FEDORY_PLYMOUTH_DRACUT_CONFIG ]]; then
+  echo "ok: unsupported graphics drivers do not leave stale early-load state"
+else
+  echo "FAIL: an unsupported graphics driver was forced into the initramfs"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
 
 # Progress rendering: the task needs its own label and an activity row, and
 # the renderer and the watcher's cursor cleanup must agree on that row.

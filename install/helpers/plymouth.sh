@@ -9,7 +9,7 @@
 # draws nothing, and with `rhgb quiet` on the kernel command line that reads as
 # a black screen for the whole boot.
 #
-# The echoed [n/3] markers are load-bearing, not decoration: run_logged's
+# The echoed [n/5] markers are load-bearing, not decoration: run_logged's
 # progress renderer parses them out of the leaf's stdout (see
 # fedory_task_progress in logging.sh) to drive the CURRENT bar. Emitting the
 # final marker *before* dracut is deliberate -- at n == total the renderer
@@ -17,13 +17,19 @@
 # user that a silent 30-60s initramfs rebuild is still alive.
 
 # fedory_apply_plymouth_theme
-#   Installs the theme, selects it, and rebuilds every initramfs.
+#   Installs the theme, smooths its display handoffs, selects it, and rebuilds
+#   every initramfs.
 #   Runs commands directly when already root, via sudo otherwise.
 fedory_apply_plymouth_theme() {
   # FEDORY_PLYMOUTH_THEME_DIR exists so the test suite can point the install at
   # a throwaway directory. Production never sets it.
   local theme_dir="${FEDORY_PLYMOUTH_THEME_DIR:-/usr/share/plymouth/themes/fedory}"
   local source_dir="${FEDORY_PATH:-}/default/plymouth"
+  local drm_class_dir="${FEDORY_DRM_CLASS_DIR:-/sys/class/drm}"
+  local dracut_config="${FEDORY_PLYMOUTH_DRACUT_CONFIG:-/etc/dracut.conf.d/fedory-early-kms.conf}"
+  local quit_override_dir="${FEDORY_PLYMOUTH_QUIT_OVERRIDE_DIR:-/etc/systemd/system/plymouth-quit.service.d}"
+  local card driver force_line
+  local -a early_drivers=()
   local run=()
 
   if [[ ! -d $source_dir ]]; then
@@ -33,7 +39,7 @@ fedory_apply_plymouth_theme() {
 
   (( EUID == 0 )) || run=(sudo)
 
-  echo "[1/3] Installing the Fedory boot splash theme"
+  echo "[1/5] Installing the Fedory boot splash theme"
   "${run[@]}" mkdir -p "$theme_dir" || return 1
   "${run[@]}" cp -r "$source_dir/." "$theme_dir/" || return 1
 
@@ -51,12 +57,42 @@ fedory_apply_plymouth_theme() {
     return 1
   fi
 
-  echo "[2/3] Selecting Fedory as the default boot splash"
+  echo "[2/5] Loading the native graphics driver before Plymouth"
+  for card in "$drm_class_dir"/card[0-9]*; do
+    [[ -e $card/device/driver/module ]] || continue
+    driver=$(basename "$(readlink -f "$card/device/driver/module")")
+
+    case "$driver" in
+      amdgpu|i915|xe)
+        [[ " ${early_drivers[*]} " == *" $driver "* ]] || early_drivers+=("$driver")
+        ;;
+    esac
+  done
+
+  if ((${#early_drivers[@]})); then
+    printf -v force_line 'force_drivers+=" %s "' "${early_drivers[*]}"
+    "${run[@]}" mkdir -p "$(dirname "$dracut_config")" || return 1
+    printf '%s\n' "$force_line" | "${run[@]}" tee "$dracut_config" >/dev/null || return 1
+  else
+    # This file belongs exclusively to Fedory. Remove stale Intel/AMD state if
+    # the machine was reconfigured with a different graphics driver.
+    "${run[@]}" rm -f "$dracut_config" || return 1
+  fi
+
+  echo "[3/5] Retaining the splash until the login screen takes over"
+  "${run[@]}" mkdir -p "$quit_override_dir" || return 1
+  printf '%s\n' \
+    '[Service]' \
+    'ExecStart=' \
+    'ExecStart=-/usr/bin/plymouth quit --retain-splash' | \
+    "${run[@]}" tee "$quit_override_dir/fedory.conf" >/dev/null || return 1
+
+  echo "[4/5] Selecting Fedory as the default boot splash"
   "${run[@]}" plymouth-set-default-theme fedory || return 1
 
   # dracut prints almost nothing on a normal run, so the progress marker above
   # is the only thing standing between the user and an apparently frozen
   # terminal for the next half-minute.
-  echo "[3/3] Regenerating the initramfs (dracut) -- this takes a minute"
+  echo "[5/5] Regenerating the initramfs (dracut) -- this takes a minute"
   "${run[@]}" dracut --regenerate-all --force || return 1
 }
