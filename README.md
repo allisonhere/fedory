@@ -36,7 +36,17 @@ Fedory is inspired by and ported from [Omarchy](https://github.com/basecamp/omar
 
 ## Screenshots
 
-> Screenshots and installation videos are coming soon.
+<p align="center">
+  <img src="docs/screenshots/fedory-hero.webp" width="100%" alt="Fedory Vesper desktop with the gradient Fedory terminal wordmark" />
+</p>
+
+<p align="center"><em>Fedory Vesper — the default desktop experience.</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/fedory-menu.webp" width="100%" alt="Fedory command menu open on the Fedory Vesper desktop" />
+</p>
+
+<p align="center"><em>The Fedory command menu keeps applications, setup, styling and system actions close at hand.</em></p>
 
 ## What you get
 
