@@ -30,7 +30,7 @@ Fedory transforms a fresh Fedora Workstation installation into a complete, keybo
 
 It configures the window manager, desktop shell, development tools, gaming support, applications, login screen, boot visuals, notifications, screenshots, updates and system integrations for you.
 
-You do not need to know Arch Linux, maintain a personal dotfiles repository or spend days assembling a working Hyprland environment.
+You do not need to maintain a personal dotfiles repository or spend days assembling a working Hyprland environment.
 
 Fedory is inspired by and ported from [Omarchy](https://github.com/basecamp/omarchy), but is adapted specifically for Fedora using DNF, COPR, Flatpak and Fedora-native system components.
 
