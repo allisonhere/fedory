@@ -11,6 +11,8 @@ boundaries, installation, migrations, and a Fedora-tested runtime.
   claim feature parity.
 - `upstream/path-map.tsv` classifies upstream paths as direct port candidates,
   Fedora rewrites, manual review, or intentionally ignored metadata.
+- `upstream/reviews/` records each completed checkpoint review, including
+  deliberate Fedory deviations that should survive future upstream diffs.
 - `fedory-dev-upstream-audit` fetches Omarchy into a bare cache and produces a
   Markdown report from the checkpoint to Omarchy's current default branch.
 - `.github/workflows/upstream-watch.yml` runs the audit weekly and maintains one

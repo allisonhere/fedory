@@ -1,0 +1,49 @@
+/* Based on Omarchy's WhatsApp Slim extension. Collapse WhatsApp Web's chat
+ * list to a Signal-style avatar rail when a window cannot fit both panes. */
+
+@media (max-width: 1100px) {
+  div:has(> div#side) {
+    flex: 0 0 90px !important;
+    min-width: 90px !important;
+    max-width: 90px !important;
+  }
+
+  div:has(> div#side) > header,
+  #side > div:first-child,
+  #side [role="tablist"],
+  #side span[data-testid="chat-butterbar"] {
+    display: none !important;
+  }
+
+  #pane-side {
+    overflow-x: hidden !important;
+    scrollbar-width: none !important;
+  }
+
+  [data-testid="cell-frame-container"] {
+    position: relative !important;
+  }
+
+  [data-testid="cell-frame-container"] > div:not(:first-child) {
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  [data-testid="cell-frame-container"] span[aria-label*="unread"] {
+    visibility: visible !important;
+    position: absolute !important;
+    top: 2px !important;
+    left: 50px !important;
+  }
+
+  [data-testid="drawer-middle"] {
+    border-left: none !important;
+  }
+
+  #app,
+  #app .two {
+    min-width: 0 !important;
+  }
+}

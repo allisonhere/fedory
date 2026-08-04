@@ -44,6 +44,7 @@ brightnessctl
 btop
 chromium
 clang
+ddcutil
 dosfstools
 dotnet-runtime
 evince
@@ -60,12 +61,12 @@ fontconfig
 foot
 fzf
 git
-gnome-calculator
 gnome-disk-utility
 gnome-keyring
 gnome-themes-extra
 gpu-screen-recorder
 grim
+gtk4-layer-shell
 gum
 gvfs-mtp
 gvfs-nfs
@@ -109,13 +110,13 @@ plymouth-plugin-script
 postgresql-libs
 power-profiles-daemon
 python-gobject
+python-dbus
 python-poetry-core
 qemu-user-static-binfmt
 qrencode
 quickshell-git
 ripgrep
 ruby
-rust
 sddm
 slurp
 socat

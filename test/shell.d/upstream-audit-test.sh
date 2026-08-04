@@ -48,7 +48,10 @@ assert_eq "10" "$audit_status" "upstream drift has a distinct exit status"
 assert_eq "3" "$(sed -n 's/^- Changed paths: //p' "$report")" "audit counts changed paths"
 
 if rg -F '| `M` | `bin/omarchy-example` | `bin/omarchy-example` |' "$report" >/dev/null; then
-  echo "ok: command changes require a Fedora rewrite"
+  echo "FAIL: Omarchy command path was not translated to Fedory"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+elif rg -F '| `M` | `bin/omarchy-example` | `bin/fedory-example` |' "$report" >/dev/null; then
+  echo "ok: command changes require a Fedora rewrite with a translated path"
 else
   echo "FAIL: command change is missing its Fedora rewrite classification"
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))

@@ -130,6 +130,9 @@ New migration format:
 - Use helper commands such as `fedory-cmd-present`, `fedory-cmd-missing`,
   `fedory-pkg-add`, `fedory-pkg-drop`, `fedory-pkg-present`, and
   `fedory-pkg-missing` when appropriate.
+- Never restart the Fedory shell. `fedory update` restarts it unconditionally
+  after migrations run, and the login-time shell already runs current code and
+  hot-reloads `shell.json` edits.
 
 Example:
 

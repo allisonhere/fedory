@@ -1,0 +1,18 @@
+[Unit]
+Description=Lock Fedory before suspend
+# Based on Omarchy's sleep-lock unit. Wait until UWSM imports FEDORY_PATH and
+# WAYLAND_DISPLAY, and tie the monitor to the active graphical session.
+After=dbus.socket wayland-session-waitenv.service
+Requires=dbus.socket
+PartOf=graphical-session.target
+ConditionEnvironment=FEDORY_PATH
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -lc 'exec "$FEDORY_PATH/bin/fedory-system-sleep-monitor"'
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

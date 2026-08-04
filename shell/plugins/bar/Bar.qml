@@ -350,8 +350,28 @@ Item {
     position = normalizePosition(config.position)
     setRequestedTransparency(config.transparent === true)
     centerAnchor = Util.canonicalWidgetId(config.centerAnchor || "")
-    layoutConfig = normalizeLayout(config.layout)
+    var next = normalizeLayout(config.layout)
+    var delta = BarModel.inlineSettingsDelta(layoutConfig, next)
+    if (delta) {
+      applySettingsDelta(delta)
+      return
+    }
+    layoutConfig = next
     barConfigSerial++
+  }
+
+  function applySettingsDelta(delta) {
+    for (var i = 0; i < delta.length; i++) {
+      var change = delta[i]
+      layoutConfig[change.region][change.index] = change.entry
+      var settings = entrySettings(change.entry)
+      for (var s = 0; s < moduleSlots.length; s++) {
+        var slot = moduleSlots[s]
+        if (!slot || slot.region !== change.region || slot.moduleName !== entryId(change.entry)) continue
+        var item = slot.activeItem
+        if (item && "settings" in item) item.settings = settings
+      }
+    }
   }
 
   onBarConfigChanged: applyBarConfig()

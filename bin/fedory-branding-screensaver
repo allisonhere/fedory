@@ -8,12 +8,10 @@
 
 set -euo pipefail
 
-SOURCE_DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}"
-
 case "${1:-}" in
 image)
-  image=$(fedory-menu-file "Pick png/svg from $SOURCE_DIR" "${SOURCE_DIR}" "svg png")
-  if [[ -n $image ]] && fedory-transcode-ascii "$image" ~/.config/fedory/branding/screensaver.txt; then
+  image=$(fedory-file-select --title "Pick PNG or SVG for screensaver" --extensions "png svg")
+  if fedory-transcode-ascii "$image" ~/.config/fedory/branding/screensaver.txt; then
     fedory-launch-screensaver force >/dev/null 2>&1
   fi
   ;;

@@ -52,4 +52,17 @@ chromium_launch=$(<"$launch_log")
 assert_eq "run org.chromium.Chromium --enable-wayland-ime --wayland-text-input-version=3 https://example.com" \
   "$chromium_launch" "Flatpak Chromium receives configured host flags"
 
+printf '%s\n' '--load-extension=/usr/share/fedory/default/chromium/extensions/whatsapp-slim' \
+  >"$HOME/.config/chromium-flags.conf"
+FEDORY_PATH="$ROOT_DIR" fedory-launch-chromium https://example.com
+chromium_launch=$(<"$launch_log")
+expected_extension="$HOME/.config/fedory/chromium/extensions/whatsapp-slim"
+if [[ $chromium_launch == *"--load-extension=$expected_extension"* ]]; then
+  echo "ok: bundled Chromium extensions use a Flatpak-visible path"
+else
+  echo "FAIL: bundled Chromium extension path is malformed: $chromium_launch"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+assert_file_exists "$HOME/.var/app/org.chromium.Chromium/config/fedory/chromium/extensions/whatsapp-slim/manifest.json"
+
 finish

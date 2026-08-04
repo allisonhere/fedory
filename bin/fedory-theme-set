@@ -200,6 +200,7 @@ post_theme_commands=(
   fedory-theme-set-pi
   fedory-theme-set-browser
   fedory-theme-set-vscode
+  fedory-theme-set-claude
   fedory-theme-set-obsidian
   fedory-theme-set-keyboard
 )

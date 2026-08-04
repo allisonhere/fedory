@@ -6,5 +6,6 @@ fedory-mise-install copilot
 fedory-mise-install opencode
 fedory-mise-install npm:playwright playwright
 fedory-mise-install pi
+fedory-mise-install github:can1357/oh-my-pi omp
 fedory-mise-install npm:@kitlangton/ghui ghui
 fedory-mise-install aqua:modem-dev/hunk hunk

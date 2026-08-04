@@ -12,7 +12,7 @@ PLUGIN_ICON=$'\U000f0431'
 case "${1:-}" in
   enable) filter='(.enabled | not)' ;;
   disable) filter='.canDisable and .enabled' ;;
-  clone) filter='.firstParty and ((.id | sub("^fedory\\."; "local.")) as $clone_id | ($plugins | map(.id) | index($clone_id)) == null)' ;;
+  clone) filter='.firstParty and (.id as $id | ($plugins | map(.clonedFrom // "") | index($id)) == null)' ;;
   remove) filter='(.firstParty | not)' ;;
   *)
     echo "Usage: fedory-menu-plugin <enable|disable|clone|remove>" >&2
@@ -40,10 +40,8 @@ id=$(awk -F'\t' -v label="$name" '$2 == label { print $3; exit }' <<<"$rows")
 [[ -n $id ]] || exit 1
 
 if [[ $1 == "clone" ]]; then
-  new_id="local.${id#fedory.}"
-  target="$HOME/.config/fedory/plugins/$new_id"
   fedory-launch-floating-terminal-with-presentation \
-    "fedory-plugin-clone $(printf '%q' "$id") && exec \$EDITOR $(printf '%q' "$target")"
+    "fedory-plugin-clone --edit $(printf '%q' "$id")"
 elif [[ $1 == "remove" ]]; then
   fedory-launch-floating-terminal-with-presentation "fedory-plugin-remove $(printf '%q' "$id")"
 else

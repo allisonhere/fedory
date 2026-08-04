@@ -10,6 +10,7 @@ bluez-tools	bluez-tools	-	-	-	dnf	1:1 name match
 bluez-utils	-	-	-	-	dropped	Arch splits bluetoothctl into bluez-utils; Fedora ships it inside the bluez package itself
 bolt	bolt	-	-	-	dnf	1:1 name match (Thunderbolt device manager)
 brightnessctl	brightnessctl	-	-	-	dnf	1:1 name match
+ddcutil	ddcutil	-	-	-	dnf	Fedora packages DDC/CI monitor control and its udev integration
 btop	btop	-	-	-	dnf	1:1 name match
 chromium	-	-	org.chromium.Chromium	-	flatpak	Not in Fedora repos (codec/licensing); Flathub build is the standard Fedora-recommended path
 clang	clang	-	-	-	dnf	1:1 name match
@@ -99,6 +100,8 @@ plymouth-plugin-script	plymouth-plugin-script	-	-	-	dnf	required by default/plym
 postgresql-libs	libpq	-	-	-	dnf	Fedora's client library package is named differently
 power-profiles-daemon	power-profiles-daemon	-	-	-	dnf	1:1 name match
 python-gobject	python3-gobject	-	-	-	dnf	Fedora prefixes Python packages with python3-
+python-dbus	python3-dbus	-	-	-	dnf	Fedora prefixes Python packages with python3-
+omacalc	-	-	-	Fedory-maintained MIT port under applications/fedory-calculator	source-build	Upstream AUR package is replaced by a reviewed Fedory-native application and stable command wrapper
 python-poetry-core	python3-poetry-core	-	-	-	dnf	see python-gobject naming note
 python-terminaltexteffects	-	-	-	mise pipx wrapper for terminaltexteffects (install/user/source-tools.sh)	source-build	not in Fedora repos; installed per-user in an isolated Python environment through mise
 qemu-user-static-binfmt	qemu-user-static	-	-	-	dnf	Fedora bundles binfmt registration into the main qemu-user-static package

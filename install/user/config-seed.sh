@@ -16,3 +16,6 @@ cp -rn "$FEDORY_PATH/config/." ~/.config/
 mkdir -p ~/.config/fedory/branding
 cp -n "$FEDORY_PATH/icon.txt" ~/.config/fedory/branding/about.txt
 cp -n "$FEDORY_PATH/logo.txt" ~/.config/fedory/branding/screensaver.txt
+
+mkdir -p ~/.config/fastfetch
+cp -n "$FEDORY_PATH/default/fastfetch/config.jsonc" ~/.config/fastfetch/config.jsonc

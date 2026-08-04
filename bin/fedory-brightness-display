@@ -1,28 +1,59 @@
 #!/bin/bash
 
-# fedory:summary=Show or adjust brightness on the most likely display device.
-# fedory:args=[--no-osd] [+N%|N%-|N%|off|on]
-# fedory:examples=fedory brightness display | fedory brightness display +5% | fedory brightness display --no-osd 50% | fedory brightness display off | fedory brightness display on
+# fedory:summary=Show or adjust brightness on the focused display.
+# fedory:args=[--no-osd] [--monitor name] [+N%|N%-|N%|off|on]
+# fedory:examples=fedory brightness display | fedory brightness display +5% | fedory brightness display --monitor DP-1 50% | fedory brightness display off | fedory brightness display on
 
 no_osd=0
-if [[ ${1:-} == "--no-osd" ]]; then
-  no_osd=1
-  shift
-fi
+monitor=""
+
+while (( $# > 0 )); do
+  case "$1" in
+    --no-osd)
+      no_osd=1
+      shift
+      ;;
+    --monitor)
+      (( $# >= 2 )) || exit 1
+      monitor="$2"
+      shift 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 # Get the brightness of the passed display
-display_brightness() {
+backlight_brightness() {
   brightnessctl -d "$1" -m 2>/dev/null | awk -F, '{ gsub("%", "", $4); print $4; found=1 } END{ exit !found }'
 }
 
+[[ -n $monitor ]] || monitor="$(fedory-hyprland-monitor-focused 2>/dev/null || true)"
+
+monitor_is_internal() {
+  [[ $monitor =~ ^(eDP|LVDS|DSI)- ]]
+}
+
+use_apple_display() {
+  fedory-hyprland-monitor-focused-apple "$monitor"
+}
+
+use_ddc_display() {
+  [[ -n $monitor ]] && ! monitor_is_internal
+}
+
 if (( $# == 0 )); then
-  if fedory-hyprland-monitor-focused-apple; then
+  if use_apple_display; then
     fedory-brightness-display-apple
+    exit
+  elif use_ddc_display; then
+    fedory-brightness-display-ddc "$monitor"
     exit
   fi
 
   device="$(fedory-hw-display)" || exit 1
-  display_brightness "$device"
+  backlight_brightness "$device"
   exit
 fi
 
@@ -45,18 +76,21 @@ fi
 exec {lock_fd}>"${XDG_RUNTIME_DIR:-/tmp}/fedory-brightness-display.lock"
 flock -n "$lock_fd" || exit 0
 
-if fedory-hyprland-monitor-focused-apple; then
+if use_apple_display; then
   if (( no_osd )); then
     fedory-brightness-display-apple --no-osd "$step"
   else
     fedory-brightness-display-apple "$step"
   fi
+elif use_ddc_display; then
+  brightness="$(fedory-brightness-display-ddc "$monitor" "$step")" || exit 1
+  (( no_osd )) || fedory-osd -i brightness -p "$brightness"
 else
   # Current device highlighted
   device="$(fedory-hw-display)" || exit 1
 
   # Current brightness percentage
-  current=$(display_brightness "$device") || exit 1
+  current=$(backlight_brightness "$device") || exit 1
 
   # Apply non-uniform step size: 1% steps if at or below 5%, otherwise set an
   # absolute target percentage to avoid raw backlight rounding causing uneven OSD steps.
@@ -84,5 +118,5 @@ else
   brightnessctl -d "$device" set "$step" >/dev/null
 
   # Show the new brightness in OSD
-  (( no_osd )) || fedory-osd -i brightness -p "$(display_brightness "$device")"
+  (( no_osd )) || fedory-osd -i brightness -p "$(backlight_brightness "$device")"
 fi
