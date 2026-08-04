@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# fedory:summary=Sync the generated Fedory theme to Claude Code
+# fedory:args=[--activate]
+# fedory:hidden=true
+
+# Based on Omarchy's bin/omarchy-theme-set-claude. Fedory keeps the generated
+# theme under its XDG state tree and uses a Fedory-specific custom theme id.
+
+set -euo pipefail
+
+source_path="$HOME/.local/state/fedory/current/theme/claude.json"
+config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+theme_path="$config_dir/themes/fedory.json"
+settings_path="$config_dir/settings.json"
+activate=0
+
+usage() {
+  echo "Usage: fedory-theme-set-claude [--activate]"
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --activate)
+      activate=1
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [[ ! -f $source_path ]]; then
+  if (( activate )); then
+    echo "Claude Code theme source missing: $source_path" >&2
+    echo "Run fedory-theme-refresh after selecting a Fedory theme." >&2
+    exit 1
+  fi
+  exit 0
+fi
+
+if (( ! activate )) && [[ ! -d $config_dir ]]; then
+  exit 0
+fi
+
+mkdir -p "$(dirname "$theme_path")"
+tmp=$(mktemp "$theme_path.XXXXXX")
+cp "$source_path" "$tmp"
+mv "$tmp" "$theme_path"
+
+if (( activate )); then
+  mkdir -p "$config_dir"
+  tmp=$(mktemp "$settings_path.XXXXXX")
+  if [[ -f $settings_path ]]; then
+    jq '.theme = "custom:fedory"' "$settings_path" >"$tmp"
+  else
+    printf '%s\n' '{' '  "theme": "custom:fedory"' '}' >"$tmp"
+  fi
+  mv "$tmp" "$settings_path"
+fi

@@ -91,6 +91,13 @@ out=$(run_templater_for nord)
 expected_count=$(ls "$ROOT_DIR/default/themed"/*.tpl | wc -l)
 actual_count=$(find "$out/.local/state/fedory/current/next-theme" -maxdepth 1 -type f ! -name colors.toml | wc -l)
 assert_eq "$expected_count" "$actual_count" "every .tpl file produces an output file"
+if jq -e '.name == "Fedory" and .base == "dark" and .overrides.text == "#d8dee9" and .overrides.selectionBg == "#434c5e"' \
+  "$out/.local/state/fedory/current/next-theme/claude.json" >/dev/null; then
+  echo "ok: Claude theme template renders standard Fedory color aliases"
+else
+  echo "FAIL: Claude theme template did not render the Nord palette"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
 rm -rf "$out"
 
 finish

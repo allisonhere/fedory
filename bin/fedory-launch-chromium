@@ -7,15 +7,45 @@ set -euo pipefail
 
 flags_file="$HOME/.config/chromium-flags.conf"
 flags=()
+extension_sources=()
+extension_paths=()
 
 if [[ -f $flags_file ]]; then
   while IFS= read -r flag; do
     [[ -n $flag && $flag != \#* ]] || continue
-    # Host extension paths are not visible inside the Flatpak sandbox. Passing
-    # them makes Chromium show a misleading "failed to load manifest" error.
-    [[ $flag == --load-extension=* ]] && continue
+    if [[ $flag == --load-extension=* ]]; then
+      IFS=',' read -ra configured_extensions <<<"${flag#--load-extension=}"
+      for configured_extension in "${configured_extensions[@]}"; do
+        extension_name="${configured_extension%/}"
+        extension_name="${extension_name##*/}"
+        source="${FEDORY_PATH:-}/default/chromium/extensions/$extension_name"
+        if [[ -n ${FEDORY_PATH:-} && -f $source/manifest.json ]]; then
+          extension_sources+=("$source")
+        fi
+      done
+      continue
+    fi
     flags+=("$flag")
   done <"$flags_file"
+fi
+
+if (( ${#extension_sources[@]} > 0 )); then
+  host_extension_root="$HOME/.var/app/org.chromium.Chromium/config/fedory/chromium/extensions"
+  sandbox_extension_root="$HOME/.config/fedory/chromium/extensions"
+  mkdir -p "$host_extension_root"
+
+  for source in "${extension_sources[@]}"; do
+    extension_name="${source##*/}"
+    mkdir -p "$host_extension_root/$extension_name"
+    cp -a "$source/." "$host_extension_root/$extension_name/"
+    extension_paths+=("$sandbox_extension_root/$extension_name")
+  done
+
+fi
+
+if (( ${#extension_paths[@]} > 0 )); then
+  extension_flag=$(IFS=,; echo "${extension_paths[*]}")
+  flags+=("--load-extension=$extension_flag")
 fi
 
 exec flatpak run org.chromium.Chromium "${flags[@]}" "$@"

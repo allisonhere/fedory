@@ -36,3 +36,8 @@ for file in "$HOME"/.local/state/fedory/restart-*-required; do
     fedory-restart-"$service"
   fi
 done
+
+# Updates routinely replace shell QML. Restart even when no explicit marker
+# exists so one process never mixes old loaded components with new lazy loads.
+echo "Restarting shell"
+fedory-restart-shell || true

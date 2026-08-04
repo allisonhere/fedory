@@ -31,7 +31,7 @@ option_bool() {
   local signature="$2"
   local option="$3"
 
-  hyprctl_instance "$runtime_dir" "$signature" -j getoption "$option" 2>/dev/null | jq -r '.bool'
+  hyprctl_instance "$runtime_dir" "$signature" -j getoption "$option" 2>/dev/null | jq -r '.bool' 2>/dev/null
 }
 
 instances() {

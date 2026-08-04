@@ -18,7 +18,7 @@ o.window({
   class = "(sublime_text|DesktopEditors|org.gnome.Nautilus)",
   title = "^(Open.*Files?|Open [F|f]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[C|c]hoose.*)",
 }, { tag = "+floating-window" })
-o.window("org.gnome.Calculator", { float = true })
+o.window("fedory-calculator", { float = true })
 
 -- Fullscreen screensaver.
 o.window("org.fedory.screensaver", { fullscreen = true })

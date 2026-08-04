@@ -62,6 +62,8 @@ fedory_task_label() {
     user/config-seed.sh) echo "Seed your desktop configuration"; return ;;
     user/theme.sh) echo "Apply your desktop theme"; return ;;
     user/chromium.sh) echo "Configure the web browser"; return ;;
+    user/calculator.sh) echo "Configure the calculator"; return ;;
+    user/systemd.sh) echo "Install user services"; return ;;
     user/git.sh) echo "Configure Git"; return ;;
     user/xcompose.sh) echo "Configure keyboard compose shortcuts"; return ;;
     user/mise-install.sh) echo "Install development runtimes"; return ;;

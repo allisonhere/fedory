@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# fedory:summary=Open the Fedory tray calculator
+# fedory:args=[--install]
+# fedory:group=launch
+# fedory:name=calculator
+# fedory:alias=calculator
+
+# The calculator is adapted from remigius-labs/omacalc (MIT). The wrapper keeps
+# the executable stable across packaged installs and development checkouts.
+exec python3 "$FEDORY_PATH/applications/fedory-calculator/calculator.py" "$@"
