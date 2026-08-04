@@ -35,9 +35,9 @@ terminal-border: "0"
 }
 
 + boot_menu {
-    left = 25%
+    left = 8%
     top = 38%
-    width = 50%
+    width = 84%
     height = 38%
 
     item_font = "Fedory Regular 32"
