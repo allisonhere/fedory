@@ -71,6 +71,7 @@ GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
 GRUB_DEFAULT=saved
 GRUB_TERMINAL_OUTPUT="console"
+GRUB_GFXPAYLOAD_LINUX="keep"
 GRUB_CMDLINE_LINUX="rhgb quiet"
 GRUB_ENABLE_BLSCFG=true
 EOF
@@ -109,8 +110,11 @@ assert_eq "gfxterm" "$(grub_value GRUB_TERMINAL_OUTPUT)" \
   "the console setting that hides themes is replaced with gfxterm"
 assert_eq "$FEDORY_GRUB_THEME_DIR/theme.txt" "$(grub_value GRUB_THEME)" \
   "the theme is selected"
-assert_eq "keep" "$(grub_value GRUB_GFXPAYLOAD_LINUX)" \
-  "the graphics mode is handed to the kernel"
+assert_eq "1920x1080x32,1600x900x32,1280x720x32,1024x768x32,auto" \
+  "$(grub_value GRUB_GFXMODE)" \
+  "the theme prefers high-resolution widescreen modes with safe fallbacks"
+assert_eq "text" "$(grub_value GRUB_GFXPAYLOAD_LINUX)" \
+  "the themed menu hands Linux back to a reliable text payload"
 
 # Replacing keys must not discard the distribution's own settings -- the kernel
 # command line lives in this file.
@@ -178,6 +182,15 @@ done < <(sed -n 's/.*file *= *"\([^"]*\)".*/\1/p' "$theme")
 background=$(sed -n 's/^desktop-image: *"\([^"]*\)"/\1/p' "$theme")
 assert_eq "background.png" "$background" \
   "the theme selects the installed Vesper background"
+
+menu_block=$(sed -n '/^+ boot_menu {/,/^}/p' "$theme")
+if grep -q '^[[:space:]]*left = 8%$' <<<"$menu_block" &&
+  grep -q '^[[:space:]]*width = 84%$' <<<"$menu_block"; then
+  echo "ok: the boot menu leaves enough width for Fedora BLS entry names"
+else
+  echo "FAIL: the boot menu is too narrow for Fedora BLS entry names"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
 
 # --- wiring -----------------------------------------------------------------
 
