@@ -40,6 +40,7 @@ if (( EUID != 0 )) && [[ ${FEDORY_GRUB_PRIVILEGED:-} != "true" ]]; then
     FEDORY_GRUB_MKCONFIG="$mkconfig" \
     FEDORY_GRUB_MKFONT="$mkfont" \
     FEDORY_GRUB_SCRIPT_CHECK="$script_check" \
+    FEDORY_GRUB_GRAPHICS="${FEDORY_GRUB_GRAPHICS:-auto}" \
     FEDORY_GRUB_EFI_CFG="${FEDORY_GRUB_EFI_CFG:-/boot/efi/EFI/fedora/grub.cfg}" \
     "$script_path"
 fi
@@ -71,6 +72,46 @@ set_grub_key() {
     printf '%s\n' "$line" | "${run[@]}" tee -a "$grub_defaults" >/dev/null
   fi
 }
+
+remove_grub_key() {
+  local key="$1"
+
+  [[ -f $grub_defaults ]] || return 0
+  "${run[@]}" sed -i "/^[[:space:]]*${key}=/d" "$grub_defaults"
+}
+
+graphics_mode=${FEDORY_GRUB_GRAPHICS:-auto}
+if [[ $graphics_mode == "auto" ]]; then
+  if systemd-detect-virt --vm --quiet; then
+    graphics_mode=false
+  else
+    graphics_mode=true
+  fi
+fi
+
+if [[ $graphics_mode != "true" ]]; then
+  echo "[1/5] Detected a virtual machine; using the reliable text boot menu"
+  set_grub_key GRUB_TERMINAL_OUTPUT "console"
+  remove_grub_key GRUB_THEME
+  remove_grub_key GRUB_GFXMODE
+  remove_grub_key GRUB_GFXPAYLOAD_LINUX
+
+  echo "[2/5] Preserving Fedora's boot entries and kernel arguments"
+  echo "[3/5] Skipping graphical theme assets"
+  echo "[4/5] Regenerating the boot menu"
+  "${run[@]}" "$mkconfig" -o "$grub_cfg"
+
+  echo "[5/5] Verifying the virtual-machine boot menu"
+  "$script_check" "$grub_cfg"
+  if ! grep -qE '^[[:space:]]*terminal_output[[:space:]]+console' "$grub_cfg" ||
+    grep -qE '^[[:space:]]*set theme=.*themes/fedory/theme\.txt' "$grub_cfg"; then
+    echo "Generated GRUB configuration did not select the safe text console." >&2
+    exit 1
+  fi
+
+  echo "Verified the Fedora text boot menu in $grub_cfg"
+  exit 0
+fi
 
 # GRUB cannot read system fonts; it needs its own .pf2 format. Generate one so
 # the name theme.txt asks for resolves. Cantarell first, to match the Plymouth
@@ -123,9 +164,10 @@ echo "[3/5] Switching the boot menu to graphics mode"
 set_grub_key GRUB_TERMINAL_OUTPUT "gfxterm"
 set_grub_key GRUB_THEME "$theme_dir/theme.txt"
 set_grub_key GRUB_GFXMODE "auto"
-# Hand the mode through to the kernel so the splash does not flip resolution
-# part way through boot.
-set_grub_key GRUB_GFXPAYLOAD_LINUX "keep"
+# Let Fedora and the kernel negotiate their own framebuffer mode. Carrying a
+# custom GRUB mode into Linux can leave virtual EFI systems stuck on the final
+# GRUB frame, and Fedora does not require this override on physical machines.
+remove_grub_key GRUB_GFXPAYLOAD_LINUX
 
 echo "[4/5] Regenerating the boot menu"
 "${run[@]}" "$mkconfig" -o "$grub_cfg"

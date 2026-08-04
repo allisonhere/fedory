@@ -24,13 +24,19 @@ while ((\$#)); do
   shift
 done
 [[ -n \$out ]] || exit 1
-cat > "\$out" <<'CONFIG'
+if grep -q '^GRUB_TERMINAL_OUTPUT="console"' "\${FEDORY_GRUB_DEFAULTS:?}"; then
+  cat > "\$out" <<'CONFIG'
+terminal_output console
+CONFIG
+else
+  cat > "\$out" <<'CONFIG'
 terminal_output gfxterm
 loadfont (hd0,gpt2)/grub2/themes/fedory/fedory.pf2
 insmod png
 set theme=(hd0,gpt2)/grub2/themes/fedory/theme.txt
 export theme
 CONFIG
+fi
 EOF
 cat > "$fake_bin/grub2-mkfont" <<'EOF'
 #!/bin/bash
@@ -52,7 +58,7 @@ exec "$@"
 EOF
 cat > "$fake_bin/grub2-script-check" <<'EOF'
 #!/bin/bash
-grep -q '^set theme=' "$1"
+grep -Eq '^(set theme=|terminal_output console)' "$1"
 EOF
 chmod +x "$fake_bin/grub2-mkconfig" "$fake_bin/grub2-mkfont" \
   "$fake_bin/grub2-script-check" "$fake_bin/pkexec"
@@ -71,6 +77,7 @@ GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
 GRUB_DEFAULT=saved
 GRUB_TERMINAL_OUTPUT="console"
+GRUB_GFXPAYLOAD_LINUX="keep"
 GRUB_CMDLINE_LINUX="rhgb quiet"
 GRUB_ENABLE_BLSCFG=true
 EOF
@@ -109,8 +116,8 @@ assert_eq "gfxterm" "$(grub_value GRUB_TERMINAL_OUTPUT)" \
   "the console setting that hides themes is replaced with gfxterm"
 assert_eq "$FEDORY_GRUB_THEME_DIR/theme.txt" "$(grub_value GRUB_THEME)" \
   "the theme is selected"
-assert_eq "keep" "$(grub_value GRUB_GFXPAYLOAD_LINUX)" \
-  "the graphics mode is handed to the kernel"
+assert_eq "" "$(grub_value GRUB_GFXPAYLOAD_LINUX)" \
+  "the boot menu does not force its graphics mode into the kernel"
 
 # Replacing keys must not discard the distribution's own settings -- the kernel
 # command line lives in this file.
@@ -148,6 +155,34 @@ assert_eq 1 "$(grep -c '^GRUB_THEME=' "$FEDORY_GRUB_DEFAULTS")" \
   "rerunning does not duplicate keys"
 assert_eq 2 "$(wc -l < "$work/mkconfig-calls")" \
   "rerunning regenerates the menu again"
+
+# --- virtual-machine fallback ----------------------------------------------
+
+vm_work=$(mktemp -d)
+FEDORY_GRUB_GRAPHICS=false \
+FEDORY_GRUB_THEME_DIR="$vm_work/themes/fedory" \
+FEDORY_GRUB_DEFAULTS="$vm_work/default-grub" \
+FEDORY_GRUB_CFG="$vm_work/grub.cfg" \
+FEDORY_GRUB_EFI_CFG="$vm_work/no-such-efi-cfg" \
+bash "$ROOT_DIR/bin/fedory-refresh-grub" >"$vm_work/output" 2>&1
+vm_status=$?
+assert_eq 0 "$vm_status" "virtual machines use the safe boot-menu fallback"
+assert_eq "console" \
+  "$(sed -n 's/^GRUB_TERMINAL_OUTPUT="\(.*\)"/\1/p' "$vm_work/default-grub")" \
+  "virtual machines keep GRUB on the text console"
+if grep -qE '^GRUB_(THEME|GFXMODE|GFXPAYLOAD_LINUX)=' "$vm_work/default-grub"; then
+  echo "FAIL: virtual-machine fallback retains graphical GRUB settings"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+else
+  echo "ok: virtual-machine fallback removes graphical GRUB settings"
+fi
+if grep -q 'themes/fedory' "$vm_work/grub.cfg"; then
+  echo "FAIL: virtual-machine grub.cfg still activates the Fedory theme"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+else
+  echo "ok: virtual-machine grub.cfg does not activate the Fedory theme"
+fi
+rm -rf "$vm_work"
 
 # --- theme contents ---------------------------------------------------------
 
