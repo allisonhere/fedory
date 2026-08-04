@@ -185,6 +185,16 @@ else
   ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
 fi
 
+if rg -F 'FEDORY_INSTALL_LOG_FILE=/var/log/fedory-install.log' \
+  "$ROOT_DIR/bootstrap.sh" >/dev/null &&
+  [[ $(rg -F -c 'FEDORY_INSTALL_LOG_FILE="$FEDORY_INSTALL_LOG_FILE"' \
+    "$ROOT_DIR/bootstrap.sh") == "2" ]]; then
+  echo "ok: bootstrap shares the install log across system and user progress"
+else
+  echo "FAIL: bootstrap loses the progress renderer during user finalization"
+  ASSERT_FAILURES=$((ASSERT_FAILURES + 1))
+fi
+
 if rg -F -- '-f $HOME/.config/fedory/branding/screensaver.txt' "$ROOT_DIR/bootstrap.sh" >/dev/null &&
   rg -F 'setup_mode=(--upgrade)' "$ROOT_DIR/bootstrap.sh" >/dev/null &&
   rg -F 'fedory-migrate || had_issues=1' "$ROOT_DIR/bootstrap.sh" >/dev/null; then

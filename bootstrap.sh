@@ -356,6 +356,10 @@ main() {
     "$FEDORY_PATH"/install/{config,hardware,login,post-install,user}/all.sh \
     | wc -l)
   FEDORY_PROGRESS_TOTAL=${FEDORY_PROGRESS_TOTAL//[[:space:]]/}
+  # Both the privileged system pass and the per-user finalization pass feed
+  # the same renderer. Keep their captured output in one log so run_logged
+  # does not fall back to raw stdout (and lose its progress bars) after sudo.
+  FEDORY_INSTALL_LOG_FILE=/var/log/fedory-install.log
   # Keep the shared counter out of sticky /tmp itself. Fedora's
   # fs.protected_regular policy blocks root from truncating a user-owned file
   # there even when it is mode 0666; a private subdirectory is not sticky and
@@ -400,6 +404,7 @@ main() {
   phase "Build the desktop" \
     "Packages, services, hardware support, login, and system integration."
   sudo env FEDORY_PATH="$FEDORY_PATH" PATH="$FEDORY_PATH/bin:$PATH" \
+    FEDORY_INSTALL_LOG_FILE="$FEDORY_INSTALL_LOG_FILE" \
     FEDORY_PROGRESS_TOTAL="$FEDORY_PROGRESS_TOTAL" \
     FEDORY_PROGRESS_FILE="$FEDORY_PROGRESS_FILE" \
     FEDORY_DISABLED_GROUPS="${FEDORY_DISABLED_GROUPS-}" \
@@ -409,7 +414,9 @@ main() {
   # --- step 5: per-user finalization -----------------------------------------
   phase "Configure your workspace" \
     "Seed user defaults, applications, theme, and development integrations."
-  FEDORY_SETUP_CONTEXT=bootstrap fedory-finalize-user "${finalize_mode[@]}" \
+  FEDORY_INSTALL_LOG_FILE="$FEDORY_INSTALL_LOG_FILE" \
+    FEDORY_SETUP_CONTEXT=bootstrap \
+    fedory-finalize-user "${finalize_mode[@]}" \
     || had_issues=1
 
   if (( existing_install )); then
