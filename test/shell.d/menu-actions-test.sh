@@ -4,6 +4,16 @@ source "$(dirname "${BASH_SOURCE[0]}")/base-test.sh"
 
 menu_file="$ROOT_DIR/default/fedory/fedory-menu.jsonc"
 
+run_node_test <<'JS'
+const fs = require('fs')
+const MenuModel = requireFromRoot('shell/plugins/menu/MenuModel.js')
+const menuPath = path.join(root, 'default/fedory/fedory-menu.jsonc')
+const items = MenuModel.parseMenuJsonc(fs.readFileSync(menuPath, 'utf8'))
+
+assert(items.length > 0, 'the default menu JSONC parses into rows')
+assert(items.some(item => item.id === 'apps'), 'the parsed menu contains its Apps root row')
+JS
+
 mapfile -t referenced_commands < <(
   rg -o 'fedory-[a-z0-9-]+' "$menu_file" \
     | sort -u \

@@ -107,7 +107,7 @@ PanelWindow {
         Text {
           visible: root.connectionName !== ""
           text: root.connectionName.toUpperCase()
-          color: Qt.darker(root.bar.foreground, 1.4)
+          color: root.onScrimDim
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.caption
           font.bold: true
@@ -376,7 +376,7 @@ PanelWindow {
       Text {
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Mbps"
-        color: Qt.darker(root.bar.foreground, 1.4)
+        color: root.onScrimDim
         font.family: root.bar.fontFamily
         font.pixelSize: Style.font.caption
       }
