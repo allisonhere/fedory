@@ -1,5 +1,6 @@
 -- Based on basecamp/omarchy default/hypr/bindings/utilities.lua with Fedory command and path names.
 o.bind("SUPER + SPACE", "Fedory menu", "fedory-menu toggle")
+o.bind("SUPER + ALT + SPACE", "Apps menu", "fedory-menu toggle apps")
 o.bind("SUPER + CTRL + E", "Emojis", "fedory-shell shell toggle fedory.emojis")
 o.bind("SUPER + CTRL + C", "Capture menu", "fedory-menu toggle capture")
 o.bind("SUPER + CTRL + O", "Toggle menu", "fedory-menu toggle toggle")
@@ -75,6 +76,7 @@ o.bind("SUPER + CTRL + ALT + T", "Show time", "fedory-notification-time")
 o.bind("SUPER + CTRL + ALT + B", "Show battery remaining", "fedory-notification-battery")
 o.bind("SUPER + CTRL + ALT + W", "Toggle weather", "fedory-notification-weather")
 
+o.bind("SUPER + SHIFT + CTRL + A", "Agent", "fedory-launch-agent")
 o.bind("SUPER + CTRL + A", "Audio", "fedory-shell shell toggle fedory.audio")
 o.bind("SUPER + CTRL + B", "Bluetooth", "fedory-shell shell toggle fedory.bluetooth")
 o.bind("SUPER + CTRL + D", "Display", "fedory-shell shell toggle fedory.monitor")
