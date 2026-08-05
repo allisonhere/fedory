@@ -24,6 +24,11 @@ stop monitoring.
 
 ## Review workflow
 
+AI coding agents handling the generated tracking issue must also follow
+[`ai-upstream-review.md`](ai-upstream-review.md). It defines the required
+commit/path accounting, implementation boundaries, verification, and issue
+lifecycle for agent-led reviews.
+
 Run the audit and keep its report with the sync branch:
 
 ```bash

@@ -3,5 +3,5 @@
 # it does not claim Fedory implements every upstream feature.
 repository=https://github.com/basecamp/omarchy.git
 ref=quattro
-commit=c992cdff100e765ad05dc6bd435eaf137d73fa16
-reviewed_at=2026-08-03
+commit=fd1034f71b162c00ed4447adb8be4ed3e31ba6e9
+reviewed_at=2026-08-05

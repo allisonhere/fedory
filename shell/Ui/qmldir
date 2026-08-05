@@ -26,6 +26,7 @@ PanelToolTip 1.0 PanelToolTip.qml
 PointerMoveGate 1.0 PointerMoveGate.qml
 PopupCard 1.0 PopupCard.qml
 SearchableDropdown 1.0 SearchableDropdown.qml
+ScreenMoveRemap 1.0 ScreenMoveRemap.qml
 TextField 1.0 TextField.qml
 Toggle 1.0 Toggle.qml
 ToggleSwitch 1.0 ToggleSwitch.qml
