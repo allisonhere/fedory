@@ -317,6 +317,7 @@ See [`docs/scope.md`](docs/scope.md) for the full design rationale.
 * [`docs/migrations.md`](docs/migrations.md) — configuration migration system
 * [`docs/tablet.md`](docs/tablet.md) — tablet profile setup and limitations
 * [`docs/upstream-sync.md`](docs/upstream-sync.md) — reviewing and porting Omarchy changes
+* [`docs/ai-upstream-review.md`](docs/ai-upstream-review.md) — AI workflow for Omarchy review issues
 * [`docs/scope.md`](docs/scope.md) — installation model and project boundaries
 * [`AGENTS.md`](AGENTS.md) — contribution and porting conventions
 

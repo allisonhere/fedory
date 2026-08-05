@@ -223,3 +223,7 @@ Migrations may use raw `dnf`, `rpm`, `command -v`, or direct config edits when n
 # Provenance
 
 Fedory is a Fedora-targeted port of [basecamp/omarchy](https://github.com/basecamp/omarchy). When porting a file, note the upstream path it's based on in a short comment or in the commit message, and record any deliberate behavioral deviation (not just the package-manager swap) — future contributors diffing against upstream need to know what's an intentional fork vs. a port that drifted by accident.
+
+When handling an `[Upstream] Omarchy changes require review` issue, follow
+[`docs/ai-upstream-review.md`](docs/ai-upstream-review.md) before changing the
+reviewed checkpoint.
